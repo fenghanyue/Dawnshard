@@ -1,9 +1,11 @@
 """通过腾讯云「自动化助手」(TAT) 在服务器上执行 deploy.sh，并等待结果。
 
 用法：
-    python3 deploy/tencent/tat_run.py --image ghcr.io/fenghanyue/dragalia-api:sha-xxxxxxx
+    python3 deploy/tencent/tat_run.py --image ghcr.io/fenghanyue/dragalia-api:sha-xxxxxxx --digest sha256:...
 
 部署前会先用 check_config.py 检查配置，有错就不部署。
+给了 --digest，服务器会先从国内镜像站按 digest 拉镜像（快，内容会校验），不行再直连 ghcr.io。
+镜像的 digest 可以这样查：docker buildx imagetools inspect <镜像> --format '{{json .Manifest}}'
 腾讯云密钥从环境变量 TENCENTCLOUD_SECRET_ID / TENCENTCLOUD_SECRET_KEY 读取。
 拉非公开镜像时，把凭证放在环境变量 GHCR_USER / GHCR_TOKEN 里。
 加 --print-script 只打印要发到服务器上的脚本（凭证会打码），不调用接口。
@@ -16,6 +18,7 @@ import base64
 import importlib.util
 import io
 import os
+import re
 import shlex
 import sys
 import tarfile
@@ -52,11 +55,13 @@ def build_bundle() -> bytes:
     return buffer.getvalue()
 
 
-def build_script(image: str, ghcr_user: str, ghcr_token: str) -> str:
+def build_script(image: str, digest: str, ghcr_user: str, ghcr_token: str) -> str:
     variables = {
         "IMAGE": image,
         "BUNDLE_B64": b64(build_bundle()),
     }
+    if digest:
+        variables["IMAGE_DIGEST"] = digest
     if ghcr_token:
         variables["GHCR_USER"] = ghcr_user or "github"
         variables["GHCR_TOKEN"] = ghcr_token
@@ -127,13 +132,18 @@ def run(args: argparse.Namespace, script: str) -> int:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--image", required=True, help="要部署的游戏服务器镜像")
+    parser.add_argument("--digest", default="", help="镜像的 digest（sha256:...），给了才会走国内镜像站")
     parser.add_argument("--region", default=os.environ.get("TENCENT_REGION", "ap-shanghai"))
     parser.add_argument(
         "--instance", default=os.environ.get("TENCENT_INSTANCE_ID", "lhins-cjiput56")
     )
-    parser.add_argument("--timeout", type=int, default=1200, help="服务器上最多执行多少秒")
+    # 镜像站不行、退回直连 ghcr.io 时，整个镜像要下半个小时左右
+    parser.add_argument("--timeout", type=int, default=3600, help="服务器上最多执行多少秒")
     parser.add_argument("--print-script", action="store_true", help="只打印脚本，不执行")
     args = parser.parse_args()
+    if args.digest and not re.fullmatch(r"sha256:[0-9a-f]{64}", args.digest):
+        print(f"--digest 格式不对：{args.digest}", file=sys.stderr)
+        return 1
 
     ghcr_user = os.environ.get("GHCR_USER", "")
     ghcr_token = os.environ.get("GHCR_TOKEN", "")
@@ -148,13 +158,13 @@ def main() -> int:
         return 1
 
     if args.print_script:
-        script = build_script(args.image, ghcr_user, ghcr_token)
+        script = build_script(args.image, args.digest, ghcr_user, ghcr_token)
         if ghcr_token:
             script = script.replace(shlex.quote(ghcr_token), "'***'")
         print(script, end="")
         return 0
 
-    return run(args, build_script(args.image, ghcr_user, ghcr_token))
+    return run(args, build_script(args.image, args.digest, ghcr_user, ghcr_token))
 
 
 if __name__ == "__main__":
