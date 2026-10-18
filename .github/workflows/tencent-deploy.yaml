@@ -1,0 +1,93 @@
+name: Deploy to Tencent Cloud
+
+# 私服的自动部署：编译游戏服务器镜像推到 ghcr.io，再通过腾讯云「自动化助手」让服务器换上。
+# 需要仓库 secrets：TENCENTCLOUD_SECRET_ID、TENCENTCLOUD_SECRET_KEY。说明见 deploy/tencent/README.md。
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - DragaliaAPI/**
+      - Shared/**
+      - Directory.Packages.props
+      - deploy/tencent/**
+      - .github/workflows/tencent-deploy.yaml
+  workflow_dispatch:
+    inputs:
+      image:
+        description: "直接部署这个镜像、不重新编译（回滚时填以前的镜像，留空则编译当前代码）"
+        required: false
+        default: ""
+
+concurrency:
+  group: tencent-deploy
+  cancel-in-progress: false
+
+env:
+  HUSKY: 0
+  TENCENT_REGION: ap-shanghai
+  TENCENT_INSTANCE_ID: lhins-cjiput56
+
+jobs:
+  build:
+    name: Build image
+    if: inputs.image == ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ steps.name.outputs.image }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Image name
+        id: name
+        run: echo "image=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/dragalia-api:sha-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Build and push
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          file: DragaliaAPI/DragaliaAPI/Dockerfile
+          tags: ${{ steps.name.outputs.image }}
+          cache-from: type=gha,scope=tencent-dragalia-api
+          cache-to: type=gha,mode=max,scope=tencent-dragalia-api
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+
+  deploy:
+    name: Deploy
+    needs: build
+    if: ${{ !cancelled() && (needs.build.result == 'success' || needs.build.result == 'skipped') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install Tencent Cloud SDK
+        run: |
+          python3 -m venv /tmp/tc
+          /tmp/tc/bin/pip install --quiet tencentcloud-sdk-python-common==3.1.188 tencentcloud-sdk-python-tat==3.1.106
+
+      - name: Deploy
+        env:
+          TENCENTCLOUD_SECRET_ID: ${{ secrets.TENCENTCLOUD_SECRET_ID }}
+          TENCENTCLOUD_SECRET_KEY: ${{ secrets.TENCENTCLOUD_SECRET_KEY }}
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IMAGE: ${{ inputs.image || needs.build.outputs.image }}
+        run: /tmp/tc/bin/python deploy/tencent/tat_run.py --image "$IMAGE"
