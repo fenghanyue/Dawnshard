@@ -3,7 +3,9 @@ using DragaliaAPI.Features.Summoning;
 using DragaliaAPI.Infrastructure.Results;
 using DragaliaAPI.Shared.Definitions.Enums.Summon;
 using DragaliaAPI.Shared.MasterAsset;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace DragaliaAPI.Integration.Test.Features.Summoning;
 
@@ -223,6 +225,60 @@ public class SummonTest : TestFixture
                 new() { Rarity = 5, TotalRate = "5.00%" },
                 new AtgenRarityList { Rarity = 4, TotalRate = "95.00%" },
             ]);
+    }
+
+    [Fact]
+    public async Task SummonGetOddsData_FilterPoolByReleaseDate_LeavesOutUnitsReleasedLater()
+    {
+        HttpClient filteredClient = this.CreateClient(builder =>
+            builder.ConfigureAppConfiguration(config =>
+                config.AddInMemoryCollection(
+                    new Dictionary<string, string?>()
+                    {
+                        ["SummonBannerOptions:FilterPoolByReleaseDate"] = "true",
+                    }
+                )
+            )
+        );
+
+        OddsRate normalOdds = (
+            await this.Client.PostMsgpack<SummonGetOddsDataResponse>(
+                "summon/get_odds_data",
+                new SummonGetOddsDataRequest(TestBannerId),
+                cancellationToken: TestContext.Current.CancellationToken
+            )
+        )
+            .Data
+            .OddsRateList
+            .Normal;
+        OddsRate filteredNormalOdds = (
+            await filteredClient.PostMsgpack<SummonGetOddsDataResponse>(
+                "summon/get_odds_data",
+                new SummonGetOddsDataRequest(TestBannerId),
+                cancellationToken: TestContext.Current.CancellationToken
+            )
+        )
+            .Data
+            .OddsRateList
+            .Normal;
+
+        List<int> charaIds = normalOdds
+            .Unit.CharaOddsList.SelectMany(x => x.UnitList)
+            .Select(x => x.Id)
+            .ToList();
+        List<int> filteredCharaIds = filteredNormalOdds
+            .Unit.CharaOddsList.SelectMany(x => x.UnitList)
+            .Select(x => x.Id)
+            .ToList();
+
+        // The test banner originally started on 2021-01-31. Eirene was released on 2021-03-12.
+        charaIds.Should().Contain((int)Charas.Eirene);
+        filteredCharaIds.Should().NotContain((int)Charas.Eirene);
+        filteredCharaIds.Should().Contain((int)Charas.Mikoto);
+        filteredCharaIds.Should().HaveCountLessThan(charaIds.Count);
+
+        filteredNormalOdds.RarityList.Should().BeEquivalentTo(normalOdds.RarityList);
+        filteredNormalOdds.RarityGroupList.Should().BeEquivalentTo(normalOdds.RarityGroupList);
     }
 
     [Fact]

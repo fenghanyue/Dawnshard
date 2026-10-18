@@ -1201,6 +1201,154 @@ public class SummonOddsLogicTest
         SummonOddsLogic.GetSummonCountToPityIncrease(count).Should().Be(expected);
     }
 
+    [Fact]
+    public void GetUnitRates_ReleasedBy_LeavesOutUnitsReleasedLater()
+    {
+        Banner banner = InitializeBanner(
+            new()
+            {
+                Id = 1020002,
+                PickupCharas = [Charas.Lily],
+                PickupDragons = [DragonId.Leviathan],
+            }
+        );
+
+        List<UnitRate> unfilteredRates = SummonOddsLogic
+            .GetRates(banner, numSummonsSinceLastFiveStar: 0)
+            .NormalRates.ToList();
+        (IEnumerable<UnitRate> PickupRates, IEnumerable<UnitRate> NormalRates) rates =
+            SummonOddsLogic.GetRates(
+                banner,
+                numSummonsSinceLastFiveStar: 0,
+                releasedBy: new DateTimeOffset(2018, 10, 4, 6, 0, 0, TimeSpan.Zero)
+            );
+
+        List<UnitRate> pickupRates = rates.PickupRates.ToList();
+        List<UnitRate> normalRates = rates.NormalRates.ToList();
+        List<UnitRate> combined = [.. pickupRates, .. normalRates];
+
+        unfilteredRates.Should().Contain(x => x.Id == (int)Charas.Naveed);
+        normalRates.Should().HaveCountLessThan(unfilteredRates.Count);
+
+        // Naveed and Cerberus were released on 2018-10-31.
+        normalRates.Should().NotContain(x => x.Id == (int)Charas.Naveed);
+        normalRates.Should().NotContain(x => x.Id == (int)DragonId.Cerberus);
+        normalRates.Should().NotContain(x => x.Id == (int)Charas.Eirene);
+
+        // Mikoto and Agni were never on rate up, so they count as launch units.
+        normalRates.Should().Contain(x => x.Id == (int)Charas.Mikoto);
+        normalRates.Should().Contain(x => x.Id == (int)DragonId.Agni);
+        normalRates.Should().Contain(x => x.Id == (int)Charas.Ezelith);
+
+        pickupRates
+            .Should()
+            .BeEquivalentTo([new(Charas.Lily, 0.005m), new UnitRate(DragonId.Leviathan, 0.008m)]);
+
+        // The units left in the pool share the same total rates.
+        combined.SumOfRates().Should().BeApproximately(1m, AssertionPrecision);
+        normalRates
+            .SumOfRatesForRarity(5)
+            .Should()
+            .BeApproximately(0.04m - 0.005m - 0.008m, AssertionPrecision);
+        normalRates
+            .SumOfRatesForRarityAndType(4, EntityTypes.Chara)
+            .Should()
+            .BeApproximately(0.0855m, AssertionPrecision);
+        normalRates
+            .SumOfRatesForRarityAndType(4, EntityTypes.Dragon)
+            .Should()
+            .BeApproximately(0.0745m, AssertionPrecision);
+        normalRates
+            .SumOfRatesForRarityAndType(3, EntityTypes.Chara)
+            .Should()
+            .BeApproximately(0.48m, AssertionPrecision);
+        normalRates
+            .SumOfRatesForRarityAndType(3, EntityTypes.Dragon)
+            .Should()
+            .BeApproximately(0.32m, AssertionPrecision);
+    }
+
+    [Fact]
+    public void GetGuaranteeUnitRates_ReleasedBy_LeavesOutUnitsReleasedLater()
+    {
+        (IEnumerable<UnitRate> PickupRates, IEnumerable<UnitRate> NormalRates) rates =
+            SummonOddsLogic.GetGuaranteeRates(
+                InitializeBanner(
+                    new()
+                    {
+                        Id = 1020002,
+                        PickupCharas = [Charas.Lily],
+                        PickupDragons = [DragonId.Leviathan],
+                    }
+                ),
+                numSummonsSinceLastFiveStar: 0,
+                releasedBy: new DateTimeOffset(2018, 10, 4, 6, 0, 0, TimeSpan.Zero)
+            );
+
+        List<UnitRate> normalRates = rates.NormalRates.ToList();
+        List<UnitRate> combined = [.. rates.PickupRates, .. normalRates];
+
+        normalRates.Should().NotContain(x => x.Id == (int)Charas.Naveed);
+        normalRates.Should().NotContain(x => x.Id == (int)DragonId.Cerberus);
+        normalRates.Should().Contain(x => x.Id == (int)Charas.Mikoto);
+
+        combined.SumOfRates().Should().BeApproximately(1m, AssertionPrecision);
+        normalRates
+            .SumOfRatesForRarityAndType(4, EntityTypes.Chara)
+            .Should()
+            .BeApproximately(0.5130m, AssertionPrecision);
+        normalRates
+            .SumOfRatesForRarityAndType(4, EntityTypes.Dragon)
+            .Should()
+            .BeApproximately(0.4470m, AssertionPrecision);
+    }
+
+    [Fact]
+    public void GetUnitRates_ReleasedBy_FiltersOverridePool()
+    {
+        List<UnitRate> normalRates = SummonOddsLogic
+            .GetRates(
+                SystemBanners.AdventurerSummonBanner,
+                numSummonsSinceLastFiveStar: 0,
+                releasedBy: new DateTimeOffset(2018, 10, 4, 6, 0, 0, TimeSpan.Zero)
+            )
+            .NormalRates.ToList();
+
+        // Naveed, Louise and Lucretia were released later in 2018.
+        normalRates
+            .Select(x => (Charas)x.Id)
+            .Should()
+            .BeEquivalentTo([
+                Charas.Mikoto,
+                Charas.Ezelith,
+                Charas.Xander,
+                Charas.Xainfried,
+                Charas.Lily,
+                Charas.Hawk,
+                Charas.Maribelle,
+                Charas.Julietta,
+                Charas.Hildegarde,
+                Charas.Nefaria,
+            ]);
+        normalRates.Should().AllSatisfy(x => x.Rate.Should().Be(0.1m));
+    }
+
+    [Fact]
+    public void GetUnitRates_ReleasedByBeforeWholeOverridePool_KeepsWholePool()
+    {
+        List<UnitRate> normalRates = SummonOddsLogic
+            .GetRates(
+                new Banner() { Id = 1, OverrideCharaPool = [Charas.Eirene, Charas.Faris] },
+                numSummonsSinceLastFiveStar: 0,
+                releasedBy: new DateTimeOffset(2018, 10, 4, 6, 0, 0, TimeSpan.Zero)
+            )
+            .NormalRates.ToList();
+
+        normalRates
+            .Should()
+            .BeEquivalentTo([new(Charas.Eirene, 0.5m), new UnitRate(Charas.Faris, 0.5m)]);
+    }
+
     private static Banner InitializeBanner(Banner banner)
     {
         banner.PostConfigure();
