@@ -7,6 +7,10 @@
         "SummonBannerOptions": {
             "type": "object",
             "properties": {
+                "FilterPoolByReleaseDate": {
+                    "type": "boolean",
+                    "description": "Leave units out of a banner's regular pool if they were released after the banner originally started"
+                },
                 "Banners": {
                     "type": "array",
                     "items": {

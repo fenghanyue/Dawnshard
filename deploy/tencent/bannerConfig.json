@@ -1,6 +1,7 @@
 {
     "$schema": "../../DragaliaAPI/DragaliaAPI/Resources/bannerConfig.schema.json",
     "SummonBannerOptions": {
+        "FilterPoolByReleaseDate": true,
         "Banners": [
             {
                 "Id": 1020002,

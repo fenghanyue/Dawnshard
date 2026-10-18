@@ -53,7 +53,10 @@ def check() -> list[str]:
 
     summon_ids = master_ids("Summon/SummonData.json")
     names = {"Charas": enum_names("Charas"), "Dragons": enum_names("DragonId")}
-    banners = read_json(HERE / "bannerConfig.json").get("SummonBannerOptions", {}).get("Banners", [])
+    summon_options = read_json(HERE / "bannerConfig.json").get("SummonBannerOptions", {})
+    if not isinstance(summon_options.get("FilterPoolByReleaseDate", False), bool):
+        errors.append("bannerConfig.json：FilterPoolByReleaseDate 只能写 true 或 false")
+    banners = summon_options.get("Banners", [])
     banner_ids = [banner.get("Id") for banner in banners]
     for duplicate in sorted({x for x in banner_ids if banner_ids.count(x) > 1}):
         errors.append(f"bannerConfig.json：卡池编号 {duplicate} 写了不止一次")

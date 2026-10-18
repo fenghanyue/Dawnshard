@@ -15,7 +15,8 @@ namespace DragaliaAPI.Features.Summoning;
 
 public class SummonOddsService(
     IOptionsMonitor<SummonBannerOptions> optionsMonitor,
-    ApiContext apiContext
+    ApiContext apiContext,
+    TimeProvider timeProvider
 )
 {
     public OddsRate GetNormalOddsRate(int bannerId, int summonCountSinceLastFiveStar)
@@ -57,7 +58,11 @@ public class SummonOddsService(
             );
         }
 
-        return SummonOddsLogic.GetRates(banner, summonCountSinceLastFiveStar);
+        return SummonOddsLogic.GetRates(
+            banner,
+            summonCountSinceLastFiveStar,
+            this.GetPoolReleaseCutoff(banner)
+        );
     }
 
     public UnitRateCollection GetGuaranteeUnitRates(int bannerId, int summonCountSinceLastFiveStar)
@@ -70,8 +75,15 @@ public class SummonOddsService(
             );
         }
 
-        return SummonOddsLogic.GetGuaranteeRates(banner, summonCountSinceLastFiveStar);
+        return SummonOddsLogic.GetGuaranteeRates(
+            banner,
+            summonCountSinceLastFiveStar,
+            this.GetPoolReleaseCutoff(banner)
+        );
     }
+
+    private DateTimeOffset? GetPoolReleaseCutoff(Banner banner) =>
+        optionsMonitor.CurrentValue.GetPoolReleaseCutoff(banner, timeProvider.GetUtcNow());
 
     private static OddsRate BuildOddsRate(UnitRateCollection rates, int[] rarities)
     {

@@ -19,6 +19,7 @@
 | `deploy.sh` | 在服务器上执行：拉镜像 → 备份数据库 → 换配置 → 重建游戏服务器 → 健康检查，没通过就回滚。镜像拉好了才动服务器上的文件 |
 | `tat_run.py` | 调腾讯云接口，把 `deploy.sh` 发到服务器执行并等结果 |
 | `check_config.py` | 部署前检查配置：活动、卡池编号存不存在，角色和龙的名字有没有写错 |
+| `gen_release_dates.py` | 从游戏数据生成角色、龙的上线日期表（`ReleaseHistory.g.cs`），卡池按上线日期过滤普通池时用 |
 | `../../.github/workflows/tencent-deploy.yaml` | 自动部署的流程 |
 
 数据库密码、`DEVELOPER_TOKEN` 只在服务器的 `/opt/dawnshard/.env` 里，不进仓库。
@@ -42,6 +43,11 @@
 - **改卡池**：编辑 `bannerConfig.json`，每个卡池写 `Id`、`Start`、`End`、`PickupCharas`（主打角色）、`PickupDragons`（主打龙）。
   原版卡池的编号、日期和主打对象在 `DragaliaAPI/DragaliaAPI.Shared/Resources/Summon/SummonData.json`，
   角色和龙的名字见 `DragaliaAPI/DragaliaAPI.Shared/Definitions/Enums/` 里的 `Charas`、`DragonId`。
+- **普通池按当年的上线日期过滤**：`bannerConfig.json` 里的 `"FilterPoolByReleaseDate": true`。
+  每个卡池的普通池只放这个卡池当年开始时已经上线的角色和龙，主打的不受影响；召唤券、Plus 召唤券和新手教程的重抽，
+  按已经开过的卡池里当年日期最新的那一期来过滤。上线日期表 `DragaliaAPI/DragaliaAPI/Features/Summoning/ReleaseHistory.g.cs`
+  由 `gen_release_dates.py` 从游戏数据生成：游戏数据里 2021 年以前的上线日期是假的，这些角色用第一次当卡池主打的日期；
+  从没当过主打的当作开服就有，其中有些 3★/4★ 其实是后来出的。
 - **改完先检查**：`python3 deploy/tencent/check_config.py`。服务器读配置时，写错的角色名、龙名会被悄悄丢掉、不报错，
   所以部署前一定会先跑这个检查，有错就不部署。
 - **加新的配置文件**：放进这个目录，再在 `tat_run.py` 的 `CONFIG_FILES` 和 `docker-compose.yml` 的 `volumes` 里各加一行。

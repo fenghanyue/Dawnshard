@@ -11,6 +11,7 @@ namespace DragaliaAPI.Features.Summoning;
 public class SummonBannerOptions
 {
     private readonly List<Banner> banners = [];
+    private List<Banner> configuredBanners = [];
     private Dictionary<int, Banner>? bannerDict;
 
     /// <summary>
@@ -31,10 +32,66 @@ public class SummonBannerOptions
         ?? throw new InvalidOperationException("SummonBannerOptions not yet initialized!");
 
     /// <summary>
+    /// Gets a value indicating whether to leave units out of a banner's regular pool if they were released after
+    /// the banner originally started, according to <see cref="ReleaseHistory"/>.
+    /// </summary>
+    /// <remarks>
+    /// The system banners, such as the summon vouchers, and configured banners that were not in the original game,
+    /// use the latest original start date of the configured banners that have started.
+    /// </remarks>
+    public bool FilterPoolByReleaseDate { get; init; }
+
+    /// <summary>
+    /// Gets the date that units must have been released by to be in a banner's regular pool.
+    /// </summary>
+    /// <param name="banner">The banner.</param>
+    /// <param name="now">The current time.</param>
+    /// <returns>The date, or null if the pool should not be filtered.</returns>
+    public DateTimeOffset? GetPoolReleaseCutoff(Banner banner, DateTimeOffset now)
+    {
+        if (!this.FilterPoolByReleaseDate)
+        {
+            return null;
+        }
+
+        if (
+            this.configuredBanners.Contains(banner)
+            && ReleaseHistory.BannerStartDates.TryGetValue(
+                banner.Id,
+                out DateTimeOffset bannerStart
+            )
+        )
+        {
+            return bannerStart;
+        }
+
+        DateTimeOffset? latestStart = null;
+
+        foreach (Banner configuredBanner in this.configuredBanners)
+        {
+            if (
+                configuredBanner.Start <= now
+                && ReleaseHistory.BannerStartDates.TryGetValue(
+                    configuredBanner.Id,
+                    out DateTimeOffset start
+                )
+                && (latestStart is null || start > latestStart)
+            )
+            {
+                latestStart = start;
+            }
+        }
+
+        return latestStart;
+    }
+
+    /// <summary>
     /// Initializes the instance, intended for use with <see cref="Microsoft.Extensions.Options.OptionsBuilder{T}.PostConfigure"/>.
     /// </summary>
     public void PostConfigure()
     {
+        this.configuredBanners = [.. this.banners];
+
         this.banners.Add(SystemBanners.RerollBanner);
         this.banners.Add(SystemBanners.AdventurerSummonBanner);
         this.banners.Add(SystemBanners.DragonSummonBanner);

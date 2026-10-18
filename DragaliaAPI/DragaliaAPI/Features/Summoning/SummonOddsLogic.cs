@@ -14,28 +14,41 @@ namespace DragaliaAPI.Features.Summoning;
 
 public static class SummonOddsLogic
 {
-    public static UnitRateCollection GetRates(Banner banner, int numSummonsSinceLastFiveStar)
+    /// <param name="banner">The banner.</param>
+    /// <param name="numSummonsSinceLastFiveStar">The number of summons since the player last got a 5★ unit.</param>
+    /// <param name="releasedBy">
+    /// If set, leave out units released after this date. Pickup units are not affected.
+    /// </param>
+    public static UnitRateCollection GetRates(
+        Banner banner,
+        int numSummonsSinceLastFiveStar,
+        DateTimeOffset? releasedBy = null
+    )
     {
         if (banner.OverrideCharaPool is not null)
         {
+            List<Charas> pool = FilterOverridePool(
+                banner.OverrideCharaPool,
+                x => IsReleased(x, releasedBy)
+            );
+
             return new()
             {
-                NormalRates = banner.OverrideCharaPool.Select(x => new UnitRate(
-                    x,
-                    1m / banner.OverrideCharaPool.Count
-                )),
+                NormalRates = pool.Select(x => new UnitRate(x, 1m / pool.Count)),
                 PickupRates = [],
             };
         }
 
         if (banner.OverrideDragonPool is not null)
         {
+            List<DragonId> pool = FilterOverridePool(
+                banner.OverrideDragonPool,
+                x => IsReleased(x, releasedBy)
+            );
+
             return new()
             {
-                NormalRates = banner.OverrideDragonPool.Select(x => new UnitRate(
-                    x,
-                    1m / banner.OverrideDragonPool.Count
-                )),
+                NormalRates = pool.Select(x => new UnitRate(x, 1m / pool.Count)),
                 PickupRates = [],
             };
         }
@@ -51,10 +64,10 @@ public static class SummonOddsLogic
         );
 
         List<CharaData> charaPool = MasterAsset
-            .CharaData.Enumerable.Where(x => IsCharaInBannerRegularPool(x, banner))
+            .CharaData.Enumerable.Where(x => IsCharaInBannerRegularPool(x, banner, releasedBy))
             .ToList();
         List<DragonData> dragonPool = MasterAsset
-            .DragonData.Enumerable.Where(x => IsDragonInBannerRegularPool(x, banner))
+            .DragonData.Enumerable.Where(x => IsDragonInBannerRegularPool(x, banner, releasedBy))
             .ToList();
 
         return (
@@ -67,9 +80,11 @@ public static class SummonOddsLogic
         );
     }
 
+    /// <inheritdoc cref="GetRates"/>
     public static UnitRateCollection GetGuaranteeRates(
         Banner banner,
-        int numSummonsSinceLastFiveStar
+        int numSummonsSinceLastFiveStar,
+        DateTimeOffset? releasedBy = null
     )
     {
         if (banner.OverrideCharaPool is not null || banner.OverrideDragonPool is not null)
@@ -91,11 +106,11 @@ public static class SummonOddsLogic
         );
 
         List<CharaData> charaPool = MasterAsset
-            .CharaData.Enumerable.Where(x => IsCharaInBannerRegularPool(x, banner))
+            .CharaData.Enumerable.Where(x => IsCharaInBannerRegularPool(x, banner, releasedBy))
             .Where(x => x.Rarity >= 4)
             .ToList();
         List<DragonData> dragonPool = MasterAsset
-            .DragonData.Enumerable.Where(x => IsDragonInBannerRegularPool(x, banner))
+            .DragonData.Enumerable.Where(x => IsDragonInBannerRegularPool(x, banner, releasedBy))
             .Where(x => x.Rarity >= 4)
             .ToList();
 
@@ -394,7 +409,11 @@ public static class SummonOddsLogic
         return new(fiveStarPoolSize, fourStarPoolSize, threeStarPoolSize);
     }
 
-    private static bool IsCharaInBannerRegularPool(CharaData charaData, Banner banner)
+    private static bool IsCharaInBannerRegularPool(
+        CharaData charaData,
+        Banner banner,
+        DateTimeOffset? releasedBy
+    )
     {
         if (!charaData.IsPlayable)
         {
@@ -404,6 +423,11 @@ public static class SummonOddsLogic
         if (banner.PickupCharas.Contains(charaData.Id))
         {
             // They are in the pickup pool instead.
+            return false;
+        }
+
+        if (!IsReleased(charaData.Id, releasedBy))
+        {
             return false;
         }
 
@@ -418,7 +442,11 @@ public static class SummonOddsLogic
         };
     }
 
-    private static bool IsDragonInBannerRegularPool(DragonData dragonData, Banner banner)
+    private static bool IsDragonInBannerRegularPool(
+        DragonData dragonData,
+        Banner banner,
+        DateTimeOffset? releasedBy
+    )
     {
         if (!dragonData.IsPlayable)
         {
@@ -426,6 +454,11 @@ public static class SummonOddsLogic
         }
 
         if (banner.PickupDragons.Contains(dragonData.Id))
+        {
+            return false;
+        }
+
+        if (!IsReleased(dragonData.Id, releasedBy))
         {
             return false;
         }
@@ -439,6 +472,28 @@ public static class SummonOddsLogic
             UnitAvailability.Limited => banner.LimitedDragons.Contains(dragonData.Id),
             _ => false,
         };
+    }
+
+    /// <remarks>
+    /// Units missing from <see cref="ReleaseHistory"/> were available from launch.
+    /// </remarks>
+    private static bool IsReleased(Charas chara, DateTimeOffset? releasedBy) =>
+        releasedBy is not { } date
+        || !ReleaseHistory.CharaReleaseDates.TryGetValue(chara, out DateTimeOffset releaseDate)
+        || releaseDate <= date;
+
+    /// <inheritdoc cref="IsReleased(Charas, DateTimeOffset?)"/>
+    private static bool IsReleased(DragonId dragon, DateTimeOffset? releasedBy) =>
+        releasedBy is not { } date
+        || !ReleaseHistory.DragonReleaseDates.TryGetValue(dragon, out DateTimeOffset releaseDate)
+        || releaseDate <= date;
+
+    private static List<T> FilterOverridePool<T>(IReadOnlyList<T> pool, Func<T, bool> isReleased)
+    {
+        List<T> released = pool.Where(isReleased).ToList();
+
+        // An empty pool can't be summoned from, so fall back to the whole pool.
+        return released.Count > 0 ? released : [.. pool];
     }
 
     private static (BaseRateData UpdatedNormalRates, BaseRateData UpdatedPickupRates) ApplyPityRate(
