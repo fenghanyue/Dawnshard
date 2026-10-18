@@ -1,0 +1,49 @@
+# 腾讯云服务器上运行的 Dawnshard。
+# deploy.sh 部署时会把它写到服务器的 /opt/dawnshard/docker-compose.yml，
+# 并把 __DRAGALIA_API_IMAGE__ 换成这次要运行的镜像。
+# 数据库密码、DEVELOPER_TOKEN 等放在服务器的 /opt/dawnshard/.env，不进仓库。
+# 服务名和数据卷名不要改：服务器上现有的数据库就在 dawnshard_pgdata 这个卷里。
+name: dawnshard
+
+volumes:
+  pgdata:
+
+services:
+  dragaliaapi:
+    image: __DRAGALIA_API_IMAGE__
+    environment:
+      - ConnectionStrings__Postgres=Host=postgres;User ID=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};Database=${POSTGRES_DB}
+      - ConnectionStrings__Redis=redis
+    env_file:
+      - .env
+    volumes:
+      # 私服配置，替换镜像里自带的同名文件：活动安排等 / 卡池
+      - ./appsettings.Production.json:/app/appsettings.Production.json:ro
+      - ./bannerConfig.json:/app/Resources/bannerConfig.json:ro
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+
+  postgres:
+    hostname: postgres
+    image: postgres:17
+    env_file:
+      - .env
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  redis:
+    hostname: redis
+    image: redis:8
+    restart: unless-stopped
