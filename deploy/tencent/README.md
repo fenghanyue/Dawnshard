@@ -7,12 +7,16 @@
                                           └─► 腾讯云「自动化助手」在服务器上执行 deploy.sh
 ```
 
+服务器在国内，直连 ghcr.io 下载每秒只有几十 KB，还会断线。所以 `deploy.sh` 先从南京大学的镜像站
+`ghcr.nju.edu.cn` 按 digest 拉镜像（实测每秒近 10 MB；按 digest 拉，docker 会校验内容，镜像站没法偷换），
+镜像站不行再直连 ghcr.io。
+
 | 文件 | 作用 |
 |---|---|
 | `docker-compose.yml` | 服务器上的容器配置（游戏服务器 + 数据库 + redis） |
 | `appsettings.Production.json` | 私服配置，比如开哪些活动（`EventOptions`） |
 | `bannerConfig.json` | 开哪些卡池，替换镜像里自带的 `Resources/bannerConfig.json` |
-| `deploy.sh` | 在服务器上执行：备份数据库 → 换配置 → 拉镜像 → 重建游戏服务器 → 健康检查，没通过就回滚 |
+| `deploy.sh` | 在服务器上执行：拉镜像 → 备份数据库 → 换配置 → 重建游戏服务器 → 健康检查，没通过就回滚。镜像拉好了才动服务器上的文件 |
 | `tat_run.py` | 调腾讯云接口，把 `deploy.sh` 发到服务器执行并等结果 |
 | `check_config.py` | 部署前检查配置：活动、卡池编号存不存在，角色和龙的名字有没有写错 |
 | `../../.github/workflows/tencent-deploy.yaml` | 自动部署的流程 |
@@ -27,7 +31,8 @@
    - `TENCENTCLOUD_SECRET_KEY`
 2. 打开仓库的 Actions 页，点 "I understand my workflows, go ahead and enable them"。
 3. 原作者的 "Publish DragaliaAPI"、"Publish PhotonStateManager"、"Publish Website" 会因为没权限失败，
-   可以在 Actions 页点进去 → 右上角 "..." → Disable workflow。
+   可以在 Actions 页点进去 → 右上角 "..." → Disable workflow。它们第一次被触发（改了对应的代码）之后
+   才会出现在 Actions 页的列表里。
 
 ## 日常怎么用
 
@@ -47,8 +52,12 @@
 
   ```bash
   pip install tencentcloud-sdk-python-common tencentcloud-sdk-python-tat
-  python3 deploy/tencent/tat_run.py --image ghcr.io/sapiensanatis/dragalia-api:4.0.204
+  python3 deploy/tencent/tat_run.py --image ghcr.io/sapiensanatis/dragalia-api:4.0.204 \
+      --digest sha256:bf410451d2bfe397074c54d70f8911e826bd3d9aef0257f0211e826e957b8649
   ```
+
+  digest 用 `docker buildx imagetools inspect <镜像> --format '{{json .Manifest}}'` 查。不给 `--digest`
+  就不走镜像站，直连 ghcr.io 慢慢下。
 
 ## 备份和恢复存档
 

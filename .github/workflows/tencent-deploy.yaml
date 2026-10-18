@@ -86,6 +86,19 @@ jobs:
           python3 -m venv /tmp/tc
           /tmp/tc/bin/pip install --quiet tencentcloud-sdk-python-common==3.1.188 tencentcloud-sdk-python-tat==3.1.106
 
+      # 服务器按 digest 从国内镜像站拉镜像，镜像站没法偷换内容
+      - name: Resolve image digest
+        id: digest
+        env:
+          IMAGE: ${{ inputs.image || needs.build.outputs.image }}
+        run: |
+          set -o pipefail
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          digest=$(docker buildx imagetools inspect "$IMAGE" --format '{{json .Manifest}}' | jq -r .digest)
+          echo "$IMAGE -> $digest"
+          [[ "$digest" == sha256:* ]]
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+
       - name: Deploy
         env:
           TENCENTCLOUD_SECRET_ID: ${{ secrets.TENCENTCLOUD_SECRET_ID }}
@@ -93,4 +106,5 @@ jobs:
           GHCR_USER: ${{ github.actor }}
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           IMAGE: ${{ inputs.image || needs.build.outputs.image }}
-        run: /tmp/tc/bin/python deploy/tencent/tat_run.py --image "$IMAGE"
+          DIGEST: ${{ steps.digest.outputs.digest }}
+        run: /tmp/tc/bin/python deploy/tencent/tat_run.py --image "$IMAGE" --digest "$DIGEST"
