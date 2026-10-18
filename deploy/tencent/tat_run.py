@@ -3,6 +3,7 @@
 用法：
     python3 deploy/tencent/tat_run.py --image ghcr.io/fenghanyue/dragalia-api:sha-xxxxxxx
 
+部署前会先用 check_config.py 检查配置，有错就不部署。
 腾讯云密钥从环境变量 TENCENTCLOUD_SECRET_ID / TENCENTCLOUD_SECRET_KEY 读取。
 拉非公开镜像时，把凭证放在环境变量 GHCR_USER / GHCR_TOKEN 里。
 加 --print-script 只打印要发到服务器上的脚本（凭证会打码），不调用接口。
@@ -12,13 +13,19 @@
 
 import argparse
 import base64
+import importlib.util
+import io
 import os
 import shlex
 import sys
+import tarfile
 import time
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
+
+# 部署时发到服务器 /opt/dawnshard 的文件。加了新的配置文件，要在这里和 docker-compose.yml 里各加一处。
+CONFIG_FILES = ["docker-compose.yml", "appsettings.Production.json", "bannerConfig.json"]
 
 # TAT 的状态里，这些表示还没执行完
 PENDING_STATES = {"PENDING", "DELIVERING", "DELIVER_DELAYED", "RUNNING", "CANCELLING"}
@@ -31,11 +38,24 @@ def b64(data: bytes) -> str:
     return base64.b64encode(data).decode()
 
 
+def build_bundle() -> bytes:
+    def as_root(info: tarfile.TarInfo) -> tarfile.TarInfo:
+        info.uid = info.gid = 0
+        info.uname = info.gname = "root"
+        info.mode = 0o644
+        return info
+
+    buffer = io.BytesIO()
+    with tarfile.open(fileobj=buffer, mode="w:gz") as tar:
+        for name in CONFIG_FILES:
+            tar.add(HERE / name, arcname=name, filter=as_root)
+    return buffer.getvalue()
+
+
 def build_script(image: str, ghcr_user: str, ghcr_token: str) -> str:
     variables = {
         "IMAGE": image,
-        "COMPOSE_B64": b64((HERE / "docker-compose.yml").read_bytes()),
-        "CONFIG_B64": b64((HERE / "appsettings.Production.json").read_bytes()),
+        "BUNDLE_B64": b64(build_bundle()),
     }
     if ghcr_token:
         variables["GHCR_USER"] = ghcr_user or "github"
@@ -117,6 +137,15 @@ def main() -> int:
 
     ghcr_user = os.environ.get("GHCR_USER", "")
     ghcr_token = os.environ.get("GHCR_TOKEN", "")
+
+    spec = importlib.util.spec_from_file_location("check_config", HERE / "check_config.py")
+    check_config = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(check_config)
+    errors = check_config.check()
+    for error in errors:
+        print(f"配置有误：{error}", file=sys.stderr)
+    if errors:
+        return 1
 
     if args.print_script:
         script = build_script(args.image, ghcr_user, ghcr_token)

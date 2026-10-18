@@ -43,6 +43,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      - name: Check config
+        run: python3 deploy/tencent/check_config.py
+
       - name: Image name
         id: name
         run: echo "image=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/dragalia-api:sha-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"

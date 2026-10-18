@@ -17,8 +17,9 @@ services:
     env_file:
       - .env
     volumes:
-      # 私服配置（活动安排等），替换镜像里自带的同名文件
+      # 私服配置，替换镜像里自带的同名文件：活动安排等 / 卡池
       - ./appsettings.Production.json:/app/appsettings.Production.json:ro
+      - ./bannerConfig.json:/app/Resources/bannerConfig.json:ro
     ports:
       - "8080:8080"
     depends_on:
