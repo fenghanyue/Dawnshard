@@ -7,7 +7,7 @@
 
 - 给用户自己和一个朋友玩的私服，跑在腾讯云轻量应用服务器上（上海，实例号见 `.github/workflows/tencent-deploy.yaml`）。
 - 只有安卓：手机装原版游戏和 Dragalipatch 补丁连服务器，资源从服务器上的资源缓存（8081 端口）下载。
-- 服务器跑的是 `ghcr.io/fenghanyue/dragalia-api:sha-1a52ef5`（#14 合并后的 main），手机端资源版本 `ICE4NIMMVP7NCCNH`。
+- 服务器跑的是 `ghcr.io/fenghanyue/dragalia-api:sha-c2c184d`（#16 合并后的 main）。手机端资源版本由部署脚本生成。
 - 开着活动 20401「忠龙之愿王之魂葬」和卡池 1020002（Lily、Leviathan），时间都是 2026-10-18 06:00 到 11-01 05:59（UTC）。
 - 20401 的剧情关能打。#16 补了战货召唤的奖池，把讨伐战改成单人打，修了高级讨伐战开打和奖章领取的报错，
   还等用户在手机上试讨伐战（#2）。活动页有白框（游戏最后一版里这个活动的图片删了），用户说不管。
@@ -26,7 +26,23 @@
   （`TENCENTCLOUD_SECRET_ID`、`TENCENTCLOUD_SECRET_KEY`）。
 - 安全加固暂缓（#8）。以后要做，不能影响用户用腾讯云 API 密钥操作服务器。
 - 部署结果看 Actions 里 Deploy to Tencent Cloud 的运行记录，最后一步会打印服务器上 `deploy.sh` 的输出。
-  要在服务器上看日志、查文件，得用腾讯云「自动化助手」跑命令（写法参考 `tat_run.py`），API 密钥要用户给。
+  要在服务器上看日志、查文件，固定用 [`tools/tencent/tat.py`](../../tools/tencent/tat.py)，用法见
+  [README 的连接服务器一节](README.md#连接服务器查日志看文件)。API 密钥从环境变量读取；已有密钥就直接用，不要反复向用户索要。
+
+## 服务器连接（接手必读）
+
+- **唯一方式是腾讯云自动化助手 TAT，不用 SSH/scp，不找密码或私钥，不改 SSH 配置。**
+- 固定工具：`python3 tools/tencent/tat.py -c 'uptime; docker ps'`；Python 环境准备见 README。
+- 地域默认 `ap-shanghai`，轻量实例编号已写进工具默认值，`lhins-` 直接用于 TAT，不转换成 `ins-`。
+- API 域名 `tat.tencentcloudapi.com`、版本 `2020-10-28`；凭证只读
+  `TENCENTCLOUD_SECRET_ID` / `TENCENTCLOUD_SECRET_KEY`，不写入文件或输出值。
+- 用 `--file` 发脚本，用 `--invocation` 接着查已有命令，避免本地中断后重复执行。不要为了接着查结果取消或重发部署。
+- 沙箱联网权限和腾讯云权限是两回事：本地报连不上、超时、DNS 失败或 SDK 装不上时，停止并请用户开启联网权限，不绕路。
+- 2026-10-19 实测：SDK 默认用自己的 certifi，单设 `REQUESTS_CA_BUNDLE` 无效，会报证书链不可信。
+  工具在 `HttpProfile.certification` 显式传入环境/系统 CA，保留代理和证书校验。
+- 先只读；删文件、重启容器、改数据库或网络配置前先说明并等用户同意。改数据库前备份，部署走 GitHub Actions。
+- 2026-10-19 的登录认证 502 在排查时自行恢复，用户确认能进游戏；登录、读存档、首页接口都返回 `Success`。
+  当时容器、服务器时间和认证服务的公开接口正常，没改代码、重启容器或改存档，尚不能确定故障的具体来源。
 
 ## 做过的事
 
