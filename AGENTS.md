@@ -1,5 +1,7 @@
 # Agent Instructions for Dawnshard
 
+> **私服（fenghanyue/Dawnshard）**：接手前先读 [deploy/tencent/NOTES.md](deploy/tencent/NOTES.md)（现状、做过的事、踩过的坑、和用户怎么配合）。下面是原作者写的通用说明。
+
 Dawnshard is a game server emulator for [Dragalia Lost](https://en.wikipedia.org/wiki/Dragalia_Lost). This document gives a coding agent the context needed to work efficiently in this repository.
 
 ## Repository Structure

@@ -13,6 +13,8 @@ on:
       - Directory.Packages.props
       - deploy/tencent/**
       - .github/workflows/tencent-deploy.yaml
+      # 只改说明文档不用重新部署
+      - "!**/*.md"
   workflow_dispatch:
     inputs:
       image:
