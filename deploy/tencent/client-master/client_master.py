@@ -5,7 +5,8 @@ EventOptions 只管放不放行。所以要把数据表里的日期改成服务�
 
 1. 下载原版的资源清单和 5 个语言包的数据表，按写死的校验值核对，存在 --cache-dir 里，下次不用再下；
 2. 把 appsettings.Production.json 的 EventOptions.EventList 里排的活动，日期改成服务器的时间
-   （规则见 EventSchedule）。只换成一样长的日期，数据表别的地方一个字节都不动；
+   （规则见 EventSchedule），活动里的讨伐战改成单人讨伐战（见 SOLO_RAID_FIELDS）。只换成一样长的值
+   （日期一样长，数字本来就是定长的），数据表别的地方一个字节都不动；
 3. 改过的数据表按内容重新取文件名，更新资源清单里这个文件的名字和大小，重新加密清单；
 4. 写到 --out-dir：dl/manifests/Android/<新版本号>/ 下是清单，dl/assetbundles/Android/xx/ 下是数据表。
    资源缓存（../asset-cache/default.conf）先从这里找文件，找不到再去资源站。
@@ -64,6 +65,12 @@ FOLLOWING_TABLES = {
 }
 # 活动召唤（宝箱抽奖）只打开服务器 eventSummon.json 里配了奖品的活动，没配的打开了一点就报错
 BOX_SUMMON_TABLE = ("BoxSummonData", "_EventId", ("_CommenceDate", "_CompleteDate"))
+# 讨伐战（关卡类型 2）要连联机服务器（Photon），私服没有，点进去会一直转圈。照游戏里本来就有的单人讨伐战
+# （关卡类型 10）改：不要联机体力，限制类型写 3。单人体力是 0 的照单人讨伐战填 15（服务器按它自己的表不扣），
+# 不是 0 的不动（服务器照扣）；要异界碎片的照扣碎片。服务器单人开打时也按单人讨伐战回（DungeonStartController）。
+RAID, SOLO_RAID = 2, 10
+SOLO_RAID_FIELDS = {"_DungeonType": SOLO_RAID, "_PayStaminaMulti": 0, "_CampaignStaminaMulti": 0, "_ConstraintType": 3}
+SOLO_RAID_STAMINA = {"_PayStaminaSingle": 15, "_CampaignStaminaSingle": 7}
 TABLES = {"EventData", "CharaData", *FOLLOWING_TABLES, BOX_SUMMON_TABLE[0]}
 
 
@@ -168,7 +175,7 @@ def rows(tree: dict) -> Iterator[dict]:
 
 
 # 每张表要改的行：表名 → {行的 _Id → {字段: 新值}}
-Changes = dict[str, dict[int, dict[str, str]]]
+Changes = dict[str, dict[int, dict[str, str | int]]]
 
 
 def plan_changes(tables: dict[str, dict], runs: list[EventRun], box_summons: set[int]) -> Changes:
@@ -181,13 +188,13 @@ def plan_changes(tables: dict[str, dict], runs: list[EventRun], box_summons: set
     grow_runs = {origins[run.id]["_EventCharaId"]: run for run in runs if origins[run.id]["_EventCharaId"]}
     changes: Changes = {}
 
-    def add(table: str, row: dict, values: dict[str, str]) -> None:
+    def add(table: str, row: dict, values: dict[str, str | int]) -> None:
         values = {key: value for key, value in values.items() if row[key] != value}
         for key, value in values.items():
-            if len(row[key]) != len(value):
-                raise SystemExit(f"{table} {row['_Id']} 的 {key} 新旧值长度不一样：{row[key]!r} → {value!r}")
+            if type(row[key]) is not type(value) or isinstance(value, str) and len(row[key]) != len(value):
+                raise SystemExit(f"{table} {row['_Id']} 的 {key} 新旧值类型或长度不一样：{row[key]!r} → {value!r}")
         if values:
-            changes.setdefault(table, {})[row["_Id"]] = values
+            changes.setdefault(table, {}).setdefault(row["_Id"], {}).update(values)
 
     for row in rows(tables["EventData"]):
         if row["_Id"] in schedules:
@@ -202,13 +209,16 @@ def plan_changes(tables: dict[str, dict], runs: list[EventRun], box_summons: set
         for row in rows(tables[table]):
             if row[key] in events:
                 add(table, row, {field: schedules[row[key]].move(row[field]) for field in fields})
+    for row in rows(tables["QuestData"]):
+        if row["_Gid"] in schedules and row["_DungeonType"] == RAID:
+            add("QuestData", row, SOLO_RAID_FIELDS | (SOLO_RAID_STAMINA if not row["_PayStaminaSingle"] else {}))
     return changes
 
 
 def make_edits(changes: Changes) -> dict[str, Callable[[dict], int]]:
     """把算好的新值写进读出来的表，返回写了几处。已经是新值的不算，所以对改好的表再跑一遍应该是 0。"""
 
-    def edit_for(targets: dict[int, dict[str, str]]) -> Callable[[dict], int]:
+    def edit_for(targets: dict[int, dict[str, str | int]]) -> Callable[[dict], int]:
         def edit(tree: dict) -> int:
             changed = 0
             for row in rows(tree):
@@ -303,7 +313,7 @@ def build_locale(
         raise SystemExit(f"{manifest_name}：改完的数据表里，变了的表和预期不一样")
     _, again = unity_bundle.patch_assets(patched, edits)
     if any(again.values()):
-        raise SystemExit(f"{manifest_name}：改完的数据表读回来，日期还不对：{again}")
+        raise SystemExit(f"{manifest_name}：改完的数据表读回来，还有没改对的：{again}")
 
     new_name = unity_bundle.asset_hash(patched)
     write_file(out_dir / "dl" / "assetbundles" / PLATFORM / new_name[:2] / new_name, patched)

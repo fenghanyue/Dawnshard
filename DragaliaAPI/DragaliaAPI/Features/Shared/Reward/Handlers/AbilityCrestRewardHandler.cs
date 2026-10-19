@@ -13,8 +13,9 @@ public partial class AbilityCrestRewardHandler(
     ILogger<AbilityCrestRewardHandler> logger
 ) : IRewardHandler
 {
+    // Rewards from older events, missions and trades still call wyrmprints amulets; the IDs are the same.
     public IReadOnlyList<EntityTypes> SupportedTypes { get; } =
-        ImmutableArray.Create(EntityTypes.Wyrmprint);
+        ImmutableArray.Create(EntityTypes.Wyrmprint, EntityTypes.Amulet);
 
     public async Task<GrantReturn> Grant(Entity entity)
     {

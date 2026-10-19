@@ -237,16 +237,16 @@ public class EventDropService(IEventRepository eventRepository)
             {
                 // Otherworld Gems are a resource that can be used to challenge EX-difficulty Raid battles.
                 // They can be obtained as drops from Expert or Nightmare-difficulty raid battles.
-                if (variation is VariationTypes.VeryHard or VariationTypes.Hell)
+                // The earliest raid events (e.g. Loyalty's Requiem) have no Otherworld Gems.
+                if (
+                    variation is VariationTypes.VeryHard or VariationTypes.Hell
+                    && itemDict.TryGetValue(RaidEventItemType.AdventItem2, out int gemId)
+                )
                 {
                     int gemQuantity = this.GenerateDropAmount(
                         variation == VariationTypes.Hell ? 3d : 2d
                     );
-                    yield return new(
-                        itemDict[RaidEventItemType.AdventItem2],
-                        EntityTypes.RaidEventItem,
-                        gemQuantity
-                    );
+                    yield return new(gemId, EntityTypes.RaidEventItem, gemQuantity);
                 }
 
                 // Beginner-difficulty raid battles are the primary source of Silver Emblems,
