@@ -4,6 +4,7 @@ using DragaliaAPI.Features.Shared;
 using DragaliaAPI.Features.TimeAttack;
 using DragaliaAPI.Infrastructure;
 using DragaliaAPI.Models.Generated;
+using DragaliaAPI.Photon.Shared.Enums;
 using DragaliaAPI.Shared.Definitions.Enums;
 using Microsoft.AspNetCore.Mvc;
 
@@ -42,6 +43,7 @@ public partial class DungeonStartController(
             request.RepeatSetting,
             request.SupportViewerId
         );
+        UseSoloRaid(ingameData);
 
         DungeonStartStartResponse response = await BuildResponse(
             request.QuestId,
@@ -121,6 +123,7 @@ public partial class DungeonStartController(
             request.SupportViewerId,
             request.RepeatSetting
         );
+        UseSoloRaid(ingameData);
 
         DungeonStartStartResponse response = await BuildResponse(
             request.QuestId,
@@ -221,6 +224,19 @@ public partial class DungeonStartController(
             OddsInfo = oddsInfo,
             UpdateDataList = updateData,
         };
+    }
+
+    /// <summary>
+    /// Raid battles are co-op only and need a Photon server. Without one, the client master can be
+    /// patched to turn them into solo raid battles (see deploy/tencent/client-master), so a solo start
+    /// of a raid battle is answered as a solo raid battle to match.
+    /// </summary>
+    private static void UseSoloRaid(IngameData ingameData)
+    {
+        if (ingameData.DungeonType == DungeonTypes.Raid)
+        {
+            ingameData.DungeonType = DungeonTypes.RaidSingle;
+        }
     }
 
     private static partial class Log
