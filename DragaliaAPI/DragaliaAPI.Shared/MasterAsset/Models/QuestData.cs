@@ -60,6 +60,9 @@ public record QuestData(
             new(Scene06, AreaName06),
         }
             .Where(x => !string.IsNullOrEmpty(x.ScenePath) && !string.IsNullOrEmpty(x.AreaName))
+            // Loyalty's Requiem's Cyclops approach map was removed from the final client.
+            // Enter its surviving boss arena directly, as the later 20458 rerun does.
+            .Where(x => x.ScenePath != "Event/Raid_01/RAID_01_0106_01")
             .ToList()
             .AsReadOnly();
 
