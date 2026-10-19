@@ -54,9 +54,23 @@ internal class EventSummonService(
             .Select(x => x.Quantity)
             .FirstOrDefaultAsync(cancellationToken);
 
-        IReadOnlyDictionary<int, EventSummonItemConfiguration> itemDict = GetEventConfig(
-            eventId
-        ).Items;
+        if (FindEventConfig(eventId) is not { } config)
+        {
+            // The client requests this whenever the event screen opens, so an error here sends the
+            // player back to the home screen. Show an empty box instead for events with no prize table.
+            return new()
+            {
+                EventId = eventId,
+                EventPoint = points,
+                MaxExecCount = MaxExecCount,
+                RemainingQuantity = 0,
+                ResetPossible = false,
+                BoxSummonDetail = [],
+                BoxSummonSeq = userData.BoxNumber,
+            };
+        }
+
+        IReadOnlyDictionary<int, EventSummonItemConfiguration> itemDict = config.Items;
 
         BoxSummonInfo data = EventSummonLogic.GetBoxSummonInfo(
             userData.BoxNumber,
@@ -267,10 +281,14 @@ internal class EventSummonService(
         userData.Items.Clear();
     }
 
+    private EventSummonConfiguration? FindEventConfig(int eventId) =>
+        this.eventSummonOptions.EventSummons.FirstOrDefault(x => x.EventId == eventId);
+
     private EventSummonConfiguration GetEventConfig(int eventId) =>
-        this.eventSummonOptions.EventSummons.FirstOrDefault(x => x.EventId == eventId)
-        ?? throw new InvalidOperationException(
-            $"No item summon table configured for event {eventId}!"
+        FindEventConfig(eventId)
+        ?? throw new DragaliaException(
+            ResultCode.SummonOutOfPeriod,
+            $"No item summon table configured for event {eventId}"
         );
 
     private Entity GenerateEntityFromPull(EventSummonItemConfiguration config)

@@ -114,6 +114,57 @@ public sealed class EventSummonTest : TestFixture, IAsyncLifetime
     }
 
     [Fact]
+    public async Task GetData_NoPrizeTable_ReturnsEmptyBox()
+    {
+        // Running in the test config and has a box summon, but no prize table in eventSummon.json
+        const int eventWithoutPrizes = 20455;
+
+        await this.Client.PostMsgpack<RaidEventEntryResponse>(
+            "raid_event/entry",
+            new RaidEventEntryRequest(eventWithoutPrizes),
+            cancellationToken: TestContext.Current.CancellationToken
+        );
+
+        DragaliaResponse<EventSummonGetDataResponse> response =
+            await this.Client.PostMsgpack<EventSummonGetDataResponse>(
+                $"{Prefix}/get_data",
+                new EventSummonGetDataRequest(eventWithoutPrizes),
+                cancellationToken: TestContext.Current.CancellationToken
+            );
+
+        AtgenBoxSummonData data = response.Data.BoxSummonData;
+
+        data.EventId.Should().Be(eventWithoutPrizes);
+        data.BoxSummonSeq.Should().Be(1);
+        data.RemainingQuantity.Should().Be(0);
+        data.ResetPossible.Should().BeFalse();
+        data.BoxSummonDetail.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Exec_NoPrizeTable_ReturnsError()
+    {
+        const int eventWithoutPrizes = 20455;
+
+        await this.Client.PostMsgpack<RaidEventEntryResponse>(
+            "raid_event/entry",
+            new RaidEventEntryRequest(eventWithoutPrizes),
+            cancellationToken: TestContext.Current.CancellationToken
+        );
+
+        ResultCodeResponse response = (
+            await this.Client.PostMsgpack<ResultCodeResponse>(
+                $"{Prefix}/exec",
+                new EventSummonExecRequest(eventWithoutPrizes, 1, false),
+                ensureSuccessHeader: false,
+                cancellationToken: TestContext.Current.CancellationToken
+            )
+        ).Data;
+
+        response.ResultCode.Should().Be(ResultCode.SummonOutOfPeriod);
+    }
+
+    [Fact]
     public async Task Exec_InsufficientPoints_ReturnsError()
     {
         ResultCodeResponse response = (
