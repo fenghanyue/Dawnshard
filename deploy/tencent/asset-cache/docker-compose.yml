@@ -1,0 +1,14 @@
+# 资源缓存的容器（服务器 8081 端口）。deploy.sh 部署时写到服务器的 /opt/asset-cache/docker-compose.yml，
+# 有变化才重建容器。项目目录和服务名不要改：服务器上现有的容器（asset-cache-assetcache-1）就是按它们建的。
+services:
+  assetcache:
+    image: nginx:1.30.6-alpine
+    ports:
+      - "8081:80"
+    volumes:
+      - ./default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./cache:/var/cache/nginx/assets
+      - ./speedtest:/srv/speedtest:ro
+      # 改过活动日期的数据表和资源清单，见 ../client-master/client_master.py
+      - ./overrides:/srv/overrides:ro
+    restart: unless-stopped
