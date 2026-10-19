@@ -69,10 +69,40 @@ jobs:
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
 
+  # 用资源站上的原版文件，把服务器部署时改手机端游戏数据表的流程完整跑一遍，出错就不部署
+  client-data:
+    name: Check client data
+    if: inputs.image == ''
+    # 和服务器一样用 Python 3.12，requirements.txt 锁的是 3.12 的安装包
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install
+        run: |
+          python3 -m venv /tmp/client-master
+          pip_install() { /tmp/client-master/bin/pip install --quiet --disable-pip-version-check --require-hashes --no-deps "$@"; }
+          pip_install -r deploy/tencent/client-master/requirements-build.txt
+          pip_install --no-build-isolation -r deploy/tencent/client-master/requirements.txt
+
+      - name: Generate
+        run: |
+          /tmp/client-master/bin/python deploy/tencent/client-master/client_master.py \
+            --events deploy/tencent/appsettings.Production.json \
+            --event-summons DragaliaAPI/DragaliaAPI/Resources/eventSummon.json \
+            --source-url https://cdn.minty.sbs/dl --source-platform universe \
+            --cache-dir /tmp/client-master-cache --out-dir /tmp/client-master-out
+
   deploy:
     name: Deploy
-    needs: build
-    if: ${{ !cancelled() && (needs.build.result == 'success' || needs.build.result == 'skipped') }}
+    needs: [build, client-data]
+    if: >-
+      ${{ !cancelled()
+      && (needs.build.result == 'success' || needs.build.result == 'skipped')
+      && (needs.client-data.result == 'success' || needs.client-data.result == 'skipped') }}
     runs-on: ubuntu-latest
     permissions:
       contents: read

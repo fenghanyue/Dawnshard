@@ -16,14 +16,15 @@
 | `docker-compose.yml` | 服务器上的容器配置（游戏服务器 + 数据库 + redis） |
 | `appsettings.Production.json` | 私服配置，比如开哪些活动（`EventOptions`） |
 | `bannerConfig.json` | 开哪些卡池，替换镜像里自带的 `Resources/bannerConfig.json` |
-| `deploy.sh` | 在服务器上执行：拉镜像 → 备份数据库 → 换配置 → 重建游戏服务器 → 健康检查，没通过就回滚。镜像拉好了才动服务器上的文件 |
+| `deploy.sh` | 在服务器上执行：拉镜像 → 生成手机端的游戏数据表 → 备份数据库 → 更新资源缓存 → 换配置 → 重建游戏服务器 → 健康检查，没通过就回滚。前两步不动正在用的东西 |
 | `tat_run.py` | 调腾讯云接口，把 `deploy.sh` 发到服务器执行并等结果 |
 | `check_config.py` | 部署前检查配置：活动、卡池编号存不存在，角色和龙的名字有没有写错 |
 | `gen_release_dates.py` | 从游戏数据生成角色、龙的上线日期表（`ReleaseHistory.g.cs`），卡池按上线日期过滤普通池时用 |
+| `client-master/` | 按排好的活动改手机端游戏数据表里的日期，生成新的资源版本（见下面「活动在手机上显示」） |
+| `asset-cache/` | 资源缓存（8081 端口的 nginx）的配置，部署时写到服务器的 `/opt/asset-cache` |
 | `../../.github/workflows/tencent-deploy.yaml` | 自动部署的流程 |
 
 数据库密码、`DEVELOPER_TOKEN` 只在服务器的 `/opt/dawnshard/.env` 里，不进仓库。
-资源缓存（8081 端口的 nginx）在服务器的 `/opt/asset-cache`，不归这里管。
 
 ## 第一次要做的设置
 
@@ -38,8 +39,8 @@
 ## 日常怎么用
 
 - **改活动安排**：编辑 `appsettings.Production.json` 里的 `EventOptions.EventList`，每个活动写
-  `Id`（活动编号）、`Start`、`End`（UTC 时间）。合并到 main 后自动部署。
-  注意：游戏里显示哪些活动，看的是手机自己的数据表（日期还是当年的），这里只管服务器放不放行。
+  `Id`（活动编号）、`Start`、`End`（UTC 时间）。合并到 main 后自动部署，手机端的数据表也会跟着改，
+  见下面「活动在手机上显示」。同一个活动只能排一次。
 - **改卡池**：编辑 `bannerConfig.json`，每个卡池写 `Id`、`Start`、`End`、`PickupCharas`（主打角色）、`PickupDragons`（主打龙）。
   原版卡池的编号、日期和主打对象在 `DragaliaAPI/DragaliaAPI.Shared/Resources/Summon/SummonData.json`，
   角色和龙的名字见 `DragaliaAPI/DragaliaAPI.Shared/Definitions/Enums/` 里的 `Charas`、`DragonId`。
@@ -64,6 +65,45 @@
 
   digest 用 `docker buildx imagetools inspect <镜像> --format '{{json .Manifest}}'` 查。不给 `--digest`
   就不走镜像站，直连 ghcr.io 慢慢下。
+
+## 活动在手机上显示
+
+游戏里显示哪些活动，看的是手机从资源站下载的游戏数据表（master）里写的日期，当年的日期早就过了。
+所以每次部署时，`client-master/client_master.py` 会按 `EventOptions.EventList` 把数据表里这些活动的日期改成服务器排的时间：
+
+- 开始、结束用服务器的时间；预告提前几天照当年。结束以后就不显示了：当年结束后还能进去看一周，
+  但服务器到点就不放行，点进去会报错。
+- 开始几天后才解锁的关卡、活动商店、首页横幅等的日期，按开始时间的差值平移，平移后晚于结束的截到结束，
+  所以活动最好按当年的天数排。
+- 活动角色「只能用专属材料养成」的时间，改成和活动一样。
+- 活动召唤（宝箱抽奖）只打开 `DragaliaAPI/DragaliaAPI/Resources/eventSummon.json` 里配了奖品的活动，
+  没配的打开了一点就报错，保持关闭。
+
+只把日期原地换成一样长的新日期，数据表别的地方一个字节都不动；5 个语言包（日、英美、英欧、简中、繁中）都改。
+改好的数据表和重新加密的资源清单放在服务器的 `/opt/asset-cache/overrides`，资源缓存先从那里找，找不到再去资源站。
+新的资源版本号由活动安排和脚本算出来，部署时写进服务器的 `ResourceVersionOptions.Android`（不要手动改）。
+版本号变了，手机进游戏时会先下一个十来 MB 的更新；活动安排没变就沿用原来的版本。服务器上保留最近 5 个版本。
+
+- 手机必须经资源缓存（8081 端口）下载资源。直连原资源站的手机找不到我们的资源版本，进不去游戏。
+- 原版文件（资源站上 `y2XM6giU6zz56wCm` 这个版本）第一次用到时下载，按写死的校验值核对，存在服务器的
+  `/opt/dawnshard/client-master/cache`；改表用的 Python 库装在 `/opt/dawnshard/client-master/venv`。
+- 部署前 GitHub 会先用资源站的原版文件把整个流程跑一遍（Check client data），出错就不部署。
+- 手机更新后进不去游戏：撤回这次改的活动安排，重新部署，服务器会换回上一个资源版本。
+- 升级改表用的库：改 `client-master/requirements*.txt` 里的版本和校验值，只留 Python 3.12、Linux x86_64 的安装包和源码包。
+  服务器下次部署时会重装。
+
+在自己电脑上试（要 Python 3.12）：
+
+```bash
+python3.12 -m venv /tmp/cm
+/tmp/cm/bin/pip install --require-hashes --no-deps -r deploy/tencent/client-master/requirements-build.txt
+/tmp/cm/bin/pip install --require-hashes --no-deps --no-build-isolation -r deploy/tencent/client-master/requirements.txt
+/tmp/cm/bin/python deploy/tencent/client-master/client_master.py \
+    --events deploy/tencent/appsettings.Production.json \
+    --event-summons DragaliaAPI/DragaliaAPI/Resources/eventSummon.json \
+    --source-url https://cdn.minty.sbs/dl --source-platform universe \
+    --cache-dir /tmp/cm-cache --out-dir /tmp/cm-out
+```
 
 ## 备份和恢复存档
 

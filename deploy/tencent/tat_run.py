@@ -29,6 +29,15 @@ HERE = Path(__file__).resolve().parent
 
 # 部署时发到服务器 /opt/dawnshard 的文件。加了新的配置文件，要在这里和 docker-compose.yml 里各加一处。
 CONFIG_FILES = ["docker-compose.yml", "appsettings.Production.json", "bannerConfig.json"]
+# 资源缓存的配置（发到 /opt/asset-cache），和改手机端游戏数据表的脚本（在服务器上运行）
+EXTRA_FILES = [
+    "asset-cache/default.conf",
+    "asset-cache/docker-compose.yml",
+    "client-master/client_master.py",
+    "client-master/unity_bundle.py",
+    "client-master/requirements.txt",
+    "client-master/requirements-build.txt",
+]
 
 # TAT 的状态里，这些表示还没执行完
 PENDING_STATES = {"PENDING", "DELIVERING", "DELIVER_DELAYED", "RUNNING", "CANCELLING"}
@@ -50,7 +59,7 @@ def build_bundle() -> bytes:
 
     buffer = io.BytesIO()
     with tarfile.open(fileobj=buffer, mode="w:gz") as tar:
-        for name in CONFIG_FILES:
+        for name in CONFIG_FILES + EXTRA_FILES:
             tar.add(HERE / name, arcname=name, filter=as_root)
     return buffer.getvalue()
 
