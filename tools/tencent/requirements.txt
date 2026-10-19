@@ -1,0 +1,2 @@
+tencentcloud-sdk-python-common==3.1.188
+tencentcloud-sdk-python-tat==3.1.106

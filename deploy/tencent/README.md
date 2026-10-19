@@ -26,6 +26,56 @@
 
 数据库密码、`DEVELOPER_TOKEN` 只在服务器的 `/opt/dawnshard/.env` 里，不进仓库。
 
+## 连接服务器（查日志、看文件）
+
+固定入口是 [`tools/tencent/tat.py`](../../tools/tencent/tat.py)。它用腾讯云「自动化助手」（TAT）的
+`RunCommand` 发命令，再用 `DescribeInvocationTasks` 取回结果；服务器上的自动化助手以 root 执行。
+只需要运行环境中的 `TENCENTCLOUD_SECRET_ID`、`TENCENTCLOUD_SECRET_KEY`，不用 SSH、密码或私钥。
+地域和轻量实例编号已设好默认值；需要换服务器时可以设置 `TENCENT_REGION`、`TENCENT_INSTANCE_ID`，
+也可用 `--region`、`--instance` 指定。轻量实例的 `lhins-` 编号可以直接用于 TAT。
+
+在仓库根目录安装依赖（新环境安装一次；密钥在运行环境的密钥设置中配置，不要写进命令、文件或仓库）：
+
+```bash
+python3 -m venv /tmp/dawnshard-tat
+/tmp/dawnshard-tat/bin/python -m pip install -r tools/tencent/requirements.txt
+```
+
+先用只读命令检查连接：
+
+```bash
+/tmp/dawnshard-tat/bin/python tools/tencent/tat.py -c 'uptime; docker ps'
+/tmp/dawnshard-tat/bin/python tools/tencent/tat.py -c 'docker compose -f /opt/dawnshard/docker-compose.yml logs --since 30m --tail 100 dragaliaapi'
+```
+
+执行本地写好的脚本，或在等待中断后继续查询原来的执行编号：
+
+```bash
+/tmp/dawnshard-tat/bin/python tools/tencent/tat.py --file /tmp/check-game.sh
+/tmp/dawnshard-tat/bin/python tools/tencent/tat.py --invocation inv-xxxxxxxx
+```
+
+工具会先打印执行编号；默认远端执行时限 120 秒、本地等待 60 秒，可用 `--timeout` 和 `--wait-seconds` 调整。
+本地等待超时或被中断不会取消远端命令；**用原编号继续查询，不要重复发送可能改数据的命令**。
+退出码 0 表示远端命令成功，1 表示失败，2 表示尚未等到最终结果，130 表示本地等待被中断。
+输出被腾讯云截断时会提示；查日志先限制时间和行数，避免输出整个存档、环境变量或 `.env`。
+
+连接问题按报错处理：
+
+| 报错 | 处理 |
+|---|---|
+| SDK 装不上、连接被拒绝、超时或 DNS 失败 | 检查当前运行环境的联网权限，允许 `pypi.org`、`files.pythonhosted.org`、`tat.tencentcloudapi.com`。这是本地连接问题，先停下告知用户，不要改密钥或尝试 SSH |
+| `CERTIFICATE_VERIFY_FAILED` | 工具会把环境的 CA 证书传给 SDK（依次读取 `REQUESTS_CA_BUNDLE`、`CURL_CA_BUNDLE`、`SSL_CERT_FILE`，否则用系统 CA）。检查证书路径，不要关闭校验，也不要清掉环境代理 |
+| `AuthFailure` / `SignatureFailure` | 检查环境变量是否缺失、填反、过期或带空白；只检查长度，不打印值 |
+| `UnauthorizedOperation` | 在腾讯云访问管理（CAM）中给密钥添加 `QcloudTATFullAccess` |
+| `InstanceIdNotExist` | 检查地域为 `ap-shanghai`、实例编号为配置的 `lhins-` 编号 |
+| `AgentNotRunning` | 在腾讯云控制台检查自动化助手状态；若需要重启服务器，先取得用户同意 |
+
+先做只读检查。删文件、重启容器、改数据库或防火墙配置之前，说明原因并等用户同意；改数据库先备份。
+部署通过 GitHub Actions 的 **Deploy to Tencent Cloud**，不要用这个日常运维工具手动部署。
+工具位于 `tools/`，只改工具和说明文档不会触发游戏服务器自动部署。
+修改工具后可运行 `python3 -m unittest discover -s tools/tencent -v` 做离线检查，再用上面的只读命令验证连接。
+
 ## 第一次要做的设置
 
 1. GitHub 仓库 → Settings → Secrets and variables → Actions → New repository secret，建两个：

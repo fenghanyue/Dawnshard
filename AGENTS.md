@@ -1,6 +1,11 @@
 # Agent Instructions for Dawnshard
 
 > **私服（fenghanyue/Dawnshard）**：接手前先读 [deploy/tencent/NOTES.md](deploy/tencent/NOTES.md)（现状、做过的事、踩过的坑、和用户怎么配合）。下面是原作者写的通用说明。
+>
+> **服务器连接只用腾讯云 TAT**：[tools/tencent/tat.py](tools/tencent/tat.py) 是查日志、看文件、执行命令的固定入口，
+> 用法见 [连接服务器](deploy/tencent/README.md#连接服务器查日志看文件)。不要用 SSH/scp，不要找密钥或改 SSH 配置。
+> API 密钥只读环境变量；先做只读检查，删除、重启、改数据库或网络配置前先向用户说明并取得同意。
+> 部署走 GitHub Actions 的 **Deploy to Tencent Cloud**。
 
 Dawnshard is a game server emulator for [Dragalia Lost](https://en.wikipedia.org/wiki/Dragalia_Lost). This document gives a coding agent the context needed to work efficiently in this repository.
 
