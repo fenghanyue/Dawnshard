@@ -90,6 +90,9 @@ jobs:
           pip_install -r deploy/tencent/client-master/requirements-build.txt
           pip_install --no-build-isolation -r deploy/tencent/client-master/requirements.txt
 
+      - name: Test client data planning
+        run: /tmp/client-master/bin/python -m unittest discover -s deploy/tencent/client-master -v
+
       - name: Generate
         run: |
           /tmp/client-master/bin/python deploy/tencent/client-master/client_master.py \

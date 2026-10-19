@@ -5,7 +5,7 @@ EventOptions 只管放不放行。所以要把数据表里的日期改成服务�
 
 1. 下载原版的资源清单和 5 个语言包的数据表，按写死的校验值核对，存在 --cache-dir 里，下次不用再下；
 2. 把 appsettings.Production.json 的 EventOptions.EventList 里排的活动，日期改成服务器的时间
-   （规则见 EventSchedule），活动里的讨伐战改成单人讨伐战（见 SOLO_RAID_FIELDS）。只换成一样长的值
+   （规则见 EventSchedule），活动里的讨伐战和菜单入口改成单人（见 SOLO_RAID_FIELDS、SOLO_RAID_MENU_FIELDS）。只换成一样长的值
    （日期一样长，数字本来就是定长的），数据表别的地方一个字节都不动；
 3. 改过的数据表按内容重新取文件名，更新资源清单里这个文件的名字和大小，重新加密清单；
 4. 写到 --out-dir：dl/manifests/Android/<新版本号>/ 下是清单，dl/assetbundles/Android/xx/ 下是数据表。
@@ -71,7 +71,10 @@ BOX_SUMMON_TABLE = ("BoxSummonData", "_EventId", ("_CommenceDate", "_CompleteDat
 RAID, SOLO_RAID = 2, 10
 SOLO_RAID_FIELDS = {"_DungeonType": SOLO_RAID, "_PayStaminaMulti": 0, "_CampaignStaminaMulti": 0, "_ConstraintType": 3}
 SOLO_RAID_STAMINA = {"_PayStaminaSingle": 15, "_CampaignStaminaSingle": 7}
-TABLES = {"EventData", "CharaData", *FOLLOWING_TABLES, BOX_SUMMON_TABLE[0]}
+# QuestEventMenu 的入口分类独立于 QuestData：3/4/5 是原来的讨伐战入口。只改关卡类型，老活动点进去仍会转圈。
+# 把转换的关卡放到已有的首领战列表（分类 2），走单人准备入口；关卡编号、解锁条件、战斗和奖励不变。
+SOLO_RAID_MENU_FIELDS = {"_QuestSubType": 2}
+TABLES = {"EventData", "CharaData", "QuestEventMenu", *FOLLOWING_TABLES, BOX_SUMMON_TABLE[0]}
 
 
 def log(message: str) -> None:
@@ -209,9 +212,14 @@ def plan_changes(tables: dict[str, dict], runs: list[EventRun], box_summons: set
         for row in rows(tables[table]):
             if row[key] in events:
                 add(table, row, {field: schedules[row[key]].move(row[field]) for field in fields})
+    raid_quests: set[int] = set()
     for row in rows(tables["QuestData"]):
         if row["_Gid"] in schedules and row["_DungeonType"] == RAID:
+            raid_quests.add(row["_Id"])
             add("QuestData", row, SOLO_RAID_FIELDS | (SOLO_RAID_STAMINA if not row["_PayStaminaSingle"] else {}))
+    for row in rows(tables["QuestEventMenu"]):
+        if row["_GroupId"] in schedules and row["_EntryQuestType"] == 1 and row["_EntryQuestId"] in raid_quests:
+            add("QuestEventMenu", row, SOLO_RAID_MENU_FIELDS)
     return changes
 
 
