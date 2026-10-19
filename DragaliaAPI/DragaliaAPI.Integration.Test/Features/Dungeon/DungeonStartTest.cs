@@ -29,6 +29,35 @@ public class DungeonStartTest : TestFixture
         this.ImportSave().Wait();
     }
 
+    [Theory]
+    [InlineData(204010201, 204010125)]
+    [InlineData(204010202, 204010225)]
+    [InlineData(204010203, 204010325)]
+    public async Task Start_LoyaltysRequiemCyclops_UsesSurvivingBossArea(
+        int questId,
+        int bossEnemyParamId
+    )
+    {
+        DungeonStartStartResponse response = (
+            await Client.PostMsgpack<DungeonStartStartResponse>(
+                "/dungeon_start/start",
+                new DungeonStartStartRequest() { PartyNoList = [1], QuestId = questId },
+                cancellationToken: TestContext.Current.CancellationToken
+            )
+        ).Data;
+
+        response.IngameData.QuestId.Should().Be(questId);
+        response.IngameQuestData.QuestId.Should().Be(questId);
+        response
+            .IngameData.AreaInfoList.Should()
+            .ContainSingle()
+            .Which.Should()
+            .BeEquivalentTo(
+                new AreaInfoList("Boss/BG002_5001_00/BG002_5001_00_01", "RAID_01_0106_02")
+            );
+        response.OddsInfo.Enemy.Should().Contain(x => x.ParamId == bossEnemyParamId);
+    }
+
     [Fact]
     public async Task Start_OneTeam_HasExpectedPartyUnitList()
     {
