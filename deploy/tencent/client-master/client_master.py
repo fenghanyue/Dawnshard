@@ -12,7 +12,7 @@ EventOptions 只管放不放行。所以要把数据表里的日期改成服务�
    资源缓存（../asset-cache/default.conf）先从这里找文件，找不到再去资源站。
 
 新版本号由输入算出来：活动安排、活动召唤配置、这个脚本和依赖都没变，版本号就不变，生成过的直接跳过。
-没排活动时直接用原版的版本号。标准输出只有最后一行的版本号，其他信息都在标准错误里。
+没排活动且没有要关闭的原版活动时，直接用原版的版本号。标准输出只有最后一行的版本号，其他信息都在标准错误里。
 
 用法（部署时 deploy.sh 会自动跑）：
     python3 client_master.py --events appsettings.Production.json --event-summons eventSummon.json \\
@@ -52,6 +52,8 @@ PLATFORM = "Android"
 KEEP_VERSIONS = 5
 DATE_FORMAT = "%Y/%m/%d %H:%M:%S"
 VERSION_FILES = ["client_master.py", "unity_bundle.py", "requirements.txt", "requirements-build.txt"]
+# 大逃杀在原版数据表里一直开放到 2030 年，但服务器不支持；关闭活动显示并隐藏任务页入口。
+CLOSED_EVENTS = {22301}
 
 # 除了活动表，这些表里属于某个活动的行，日期也跟着活动走：表名 → (哪个字段是活动编号, 日期字段)
 FOLLOWING_TABLES = {
@@ -184,8 +186,10 @@ Changes = dict[str, dict[int, dict[str, str | int]]]
 def plan_changes(tables: dict[str, dict], runs: list[EventRun], box_summons: set[int]) -> Changes:
     """按原版数据表算出每一行要改成什么，只留真的会变的字段。"""
     origins = {row["_Id"]: row for row in rows(tables["EventData"])}
-    if missing := [run.id for run in runs if run.id not in origins]:
+    if missing := sorted(({run.id for run in runs} | CLOSED_EVENTS) - origins.keys()):
         raise SystemExit(f"数据表里没有这些活动：{missing}")
+    if closed := sorted({run.id for run in runs} & CLOSED_EVENTS):
+        raise SystemExit(f"活动 {closed} 已停用，不能排期")
     schedules = {run.id: EventSchedule(origins[run.id], run) for run in runs}
     # 活动角色在活动期间只用专属材料养成（2020 年以后的部分活动），时间也要跟服务器一致
     grow_runs = {origins[run.id]["_EventCharaId"]: run for run in runs if origins[run.id]["_EventCharaId"]}
@@ -200,8 +204,13 @@ def plan_changes(tables: dict[str, dict], runs: list[EventRun], box_summons: set
             changes.setdefault(table, {}).setdefault(row["_Id"], {}).update(values)
 
     for row in rows(tables["EventData"]):
-        if row["_Id"] in schedules:
+        if row["_Id"] in CLOSED_EVENTS:
+            add("EventData", row, {"_EndDate": row["_StartDate"], "_ViewCloseDate": row["_StartDate"]})
+        elif row["_Id"] in schedules:
             add("EventData", row, schedules[row["_Id"]].event_dates(row))
+    for row in rows(tables["QuestEventGroup"]):
+        if row["_Id"] in CLOSED_EVENTS:
+            add("QuestEventGroup", row, {"_IsHideBanner": 1})
     for row in rows(tables["CharaData"]):
         if run := grow_runs.get(row["_Id"]):
             dates = {"_GrowMaterialOnlyStartDate": run.start, "_GrowMaterialOnlyEndDate": run.end}
@@ -362,11 +371,13 @@ def clean_up(out_dir: Path, current: str) -> None:
 
 def generate(args: argparse.Namespace) -> str:
     runs = load_runs(args.events)
-    if not runs:
+    if not runs and not CLOSED_EVENTS:
         log("没有排活动，用原版的资源版本")
         return SOURCE_VERSION
     box_summons = load_box_summons(args.event_summons) & {run.id for run in runs}
     version = plan_version(runs, box_summons)
+    for event_id in sorted(CLOSED_EVENTS):
+        log(f"关闭原版活动 {event_id}，隐藏任务页入口")
     for run in runs:
         summon = "，活动召唤打开" if run.id in box_summons else ""
         log(f"活动 {run.id}：{to_master_date(run.start)} 到 {to_master_date(run.end)}（UTC）{summon}")
