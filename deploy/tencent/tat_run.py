@@ -44,6 +44,7 @@ EXTRA_FILES = [
     "client-master/requirements-build.txt",
     "photon/config.template.yml",
     "photon/docker-compose.yml",
+    "photon/docker-compose.rooms.yml",
     "photon/prepare.py",
     "photon/manage.sh",
 ]
@@ -81,6 +82,7 @@ def build_script(
     photon_image: str = "",
     photon_digest: str = "",
     disable_photon: bool = False,
+    photon_rooms: bool = False,
 ) -> str:
     variables = {
         "IMAGE": image,
@@ -88,6 +90,7 @@ def build_script(
         "PHOTON_IMAGE": photon_image,
         "PHOTON_DIGEST": photon_digest,
         "DISABLE_PHOTON": "1" if disable_photon else "0",
+        "PHOTON_ROOMS": "1" if photon_rooms else "0",
     }
     if digest:
         variables["IMAGE_DIGEST"] = digest
@@ -164,6 +167,11 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--image", required=True, help="要部署的游戏服务器镜像")
     parser.add_argument(
+        "--photon-rooms",
+        action="store_true",
+        help="使用包含房间准备插件和列表服务的联机镜像",
+    )
+    parser.add_argument(
         "--digest", default="", help="镜像的 digest（sha256:...），给了才会走国内镜像站"
     )
     parser.add_argument(
@@ -208,6 +216,8 @@ def main() -> int:
         parser.error("--photon-image 必须是 ghcr.io 上带 tag 的镜像")
     if args.disable_photon and args.photon_image:
         parser.error("--disable-photon 不能和 --photon-image 一起给")
+    if args.photon_rooms and not args.photon_image:
+        parser.error("--photon-rooms 必须和 --photon-image 一起给")
 
     ghcr_user = os.environ.get("GHCR_USER", "")
     ghcr_token = os.environ.get("GHCR_TOKEN", "")
@@ -231,6 +241,7 @@ def main() -> int:
         args.photon_image,
         args.photon_digest,
         args.disable_photon,
+        args.photon_rooms,
     )
     if len(b64(script.encode())) > MAX_CONTENT_BYTES:
         print("脚本太长，超过 TAT 的 60KB 限制", file=sys.stderr)

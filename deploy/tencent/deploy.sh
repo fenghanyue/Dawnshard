@@ -283,6 +283,24 @@ if [ "$healthy" != 1 ]; then
     rollback "健康检查没通过"
 fi
 
-start_photon || true
+if ! start_photon; then
+    # The room API URL and UDP service form one change. Restore both URL overrides
+    # when room startup rolls back, then reload the healthy game image's settings.
+    python3 "$new_dir/photon/prepare.py" --mode restore \
+        --settings "$APP_DIR/appsettings.Production.json" --previous "$PREV_DIR/appsettings.Production.json" \
+        --env-file "$APP_DIR/.env" --output "$new_dir/photon-runtime"
+    docker compose up -d --no-deps --force-recreate dragaliaapi
+    recovered=0
+    for _ in $(seq 1 30); do
+        if curl -fsS --max-time 5 "$HEALTH_URL" 2>/dev/null \
+            | python3 -c 'import json, sys; sys.exit(json.load(sys.stdin).get("status") != "Healthy")' 2>/dev/null; then
+            recovered=1
+            break
+        fi
+        sleep 3
+    done
+    [ "$recovered" = 1 ] || rollback "恢复联机地址后游戏健康检查未通过"
+    echo "已恢复原联机地址，游戏服务器健康"
+fi
 echo "部署完成：$IMAGE"
 docker compose ps --format 'table {{.Service}}\t{{.Image}}\t{{.Status}}'

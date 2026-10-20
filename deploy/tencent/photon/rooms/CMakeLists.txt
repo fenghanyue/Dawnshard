@@ -1,0 +1,40 @@
+cmake_minimum_required(VERSION 3.25)
+project(DawnshardLuxonRooms LANGUAGES C CXX)
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+option(DAWNSHARD_BUILD_TESTS "Build Dawnshard room checks" ON)
+set(BUILD_TESTING OFF CACHE BOOL "Disable dependency tests" FORCE)
+
+# fetch-source.sh fixes both the server and its protocol implementation to v1.5.
+set(LUXON_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/upstream" CACHE PATH "Pinned Luxon checkout")
+set(LUXON_SERVER_ENABLE_PLUGINS ON CACHE BOOL "" FORCE)
+set(LUXON_SERVER_ENABLE_MULTIPROCESSING OFF CACHE BOOL "" FORCE)
+set(LUXON_SERVER_ENABLE_SETTINGS_DATABASE OFF CACHE BOOL "" FORCE)
+set(LUXON_SERVER_USE_SANMAKE OFF CACHE BOOL "" FORCE)
+add_subdirectory("${LUXON_SOURCE_DIR}" upstream-build)
+
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(CURL REQUIRED IMPORTED_TARGET libcurl)
+include(FetchContent)
+set(LZ4_BUILD_CLI OFF CACHE BOOL "" FORCE)
+set(LZ4_BUILD_LEGACY_LZ4C OFF CACHE BOOL "" FORCE)
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+FetchContent_Declare(lz4
+    GIT_REPOSITORY https://github.com/lz4/lz4.git
+    GIT_TAG ebb370ca83af193212df4dcbadcc5d87bc0de2f0
+    SOURCE_SUBDIR build/cmake)
+FetchContent_MakeAvailable(lz4)
+add_library(dawnshard_room_support room_data.cpp state_publisher.cpp)
+target_include_directories(dawnshard_room_support PUBLIC . "${LUXON_SOURCE_DIR}/src")
+target_link_libraries(dawnshard_room_support PUBLIC luxon_server_lib PkgConfig::CURL lz4_static)
+target_sources(luxon_server PRIVATE room_plugin.cpp)
+target_link_libraries(luxon_server dawnshard_room_support)
+
+if(DAWNSHARD_BUILD_TESTS)
+    enable_testing()
+    add_executable(room_protocol_test tests/room_protocol_test.cpp)
+    target_link_libraries(room_protocol_test PRIVATE dawnshard_room_support)
+    add_test(NAME room_protocol_test COMMAND room_protocol_test)
+    add_executable(room_udp_test tests/room_udp_test.cpp room_plugin.cpp)
+    target_link_libraries(room_udp_test PRIVATE dawnshard_room_support)
+endif()

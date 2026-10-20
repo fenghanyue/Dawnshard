@@ -9,9 +9,11 @@ photon_compose() {
 }
 
 photon_settings() {
+    local room_args=()
+    [ "${PHOTON_ROOMS:-0}" != 1 ] || room_args+=(--rooms)
     python3 "$new_dir/photon/prepare.py" --mode "$1" \
         --settings "$new_dir/appsettings.Production.json" --previous "$APP_DIR/appsettings.Production.json" \
-        --env-file "$APP_DIR/.env" --output "$new_dir/photon-runtime" --image "${PHOTON_IMAGE:-}"
+        --env-file "$APP_DIR/.env" --output "$new_dir/photon-runtime" --image "${PHOTON_IMAGE:-}" "${room_args[@]}"
 }
 
 prepare_photon() {
@@ -62,7 +64,7 @@ start_photon() {
     local previous
     previous=$(mktemp -d "$PHOTON_DIR/.previous.XXXXXX") || return 1
     local f
-    for f in config.yml docker-compose.yml; do
+    for f in config.yml docker-compose.yml state-settings.json photon-token; do
         if [ -f "$PHOTON_DIR/$f" ]; then
             if ! cp "$PHOTON_DIR/$f" "$previous/$f"; then
                 rm -rf "$previous"
@@ -72,20 +74,26 @@ start_photon() {
         fi
     done
     local copied=1
-    for f in config.yml docker-compose.yml; do
-        cp "$new_dir/photon-runtime/$f" "$PHOTON_DIR/$f" && chmod 644 "$PHOTON_DIR/$f" || copied=0
+    for f in config.yml docker-compose.yml state-settings.json photon-token; do
+        if [ -f "$new_dir/photon-runtime/$f" ]; then
+            cp "$new_dir/photon-runtime/$f" "$PHOTON_DIR/$f" && chmod 644 "$PHOTON_DIR/$f" || copied=0
+        fi
     done
     if [ "$copied" = 1 ] && (
         photon_compose config --quiet && photon_compose up -d --force-recreate --pull never --wait --wait-timeout 40
     ) > "$PHOTON_DIR/deploy.log" 2>&1; then
         rm -rf "$previous"
-        echo "联机试连已启动，容器和本机管理页检查通过；仍需手机验证"
+        echo "联机服务已启动，容器健康检查通过；仍需手机验证准备界面"
         return
     fi
     # 联机单独回退，不回滚已经健康的游戏服务器。
     if [ -f "$previous/docker-compose.yml" ]; then
-        for f in config.yml docker-compose.yml; do
-            cp "$previous/$f" "$PHOTON_DIR/$f"
+        for f in config.yml docker-compose.yml state-settings.json photon-token; do
+            if [ -f "$previous/$f" ]; then
+                cp "$previous/$f" "$PHOTON_DIR/$f"
+            else
+                rm -f "$PHOTON_DIR/$f"
+            fi
         done
         photon_compose up -d --force-recreate --pull never >> "$PHOTON_DIR/deploy.log" 2>&1 || true
     else

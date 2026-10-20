@@ -1,0 +1,37 @@
+name: dawnshard-photon
+
+services:
+  photon:
+    image: __PHOTON_IMAGE__
+    platform: linux/amd64
+    ports:
+      - "5055:5055/udp"
+      - "5056:5056/udp"
+    networks:
+      game:
+        aliases:
+          - photon-rooms
+    volumes:
+      - ./config.yml:/app/config.yml:ro
+      - ./state-settings.json:/app/state/appsettings.Production.json:ro
+      - ./photon-token:/run/secrets/photon-token:ro
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 128
+    mem_limit: 512m
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+networks:
+  game:
+    external: true
+    name: dawnshard_default
