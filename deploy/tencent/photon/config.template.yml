@@ -1,0 +1,17 @@
+# 公网地址仅在服务器上替换，生成的 config.yml 不进仓库。
+Servers:
+  MasterServer:
+    - port: 5055
+      external_address: "__PHOTON_PUBLIC_HOST__:5055"
+  GameServer:
+    - port: 5056
+      external_address: "__PHOTON_PUBLIC_HOST__:5056"
+EnableIPv6: false
+MaxConnections: 20
+MaxGamePeers: 0
+TickTimeBudget: 2000
+NoBanner: true
+HTTP:
+  enabled: true
+  address: 127.0.0.1
+  port: 5088

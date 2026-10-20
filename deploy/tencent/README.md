@@ -22,6 +22,7 @@
 | `gen_release_dates.py` | 从游戏数据生成角色、龙的上线日期表（`ReleaseHistory.g.cs`），卡池按上线日期过滤普通池时用 |
 | `client-master/` | 按排好的活动改手机端游戏数据表里的日期，生成新的资源版本（见下面「活动在手机上显示」） |
 | `asset-cache/` | 资源缓存（8081 端口的 nginx）的配置，部署时写到服务器的 `/opt/asset-cache` |
+| `photon/` | Luxon v1.5 联机试连镜像、配置模板和独立容器的部署脚本 |
 | `../../.github/workflows/tencent-deploy.yaml` | 自动部署的流程 |
 
 数据库密码、`DEVELOPER_TOKEN` 只在服务器的 `/opt/dawnshard/.env` 里，不进仓库。
@@ -75,6 +76,56 @@ python3 -m venv /tmp/dawnshard-tat
 部署通过 GitHub Actions 的 **Deploy to Tencent Cloud**，不要用这个日常运维工具手动部署。
 工具位于 `tools/`，只改工具和说明文档不会触发游戏服务器自动部署。
 修改工具后可运行 `python3 -m unittest discover -s tools/tencent -v` 做离线检查，再用上面的只读命令验证连接。
+
+## 联机第一步：Luxon 试连（#20）
+
+这一阶段只验证手机能否连接、发起建房，还没有龙约专用插件和房间管理服务，不能开始战斗。
+固定使用 [LuxonServer v1.5](https://github.com/niansa/LuxonServer/releases/tag/v1.5) 的静态 Linux x86_64 程序，
+构建时核对 SHA-256；镜像以普通用户运行，保留上游 BSD-3 许可证。
+
+正常部署会单独构建 `dragalia-photon` 镜像，先按 digest 从南京大学镜像站拉，失败再按 digest 从 ghcr.io 拉。
+联机镜像构建失败、下载失败或无法取得地址时，游戏照常部署，保留之前的联机地址。
+游戏健康检查通过以后才启动独立 compose 项目 `dawnshard-photon`，目录为 `/opt/dawnshard/photon`。
+联机启动失败只回退联机容器、发出警告，不回滚已经健康的游戏服务器。
+
+公网地址只在服务器上确定：优先读取现有 `.env` 里的 `PHOTON_PUBLIC_HOST`，没有则查询腾讯云元数据服务。
+`PHOTON_PUBLIC_HOST` 可以是 IPv4 或域名，不带协议和端口；无需为了首次部署编辑 `.env`。
+地址会写入服务器上生成的 `photon/config.yml` 和 `appsettings.Production.json` 的 `PhotonOptions.ServerUrl`，
+与设置 `PhotonOptions__ServerUrl` 的作用相同。不要同时在 `.env` 中另设 `PhotonOptions__ServerUrl` 覆盖它。
+地址、配置文件和联机日志不进仓库、issue、PR，也不输出到 Actions。管理页只监听 `127.0.0.1:5088`。
+
+第一次手机验证前，用户在轻量服务器控制台的防火墙添加允许规则：UDP 5055、5056，来源为全部 IPv4。
+不需要开 5058、27000–27002 或管理页的端口。
+彻底退出游戏再打开，进入支持联机的普通关卡，选择联机、创建房间，等半分钟，记录手机现象和测试时间。
+现在活动讨伐战仍按单人入口处理，不用于这一步验证。
+
+通过 TAT 查看同一时间段的日志（不要贴到公开页面）：
+
+```bash
+python3 tools/tencent/tat.py -c 'docker compose --project-directory /opt/dawnshard/photon -f /opt/dawnshard/photon/docker-compose.yml logs --since 30m --tail 150 photon'
+python3 tools/tencent/tat.py -c 'tail -n 80 /opt/dawnshard/photon/deploy.log'
+```
+
+看手机是否依次到达主服务器连接、认证、请求创建带 `GluonPlugin` 的房间、转到 5056。
+发布版尚未接上插件，创建房间被拒绝也是有价值的试连结果，不能因此标记为“能联机打关”。
+
+只回滚游戏镜像：照旧填写 Actions 的 `image`，联机容器和地址保持原样。
+停用试连：在 **Deploy to Tencent Cloud** 中填写当前游戏镜像，勾选 `disable_photon`；
+游戏健康后会恢复默认联机地址并停止独立联机容器，不编辑 `.env`。先告知用户此次会重建游戏容器并取得同意。
+若完整撤回功能，先停用，再开 PR 撤回改动，请用户关掉两个 UDP 端口。
+单次停用后，后续普通部署会重新启用试连。
+
+PR 检查会验证失败回退、日志不泄露地址、回滚保留地址、TAT 包大小，并构建镜像、检查两个 UDP 服务启动及本机健康页。
+本地检查：
+
+```bash
+bash -n deploy/tencent/deploy.sh deploy/tencent/photon/manage.sh deploy/tencent/photon/smoke.sh
+python3 -m unittest discover -s deploy/tencent -p 'test_*.py' -v
+python3 -m unittest discover -s tools/tencent -v
+python3 deploy/tencent/tat_run.py --image ghcr.io/example/dragalia-api:test --print-script > /dev/null
+docker build -t dawnshard-luxon:trial deploy/tencent/photon
+bash deploy/tencent/photon/smoke.sh dawnshard-luxon:trial
+```
 
 ## 第一次要做的设置
 

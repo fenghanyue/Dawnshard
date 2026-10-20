@@ -1,0 +1,22 @@
+name: dawnshard-photon
+
+services:
+  photon:
+    image: __PHOTON_IMAGE__
+    platform: linux/amd64
+    network_mode: host
+    volumes:
+      - ./config.yml:/app/config.yml:ro
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 64
+    mem_limit: 256m
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
