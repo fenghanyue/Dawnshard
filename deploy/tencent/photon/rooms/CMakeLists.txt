@@ -24,7 +24,7 @@ FetchContent_Declare(lz4
     GIT_TAG ebb370ca83af193212df4dcbadcc5d87bc0de2f0
     SOURCE_SUBDIR build/cmake)
 FetchContent_MakeAvailable(lz4)
-add_library(dawnshard_room_support room_data.cpp state_publisher.cpp)
+add_library(dawnshard_room_support room_data.cpp state_publisher.cpp battle_http.cpp battle_session.cpp)
 target_include_directories(dawnshard_room_support PUBLIC . "${LUXON_SOURCE_DIR}/src")
 target_link_libraries(dawnshard_room_support PUBLIC luxon_server_lib PkgConfig::CURL lz4_static)
 target_sources(luxon_server PRIVATE room_plugin.cpp)

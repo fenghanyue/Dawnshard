@@ -237,6 +237,11 @@ dotnet_diagnostic.RS0030.severity = error # Banned symbol
 [DragaliaAPI/DragaliaAPI.Database/Migrations/*.cs]
 generated_code = true
 
+# The legacy Photon plugin also supplies protocol DTOs to the .NET service.
+# Its net481/C# 7.3 project requires block-scoped namespaces.
+[PhotonPlugin/**/*.cs]
+csharp_style_namespace_declarations = block_scoped:warning
+
 [*.xml]
 indent_style = space
 indent_size = 4

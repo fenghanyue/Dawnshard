@@ -86,12 +86,13 @@ python3 -m venv /tmp/dawnshard-tat
 `photon/Dockerfile.rooms` 固定编译 [LuxonServer v1.5](https://github.com/niansa/LuxonServer/releases/tag/v1.5)
 （`e4bab98d8d6b3aee9ecf4035309a78a59b584f93`）及其指定的协议子模块，以原生 C++ 注册客户端要求的 `GluonPlugin`。
 同一个独立容器运行 Luxon 和 PhotonStateManager，任一进程退出就重启整个房间服务。
-**这一步没有开战、结算和自动匹配逻辑，必须先由手机确认能稳定停留在准备界面。** 详情见 [房间插件说明](photon/rooms/README.md)。
+房间准备已由两部手机验证。后续普通关卡开战适配增加加载屏障、角色分配、行动转发和现有游戏 API 的通关接口，
+实际进图与奖励仍须手机实测。讨伐战、随机匹配关卡和计时排行暂不支持。详情见 [房间插件说明](photon/rooms/README.md)。
 
 正常部署会单独构建 `dragalia-photon` 镜像，先按 digest 从南京大学镜像站拉，失败再按 digest 从 ghcr.io 拉。
 联机镜像构建失败、下载失败或无法取得地址时，游戏照常部署，保留之前的联机地址。
 游戏健康检查通过以后才启动独立 compose 项目 `dawnshard-photon`，目录为 `/opt/dawnshard/photon`。
-联机启动失败会回退联机容器，同时恢复原联机地址和房间列表地址，再重建游戏容器使配置生效。
+联机启动失败会回退联机容器，同时恢复原联机地址、房间列表地址及游戏 API 令牌，再重建游戏容器使配置生效。
 新游戏镜像保持不变；恢复配置后游戏仍不健康才执行原有的游戏版本回滚。
 
 公网地址只在服务器上确定：优先读取现有 `.env` 里的 `PHOTON_PUBLIC_HOST`，没有则查询腾讯云元数据服务。
@@ -101,6 +102,8 @@ python3 -m venv /tmp/dawnshard-tat
 房间列表地址为 Docker 内部的 `http://photon-rooms:5089`，不发布这个 HTTP 端口；管理页只监听容器里的 `127.0.0.1:5088`。
 联机容器加入现有 `dawnshard_default` 网络，只发布 UDP 5055/5056。
 首次配置会在私有的 `/opt/dawnshard/photon` 目录生成共享令牌，后续部署复用；不修改现有 `.env`。
+普通关卡通关接口使用游戏 API 的现有 `PhotonOptions.Token`，优先读取 `.env` 中生效的覆盖值，
+写入私有列表服务配置用于内网调用；与列表服务共享令牌分别保存，没有现有游戏 API 令牌才生成。
 地址、令牌、配置文件和联机日志不进仓库、issue、PR，也不输出到 Actions。
 
 第一次手机验证前，用户在轻量服务器控制台的防火墙添加允许规则：UDP 5055、5056，来源为全部 IPv4。
@@ -116,7 +119,8 @@ python3 tools/tencent/tat.py -c 'tail -n 80 /opt/dawnshard/photon/deploy.log'
 ```
 
 手机验证：彻底退出重开，进入普通联机关卡建房；应显示七位房间号，并在准备界面停留至少一分钟。
-再让朋友凭编号进入，检查双方人物显示、队员退出、房主退出。暂时不要按开始，不把房间成功当成能打关。
+再让朋友凭编号进入，检查双方人物显示、队员退出、房主退出。
+开战适配上线后，先在“成长之路”等普通关卡测试开始、两边进图、人物动作和双方结算奖励；不要以房间成功代替这些验证。
 
 只回滚游戏镜像：照旧填写 Actions 的 `image`，联机容器和地址保持原样。
 停用试连：在 **Deploy to Tencent Cloud** 中填写当前游戏镜像，勾选 `disable_photon`；
@@ -124,7 +128,7 @@ python3 tools/tencent/tat.py -c 'tail -n 80 /opt/dawnshard/photon/deploy.log'
 若完整撤回功能，先停用，再开 PR 撤回改动，请用户关掉两个 UDP 端口。
 单次停用后，后续普通部署会重新启用试连。
 
-PR 检查会验证失败回退、日志不泄露地址、回滚保留地址、TAT 包大小，并在 Redis 8 上使用实际镜像完成加密 UDP 建房、进出、权限和 65 秒房间续期检查。
+PR 检查验证失败回退、日志不泄露地址、回滚保留配置、TAT 包大小，并在 Redis 8 上使用实际镜像完成加密 UDP 房间、65 秒续期、加载与通关协议检查；游戏 API 使用合成测试替身。
 本地检查：
 
 ```bash

@@ -128,7 +128,10 @@ class PhotonConfigTest(unittest.TestCase):
             )
         )
         result = self.run_prepare("keep")
-        self.assertEqual(result["PhotonOptions"], {"ServerUrl": "old.example:5055"})
+        self.assertEqual(
+            result["PhotonOptions"],
+            {"ServerUrl": "old.example:5055", "Token": "secret"},
+        )
         self.assertNotIn("Old", result)
         self.assertFalse(self.output.exists())
 
@@ -164,11 +167,58 @@ class PhotonConfigTest(unittest.TestCase):
         self.assertEqual((self.output / "photon-token").read_text().strip(), "a" * 64)
         state = json.loads((self.output / "state-settings.json").read_text())
         self.assertEqual(state["PhotonOptions"]["Token"], "a" * 64)
+        self.assertEqual(state["LuxonApiOptions"]["Token"], options["Token"])
+        self.assertNotEqual(
+            state["LuxonApiOptions"]["Token"], state["PhotonOptions"]["Token"]
+        )
+        self.assertEqual(
+            state["LuxonApiOptions"]["BaseUrl"],
+            "http://dragaliaapi:8080/2.19.0_20220714193707/",
+        )
         self.assertEqual(self.output.stat().st_mode & 0o777, 0o700)
         self.assertEqual(self.env_file.read_bytes(), before)
         compose = (self.output / "docker-compose.yml").read_text()
         self.assertNotIn("network_mode: host", compose)
         self.assertNotIn('"5089:5089"', compose)
+
+    def test_room_bridge_uses_effective_game_token_from_env_without_changing_env(self):
+        self.env_file.write_text(
+            "PHOTON_PUBLIC_HOST=private-sentinel.example\nPhotonOptions__Token='game-api-secret'\n"
+        )
+        self.previous.write_text(json.dumps({"PhotonOptions": {"Token": "old-secret"}}))
+        before = self.env_file.read_bytes()
+        prepare.prepare(
+            "configure",
+            self.settings,
+            self.previous,
+            self.env_file,
+            self.output,
+            "ghcr.io/example/photon:rooms",
+            rooms=True,
+        )
+        api = json.loads(self.settings.read_text())["PhotonOptions"]
+        state = json.loads((self.output / "state-settings.json").read_text())
+        self.assertEqual(api["Token"], "game-api-secret")
+        self.assertEqual(state["LuxonApiOptions"]["Token"], "game-api-secret")
+        self.assertNotEqual(state["PhotonOptions"]["Token"], "game-api-secret")
+        self.assertEqual(self.env_file.read_bytes(), before)
+
+    def test_room_bridge_reuses_previous_game_token_when_env_has_no_override(self):
+        self.env_file.write_text("PHOTON_PUBLIC_HOST=private-sentinel.example\n")
+        self.previous.write_text(
+            json.dumps({"PhotonOptions": {"Token": "previous-game-secret"}})
+        )
+        prepare.prepare(
+            "configure",
+            self.settings,
+            self.previous,
+            self.env_file,
+            self.output,
+            "ghcr.io/example/photon:rooms",
+            rooms=True,
+        )
+        state = json.loads((self.output / "state-settings.json").read_text())
+        self.assertEqual(state["LuxonApiOptions"]["Token"], "previous-game-secret")
 
     def test_restore_reverts_both_urls_and_keeps_other_new_settings(self):
         self.settings.write_text(

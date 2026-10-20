@@ -146,6 +146,7 @@ elif args[0]=='compose' and '--project-directory' in args and 'photon' in args[a
         state = json.loads((app / "photon/state-settings.json").read_text())
         token = (app / "photon/photon-token").read_text().strip()
         self.assertEqual(state["PhotonOptions"]["Token"], token)
+        self.assertEqual(state["LuxonApiOptions"]["Token"], options["Token"])
         self.assertEqual(len(token), 64)
         self.assertNotIn(
             token, result.stdout + result.stderr + (app / ".env").read_text()

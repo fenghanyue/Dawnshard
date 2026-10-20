@@ -7,12 +7,14 @@ here=$(cd "$(dirname "$0")" && pwd)
 trial_dir=$(mktemp -d)
 network="dawnshard-rooms-smoke-$$"
 redis="dawnshard-rooms-redis-$$"
+fake_api="dawnshard-rooms-api-$$"
 compose() {
     docker compose -p "dawnshard-rooms-smoke-$$" --project-directory "$trial_dir" -f "$trial_dir/docker-compose.yml" "$@"
 }
 cleanup() {
     compose down > /dev/null 2>&1 || true
     docker rm -f "$redis" > /dev/null 2>&1 || true
+    docker rm -f "$fake_api" > /dev/null 2>&1 || true
     docker network rm "$network" > /dev/null 2>&1 || true
     rm -rf "$trial_dir"
 }
@@ -25,6 +27,10 @@ python3 "$here/prepare.py" --mode configure --rooms --settings "$trial_dir/setti
 sed -i "s/name: dawnshard_default/name: $network/" "$trial_dir/docker-compose.yml"
 docker network create "$network" > /dev/null
 docker run -d --name "$redis" --network "$network" --network-alias redis redis:8 > /dev/null
+docker run -d --name "$fake_api" --network "$network" --network-alias dragaliaapi \
+    -e ASPNETCORE_URLS=http://0.0.0.0:8080 \
+    --mount "type=bind,src=$trial_dir/state-settings.json,dst=/app/appsettings.json,readonly" \
+    --entrypoint python3 "$checks" /checks/fake_game_api.py > /dev/null
 if ! compose up -d --pull never --wait --wait-timeout 90; then
     compose logs --tail 60
     exit 1
@@ -34,7 +40,12 @@ container=$(compose ps -q photon)
 [ "$(docker inspect --format '{{.HostConfig.ReadonlyRootfs}}' "$container")" = true ]
 # Luxon's test peer accepts numeric endpoints; HTTP uses Docker DNS normally.
 address=$(docker inspect --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$container")
-docker run --rm --network "$network" \
+if ! docker run --rm --network "$network" \
     -e LUXON_TEST_EXTERNAL_SERVER="$address" -e LUXON_STATE_URL=http://photon-rooms:5089 -e LUXON_TEST_LEASE=1 \
-    "$checks"
-echo "房间镜像：普通用户、只读文件系统、真实 UDP 建房/加人/权限/退出检查通过"
+    -e LUXON_TEST_API_URL=http://dragaliaapi:8080 \
+    "$checks"; then
+    compose logs --tail 100
+    docker logs --tail 25 "$fake_api"
+    exit 1
+fi
+echo "联机镜像：普通用户、只读文件系统、真实 UDP 房间/加载/战斗消息/结算接口检查通过（游戏 API 为测试替身）"

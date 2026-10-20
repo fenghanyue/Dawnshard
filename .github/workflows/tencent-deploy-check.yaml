@@ -6,6 +6,7 @@ on:
       - deploy/tencent/**
       - tools/tencent/**
       - PhotonStateManager/**
+      - PhotonPlugin/DragaliaAPI.Photon.Plugin/Plugins/GameLogic/**
       - .github/workflows/tencent-deploy*.yaml
       - "!**/*.md"
 
@@ -39,5 +40,5 @@ jobs:
           docker build -f deploy/tencent/photon/Dockerfile.rooms --target final -t dawnshard-luxon:rooms .
           docker build -f deploy/tencent/photon/Dockerfile.rooms --target verification -t dawnshard-luxon:checks .
 
-      - name: Verify encrypted UDP rooms and room list with Redis 8
+      - name: Verify encrypted UDP rooms, battle protocol and result bridge with Redis 8
         run: bash deploy/tencent/photon/smoke-rooms.sh dawnshard-luxon:rooms dawnshard-luxon:checks

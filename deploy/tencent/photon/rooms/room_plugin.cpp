@@ -1,3 +1,4 @@
+#include "battle_session.hpp"
 #include "room_data.hpp"
 #include "state_publisher.hpp"
 
@@ -26,7 +27,8 @@ int reserve_room_id() {
 }
 } // namespace
 
-// Lobby milestone only. GoToIngameState, battle events and settlement are not implemented.
+// Ordinary quest loading and results use the existing game API through a
+// private bridge.
 class DawnshardRoomPlugin : public PluginBase {
   public:
     DawnshardRoomPlugin(Game *game, std::string_view name) : PluginBase(game, name) {}
@@ -48,7 +50,10 @@ class DawnshardRoomPlugin : public PluginBase {
             properties[std::string("RoomId")] = int32_t(room_id_);
             properties[uint8_t(GameProps::MaxPlayers)] = uint8_t(4);
             game_->empty_game_ttl = 500;
-            log_->info("Room preparation plugin initialized (battle disabled)");
+            battle_ = std::make_shared<dawnshard::BattleSession>(
+                game_, log_, [this] { dawnshard::StatePublisher::instance().close(game_->id); },
+                [this] { reopen(); });
+            log_->info("Room plugin initialized (ordinary co-op quests)");
             return Result::Continue;
         } catch (const std::exception &) {
             log_->warn("Rejected invalid room creation properties");
@@ -64,7 +69,7 @@ class DawnshardRoomPlugin : public PluginBase {
                 game_->expected_users.erase(info.joiner->persistent->user_id);
             return Result::Fail;
         };
-        if (closed_ || !players_.contains(1) || players_.size() >= 4)
+        if (closed_ || (battle_ && battle_->active()) || !players_.contains(1) || players_.size() >= 4)
             return reject();
         try {
             auto &props = dawnshard::request_properties(request, DictKeyCodes::Properties::ActorProperties);
@@ -81,7 +86,8 @@ class DawnshardRoomPlugin : public PluginBase {
 
     Result OnJoinGame(ser::OperationRequestMessage &request, OnJoinGameCallInfo &info) override {
         try {
-            // v1.5 calls this hook before copying ActorProperties into the stored GamePeer.
+            // v1.5 calls this hook before copying ActorProperties into the stored
+            // GamePeer.
             auto &props = dawnshard::request_properties(request, DictKeyCodes::Properties::ActorProperties);
             int actor_id = info.joiner->actor_id;
             players_[actor_id] = dawnshard::player(actor_id, props);
@@ -101,6 +107,8 @@ class DawnshardRoomPlugin : public PluginBase {
         if (!info.leaver)
             return Result::Continue;
         players_.erase(info.leaver->actor_id);
+        if (battle_)
+            battle_->on_leave(info.leaver->actor_id);
         if (info.leaver->actor_id == 1) {
             closed_ = true;
             game_->is_open = false;
@@ -124,7 +132,8 @@ class DawnshardRoomPlugin : public PluginBase {
         try {
             const auto &update = *info.update;
             if (info.target_actor_id == 0) {
-                if (info.setter->actor_id != 1 || update.contains(std::string("RoomId")) ||
+                if ((battle_ && battle_->active()) || info.setter->actor_id != 1 ||
+                    update.contains(std::string("RoomId")) ||
                     !dawnshard::property(update, "GoToIngameInfo").is_null())
                     return Result::Fail;
                 auto merged = game_->custom_props;
@@ -145,11 +154,14 @@ class DawnshardRoomPlugin : public PluginBase {
                     if (update.contains(std::string(key)))
                         return Result::Fail;
                 const auto &start = dawnshard::property(update, "GoToIngameState");
-                if (!start.is_null() && dawnshard::integer(start) != 0) {
-                    log_->info("Quest start rejected: room preparation milestone only");
+                if (!start.is_null() &&
+                    (dawnshard::integer(start) < 0 || dawnshard::integer(start) > 4 || !battle_ ||
+                     !battle_->validate_stage(info.target_actor_id, int(dawnshard::integer(start))))) {
                     return Result::Fail;
                 }
                 if (!dawnshard::property(update, "UsePartySlot").is_null()) {
+                    if (battle_ && battle_->active())
+                        return Result::Fail;
                     auto merged = info.setter->actor_props;
                     for (const auto &[key, value] : update)
                         merged[key] = value;
@@ -171,6 +183,10 @@ class DawnshardRoomPlugin : public PluginBase {
                 snapshot_ = std::move(current);
             } else if (auto peer = game_->find_peer(info.target_actor_id)) {
                 players_[info.target_actor_id] = dawnshard::player(info.target_actor_id, peer->actor_props);
+                const auto &stage = dawnshard::property(*info.update, "GoToIngameState");
+                if (battle_ && !stage.is_null() &&
+                    dawnshard::property(peer->actor_props, "GoToIngameState") == stage)
+                    battle_->on_stage(info.target_actor_id, int(dawnshard::integer(stage)));
             }
             if (!closed_)
                 publish();
@@ -181,20 +197,23 @@ class DawnshardRoomPlugin : public PluginBase {
     }
 
     Result OnRaiseEvent(ser::OperationRequestMessage &, OnRaiseEventCallInfo &info) override {
-        // Preparation events are relayed normally. Combat and room reuse are gated.
+        // Server-only events cannot be forged by a client.
         switch (info.event.code) {
-        case 0x03:
         case 0x14:
         case 0x15:
         case 0x17:
-        case 0x18:
         case 0x3e:
-        case 0x3f:
         case 0x40:
-        case 0x43:
         case 0x44:
-        case 0x48:
             return Result::Cancel;
+        case 0x03:
+        case 0x18:
+        case 0x3f:
+        case 0x43:
+        case 0x48:
+            return !closed_ && battle_ && info.raiser && battle_->on_event(*info.raiser, info.event)
+                       ? Result::Continue
+                       : Result::Cancel;
         default:
             return closed_ ? Result::Cancel : Result::Continue;
         }
@@ -206,13 +225,33 @@ class DawnshardRoomPlugin : public PluginBase {
     }
 
   private:
+    void reopen() {
+        int previous_room_id = room_id_;
+        room_id_ = reserve_room_id();
+        room_ids.erase(previous_room_id);
+        game_->is_open = true;
+        game_->is_visible = true;
+        ser::Hashtable properties{{std::string("RoomId"), int32_t(room_id_)}};
+        game_->insert_game_props(properties);
+        auto event = game_->create_property_update_event(0, properties, 0);
+        event.receivers = uint8_t(ReceiverGroup::All);
+        game_->broadcast_event(event);
+        snapshot_ = dawnshard::room(game_->id, room_id_, game_->custom_props);
+        snapshot_["StartEntryTime"] = std::format(
+            "{:%FT%TZ}", std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now()));
+        publish();
+    }
+
     bool publish() {
+        if (battle_ && battle_->active())
+            return true;
         snapshot_["Players"] = dawnshard::Json::array();
         for (const auto &[id, player] : players_)
             snapshot_["Players"].push_back(player);
         return dawnshard::StatePublisher::instance().publish(game_->id, snapshot_);
     }
     int room_id_ = 0;
+    std::shared_ptr<dawnshard::BattleSession> battle_;
     bool closed_ = false;
     dawnshard::Json snapshot_;
     std::map<int, dawnshard::Json> players_;

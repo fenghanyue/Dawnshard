@@ -34,6 +34,17 @@ internal static class ServiceConfiguration
             return ConnectionMultiplexer.Connect(connectionString);
         });
         builder.Services.AddSingleton<IRedisConnectionProvider, RedisConnectionProvider>();
+        builder.Services.AddOptions<LuxonApiOptions>().BindConfiguration(nameof(LuxonApiOptions));
+        builder
+            .Services.AddHttpClient<LuxonApiClient>(client =>
+            {
+                client.Timeout = TimeSpan.FromSeconds(12);
+                client.MaxResponseContentBufferSize = 4 * 1024 * 1024;
+            })
+            .RemoveAllLoggers()
+            .ConfigurePrimaryHttpMessageHandler(() =>
+                new HttpClientHandler { AllowAutoRedirect = false, UseProxy = false }
+            );
 
         return builder;
     }
