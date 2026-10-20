@@ -1,4 +1,4 @@
-"""验证讨伐战改成单人时，活动菜单也改用单人入口。"""
+"""验证活动菜单的单人入口和原版大逃杀的关闭。"""
 
 import copy
 import unittest
@@ -19,7 +19,14 @@ class SoloRaidMenuTest(unittest.TestCase):
             "_Id": 20401, "_EventCharaId": 0,
             "_StartDate": "2018/10/04 06:00:00", "_EndDate": "2018/10/15 06:00:00",
             "_ViewCloseDate": "2018/10/22 06:00:00", "_ViewAnnounceDate": "", "_ViewNewDate": "",
+        }, {
+            "_Id": 22301, "_EventCharaId": 0,
+            "_StartDate": "2020/09/24 15:00:00", "_EndDate": "2030/12/31 05:59:59",
+            "_ViewCloseDate": "2030/12/31 05:59:59", "_ViewAnnounceDate": "", "_ViewNewDate": "",
         }])
+        self.tables["QuestEventGroup"] = table([
+            {"_Id": 22301, "_IsHideBanner": 0, "_ViewStartDate": "", "_ViewEndDate": ""},
+        ])
 
     def quest(self, quest_id, group_id=20401, dungeon_type=2):
         return {
@@ -69,6 +76,25 @@ class SoloRaidMenuTest(unittest.TestCase):
         self.assertEqual(changes["QuestEventMenu"], {1: {"_QuestSubType": 2}})
         client_master.make_edits(changes)["QuestEventMenu"](self.tables["QuestEventMenu"])
         self.assertEqual(list(client_master.rows(self.tables["QuestEventMenu"]))[1:], menus[1:])
+
+    def test_battle_royale_closes_even_without_scheduled_events(self):
+        original = copy.deepcopy(self.tables)
+        changes = client_master.plan_changes(self.tables, [], set())
+        for name, edit in client_master.make_edits(changes).items():
+            edit(self.tables[name])
+
+        event = list(client_master.rows(self.tables["EventData"]))[1]
+        self.assertEqual(event["_EndDate"], event["_StartDate"])
+        self.assertEqual(event["_ViewCloseDate"], event["_StartDate"])
+        self.assertEqual(list(client_master.rows(self.tables["QuestEventGroup"]))[0]["_IsHideBanner"], 1)
+        self.assertEqual(list(client_master.rows(self.tables["EventData"]))[0],
+                         list(client_master.rows(original["EventData"]))[0])
+        self.assertEqual(client_master.plan_changes(self.tables, [], set()), {})
+
+    def test_closed_battle_royale_cannot_be_reopened_by_scheduling(self):
+        run = client_master.EventRun(22301, self.run.start, self.run.end)
+        with self.assertRaisesRegex(SystemExit, "22301.*已停用"):
+            client_master.plan_changes(self.tables, [run], set())
 
 
 if __name__ == "__main__":
