@@ -21,6 +21,11 @@ on:
         description: "直接部署这个镜像、不重新编译（回滚时填以前的镜像，留空则编译当前代码）"
         required: false
         default: ""
+      disable_photon:
+        description: "停用联机试连（恢复默认联机地址，游戏健康后停止独立容器）"
+        type: boolean
+        required: false
+        default: false
 
 concurrency:
   group: tencent-deploy
@@ -71,6 +76,45 @@ jobs:
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
 
+  photon:
+    name: Build Luxon trial image
+    if: inputs.image == '' && !inputs.disable_photon
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ steps.name.outputs.image }}
+      digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Image name
+        id: name
+        run: echo "image=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/dragalia-photon:sha-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Build and push Luxon v1.5
+        id: build
+        uses: docker/build-push-action@v7
+        with:
+          context: deploy/tencent/photon
+          file: deploy/tencent/photon/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.name.outputs.image }}
+          cache-from: type=gha,scope=tencent-photon
+          cache-to: type=gha,mode=max,scope=tencent-photon
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+
   # 用资源站上的原版文件，把服务器部署时改手机端游戏数据表的流程完整跑一遍，出错就不部署
   client-data:
     name: Check client data
@@ -103,7 +147,7 @@ jobs:
 
   deploy:
     name: Deploy
-    needs: [build, client-data]
+    needs: [build, client-data, photon]
     if: >-
       ${{ !cancelled()
       && (needs.build.result == 'success' || needs.build.result == 'skipped')
@@ -142,4 +186,14 @@ jobs:
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           IMAGE: ${{ inputs.image || needs.build.outputs.image }}
           DIGEST: ${{ steps.digest.outputs.digest }}
-        run: /tmp/tc/bin/python deploy/tencent/tat_run.py --image "$IMAGE" --digest "$DIGEST"
+          PHOTON_IMAGE: ${{ needs.photon.outputs.image }}
+          PHOTON_DIGEST: ${{ needs.photon.outputs.digest }}
+          DISABLE_PHOTON: ${{ inputs.disable_photon }}
+        run: |
+          args=(--image "$IMAGE" --digest "$DIGEST")
+          if [ "$DISABLE_PHOTON" = true ]; then
+            args+=(--disable-photon)
+          elif [ -n "$PHOTON_IMAGE" ] && [ -n "$PHOTON_DIGEST" ]; then
+            args+=(--photon-image "$PHOTON_IMAGE" --photon-digest "$PHOTON_DIGEST")
+          fi
+          /tmp/tc/bin/python deploy/tencent/tat_run.py "${args[@]}"

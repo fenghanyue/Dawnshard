@@ -4,6 +4,8 @@
 # tat_run.py 会在本脚本前面加上这些变量：
 #   IMAGE         这次要运行的游戏服务器镜像（带 tag）
 #   IMAGE_DIGEST  可选，镜像的 digest（sha256:...），有了才会去国内镜像站拉
+#   PHOTON_IMAGE、PHOTON_DIGEST  可选，联机试连镜像；留空保留原服务和地址
+#   DISABLE_PHOTON  1 表示游戏健康后停用试连，恢复默认联机地址
 #   BUNDLE_B64    要发到服务器的文件打成的 tar.gz（base64），清单见 tat_run.py：
 #                 最外层是 /opt/dawnshard 的 compose 和配置，asset-cache/ 是资源缓存的配置，
 #                 client-master/ 是改手机端游戏数据表的脚本
@@ -60,29 +62,32 @@ rollback() {
 
 # 服务器上已经有这个镜像，并且就是这个 digest
 have_image() {
-    [ -n "${IMAGE_DIGEST:-}" ] \
-        && docker image inspect --format '{{join .RepoDigests "\n"}}' "$IMAGE" 2>/dev/null \
-        | grep -F "@$IMAGE_DIGEST" > /dev/null
+    local image="${1:-$IMAGE}" digest="${2:-${IMAGE_DIGEST:-}}"
+    [ -n "$digest" ] \
+        && docker image inspect --format '{{join .RepoDigests "\n"}}' "$image" 2>/dev/null \
+        | grep -F "@$digest" > /dev/null
 }
 
 # 按 digest 拉，docker 会校验内容，镜像站没法偷换
 pull_from_mirror() {
-    [ -n "${IMAGE_DIGEST:-}" ] && [[ "$IMAGE" == ghcr.io/* ]] || return 1
-    local repo="${IMAGE#ghcr.io/}"
-    local ref="$GHCR_MIRROR/${repo%:*}@$IMAGE_DIGEST"
+    local image="${1:-$IMAGE}" digest="${2:-${IMAGE_DIGEST:-}}"
+    [ -n "$digest" ] && [[ "$image" == ghcr.io/* ]] || return 1
+    local repo="${image#ghcr.io/}"
+    local ref="$GHCR_MIRROR/${repo%:*}@$digest"
     echo "从镜像站拉取 $ref"
-    timeout 600 docker pull --quiet "$ref" > /dev/null && docker tag "$ref" "$IMAGE"
+    timeout 600 docker pull --quiet "$ref" > /dev/null && docker tag "$ref" "$image"
 }
 
 pull_from_registry() {
+    local image="${1:-$IMAGE}"
     # 上次部署中途被掐断时会留下过期的登录，不清掉连公开镜像都拉不下来
     docker logout ghcr.io > /dev/null 2>&1 || true
     if [ -n "${GHCR_TOKEN:-}" ]; then
         printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "${GHCR_USER:-github}" --password-stdin > /dev/null
     fi
-    echo "直接拉取 $IMAGE"
+    echo "直接拉取 $image"
     local ok=1
-    docker pull --quiet "$IMAGE" > /dev/null || ok=0
+    docker pull --quiet "$image" > /dev/null || ok=0
     docker logout ghcr.io > /dev/null 2>&1 || true
     [ "$ok" = 1 ]
 }
@@ -102,6 +107,10 @@ fi
 new_dir=$(mktemp -d)
 trap 'rm -rf "$new_dir"' EXIT
 printf '%s' "$BUNDLE_B64" | base64 -d | tar -xz --no-same-owner -C "$new_dir"
+# 只生成待部署的联机配置；游戏通过健康检查之后，才启动独立的联机容器。
+# shellcheck source=deploy/tencent/photon/manage.sh
+source "$new_dir/photon/manage.sh"
+prepare_photon
 
 echo "== 2/7 生成手机端的游戏数据表"
 # 按 appsettings.Production.json 排的活动改数据表里的日期，生成新的资源版本，说明见 client-master/client_master.py
@@ -270,9 +279,10 @@ for _ in $(seq 1 60); do
     sleep 3
 done
 if [ "$healthy" != 1 ]; then
-    docker compose logs --tail 60 dragaliaapi >&2 || true
+    echo "详细日志请通过 TAT 查看，不输出到公开的 Actions 日志" >&2
     rollback "健康检查没通过"
 fi
 
+start_photon || true
 echo "部署完成：$IMAGE"
 docker compose ps --format 'table {{.Service}}\t{{.Image}}\t{{.Status}}'
