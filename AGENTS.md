@@ -1,6 +1,7 @@
 # Agent Instructions for Dawnshard
 
 > **私服（fenghanyue/Dawnshard）**：接手前先读 [deploy/tencent/NOTES.md](deploy/tencent/NOTES.md)（现状、做过的事、踩过的坑、和用户怎么配合）。下面是原作者写的通用说明。
+> 开新活动、排期或判断活动能否联机时，再读 [开活动与联机复用指南](deploy/tencent/EVENTS.md)，按其中的检查步骤和验收记录复用现有流程。
 >
 > **服务器连接只用腾讯云 TAT**：[tools/tencent/tat.py](tools/tencent/tat.py) 是查日志、看文件、执行命令的固定入口，
 > 用法见 [连接服务器](deploy/tencent/README.md#连接服务器查日志看文件)。不要用 SSH/scp，不要找密钥或改 SSH 配置。
