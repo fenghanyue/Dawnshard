@@ -26,6 +26,15 @@
 LICENSE
 README.md
 PhotonPlugin/
+!PhotonPlugin/DragaliaAPI.Photon.Plugin/
+!PhotonPlugin/DragaliaAPI.Photon.Plugin/Plugins/
+!PhotonPlugin/DragaliaAPI.Photon.Plugin/Plugins/GameLogic/
+!PhotonPlugin/DragaliaAPI.Photon.Plugin/Plugins/GameLogic/QuestHelper*.cs
+!PhotonPlugin/DragaliaAPI.Photon.Plugin/Plugins/GameLogic/HeroParamExData.cs
+!PhotonPlugin/DragaliaAPI.Photon.Plugin/Plugins/GameLogic/Events/
+!PhotonPlugin/DragaliaAPI.Photon.Plugin/Plugins/GameLogic/Events/EventBase.cs
+!PhotonPlugin/DragaliaAPI.Photon.Plugin/Plugins/GameLogic/Events/PartyEvent.cs
+!PhotonPlugin/DragaliaAPI.Photon.Plugin/Plugins/GameLogic/Events/CharacterData.cs
 **/*.Test/
 **/logs
 **/.pnpm-store
@@ -39,4 +48,5 @@ PhotonPlugin/
 work/
 !deploy/tencent/photon/rooms/tests/
 !deploy/tencent/photon/rooms/tests/*.cpp
+!deploy/tencent/photon/rooms/tests/*.py
 !LICENSE

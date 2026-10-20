@@ -11,6 +11,7 @@ on:
       - DragaliaAPI/**
       - Shared/**
       - PhotonStateManager/**
+      - PhotonPlugin/DragaliaAPI.Photon.Plugin/Plugins/GameLogic/**
       - Directory.Packages.props
       - deploy/tencent/**
       - .github/workflows/tencent-deploy.yaml
@@ -78,7 +79,7 @@ jobs:
             org.opencontainers.image.revision=${{ github.sha }}
 
   photon:
-    name: Build Luxon room preparation image
+    name: Build Luxon co-op image
     if: inputs.image == '' && !inputs.disable_photon
     runs-on: ubuntu-latest
     permissions:

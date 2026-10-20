@@ -1,3 +1,4 @@
+#include "battle_http.hpp"
 #include "room_data.hpp"
 #include <chrono>
 #include <curl/curl.h>
@@ -25,6 +26,7 @@ struct Client {
     std::vector<ser::EventMessage> events;
     bool encrypted = false;
     bool initialized = false;
+    int actor_id = 0;
 
     Client(const std::string &host, uint16_t port) : peer(luxon::enet::EnetPeerConfig{}) {
         peer.on_payload_command = [this](const luxon::enet::EnetCommand &command) {
@@ -48,10 +50,12 @@ struct Client {
         };
         require(peer.connect(socket, host, port), "UDP connect failed");
     }
-    void send(const ser::Message &message) {
+    void send(const ser::Message &message, bool reliable = true) {
         auto data = protocol.Serialize(message);
         require(bool(data), "Cannot serialize request");
-        require(peer.send_payload(*data, {.channel = 0, .mode = luxon::enet::EnetDeliveryMode::Reliable}),
+        require(peer.send_payload(*data, {.channel = 0,
+                                          .mode = reliable ? luxon::enet::EnetDeliveryMode::Reliable
+                                                           : luxon::enet::EnetDeliveryMode::Unreliable}),
                 "Peer was not connected");
     }
     void tick() {
@@ -164,10 +168,12 @@ class Scenario {
             ser::Hashtable{{std::string("C0"), int32_t(301010103)},
                            {std::string("MatchingCompatibleId"), int32_t(36)},
                            {std::string("MatchingType"), int32_t(1)}});
-        request(
+        auto joined = request(
             game, create ? 227 : 226,
             {{255, name}, {249, actor}, {248, properties}, {204, std::vector<std::string>{"GluonPlugin"}}},
             accepted);
+        if (accepted)
+            game.actor_id = int(dawnshard::integer(joined.parameters.at(254)));
         return game;
     }
     Json get(const std::string &path, long &status) {
@@ -190,16 +196,108 @@ class Scenario {
             return nullptr;
         return Json::parse(body);
     }
-    Json wait_room(int count) {
+    Json wait_room(int count, int viewer = 101) {
         Json room;
         until(
             [&] {
                 long status;
-                room = get("/Get/ByViewerId/101", status);
+                room = get("/Get/ByViewerId/" + std::to_string(viewer), status);
                 return status == 200 && room["players"].size() == static_cast<size_t>(count);
             },
             "Room state did not converge");
         return room;
+    }
+    void stage(Client &client, int value, bool accepted = true) {
+        auto props = std::make_shared<ser::Hashtable>(
+            ser::Hashtable{{std::string("GoToIngameState"), int32_t(value)}});
+        try {
+            request(client, 252, {{251, props}, {254, int32_t(client.actor_id)}}, accepted);
+        } catch (const std::exception &error) {
+            throw std::runtime_error("Actor " + std::to_string(client.actor_id) + " stage " +
+                                     std::to_string(value) + ": " + error.what());
+        }
+    }
+    void raise(Client &client, uint8_t code, ser::ByteArray data, bool reliable = true) {
+        client.send(
+            ser::Message(ser::OperationRequestMessage{253, {{244, code}, {245, std::move(data)}}}, true),
+            reliable);
+    }
+    size_t events(const Client &client, uint8_t code, bool server_only = true) const {
+        return std::ranges::count_if(client.events, [&](const auto &event) {
+            if (event.event_code != code)
+                return false;
+            auto sender = event.parameters.find(254);
+            return !server_only ||
+                   (sender != event.parameters.end() && dawnshard::integer(sender->second) == 0);
+        });
+    }
+    ser::ByteArray event_data(const Client &client, uint8_t code) const {
+        for (auto it = client.events.rbegin(); it != client.events.rend(); ++it)
+            if (it->event_code == code && dawnshard::integer(it->parameters.at(254)) == 0)
+                return it->parameters.at(245).get<ser::ByteArray>();
+        throw std::runtime_error("Missing expected server event");
+    }
+    void pause(int milliseconds) {
+        auto deadline = Clock::now() + std::chrono::milliseconds(milliseconds);
+        while (Clock::now() < deadline)
+            pump();
+    }
+    void load(Client &host, Client &guest) {
+        host.events.clear();
+        guest.events.clear();
+        stage(guest, 1, false);
+        stage(host, 1);
+        stage(guest, 1);
+        stage(host, 2);
+        stage(guest, 2);
+        stage(host, 3);
+        stage(guest, 3);
+        until([&] { return events(host, 0x3e) && events(guest, 0x3e); },
+              "Party allocation was not delivered");
+        stage(host, 4);
+        pause(50);
+        require(events(host, 0x14) == 0, "Character data sent before both clients reached stage 4");
+        stage(guest, 4);
+        until([&] { return events(host, 0x14) == 2 && events(guest, 0x14) == 2; },
+              "Character data was not delivered");
+        for (const auto &event : host.events) {
+            if (event.event_code != 0x14)
+                continue;
+            auto data = dawnshard::decode_messagepack(event.parameters.at(245).get<ser::ByteArray>(), 65536);
+            require(data.is_array() && data.size() == 5 && data[2].size() == 2 && data[4].size() == 4,
+                    "Two-player character/AI allocation did not match the original wire format");
+            require(data[2][0].size() == 161 && data[2][0][0] == 80 && data[2][0][93] == 1.25,
+                    "Hero parameter wire fields were not preserved");
+        }
+        raise(host, 0x03, Json::to_msgpack(Json::array({1})));
+        pause(60);
+        require(events(host, 0x15) == 0 && events(guest, 0x15) == 0,
+                "Battle started before guest finished loading");
+        raise(guest, 0x03, Json::to_msgpack(Json::array({1})));
+        until([&] { return events(host, 0x15) == 1 && events(guest, 0x15) == 1; },
+              "Battle did not start after both Ready events");
+        raise(guest, 0x03, Json::to_msgpack(Json::array({1})));
+        pause(50);
+        require(events(host, 0x15) == 1, "Duplicate Ready restarted battle");
+    }
+    int record_count(int viewer) {
+        CURL *curl = curl_easy_init();
+        std::string body;
+        std::string url =
+            std::string(std::getenv("LUXON_TEST_API_URL")) + "/records/" + std::to_string(viewer);
+        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+        curl_easy_setopt(curl, CURLOPT_PROXY, "");
+        curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS, 2000L);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &body);
+        curl_easy_setopt(
+            curl, CURLOPT_WRITEFUNCTION, +[](char *data, size_t size, size_t count, void *target) -> size_t {
+                static_cast<std::string *>(target)->append(data, size * count);
+                return size * count;
+            });
+        auto code = curl_easy_perform(curl);
+        curl_easy_cleanup(curl);
+        require(code == CURLE_OK, "Test game API unavailable");
+        return std::stoi(body);
     }
 };
 
@@ -245,7 +343,7 @@ int main() {
 
         auto start =
             std::make_shared<ser::Hashtable>(ser::Hashtable{{std::string("GoToIngameState"), int32_t(1)}});
-        scenario.request(host, 252, {{251, start}, {254, int32_t(1)}}, false);
+        scenario.request(guest, 252, {{251, start}, {254, int32_t(guest.actor_id)}}, false);
         scenario.leave(guest);
         scenario.wait_room(3);
         scenario.leave(host);
@@ -266,6 +364,125 @@ int main() {
             "Remaining guest did not receive RoomBroken");
         std::cout
             << "UDP 1.6 encryption, Master/Game handoff, room state, privacy, capacity and close passed\n";
+
+        if (!std::getenv("LUXON_TEST_API_URL"))
+            return 0;
+        auto &battle_host = scenario.join("luxon-battle-smoke", 201, true);
+        auto &battle_guest = scenario.join("luxon-battle-smoke", 202, false);
+        auto battle_room = scenario.wait_room(2, 201);
+        int battle_id = battle_room["roomId"];
+        scenario.load(battle_host, battle_guest);
+        scenario.until(
+            [&] {
+                long code;
+                scenario.get("/Get/ById/" + std::to_string(battle_id), code);
+                return code == 404;
+            },
+            "In-progress room remained joinable through room list");
+        scenario.join("luxon-battle-smoke", 203, false, false);
+        for (bool reliable : {true, false}) {
+            auto count = scenario.events(battle_guest, 0x01, false);
+            scenario.raise(battle_host, 0x01, {1, 2, 3, 4}, reliable);
+            scenario.until([&] { return scenario.events(battle_guest, 0x01, false) > count; },
+                           "Battle action was not relayed");
+        }
+        auto start_count = scenario.events(battle_host, 0x15, false);
+        scenario.raise(battle_guest, 0x15, {0x80});
+        scenario.pause(50);
+        require(scenario.events(battle_host, 0x15, false) == start_count,
+                "Client forged a server StartQuest event");
+
+        auto clear_payload = [](int viewer) {
+            auto record = Json::to_msgpack(Json{{"dungeon_key", "smoke-" + std::to_string(viewer)},
+                                                {"is_host", false},
+                                                {"member_count", 99},
+                                                {"connecting_viewer_id_list", Json::array({99999})}});
+            return Json::to_msgpack(Json::array({1, Json::binary(record)}));
+        };
+        scenario.raise(battle_host, 0x3f, clear_payload(201));
+        scenario.raise(battle_host, 0x3f, clear_payload(201));
+        scenario.until([&] { return scenario.events(battle_host, 0x40) > 0; },
+                       "Host quest result not delivered");
+        require(scenario.events(battle_guest, 0x40) == 0, "Host quest result leaked to guest");
+        auto host_result = dawnshard::decode_messagepack(scenario.event_data(battle_host, 0x40), 65536);
+        auto host_record = Json::from_msgpack(host_result[1].get_binary());
+        require(host_record["test_api_viewer"] == 201 && host_record["is_host"] == true &&
+                    host_record["member_count"] == 2 &&
+                    host_record["connecting_viewer_id_list"] == Json::array({202}),
+                "Host clear request was not augmented from server state");
+        auto returned = scenario.events(battle_host, 0x40);
+        scenario.raise(battle_host, 0x3f, clear_payload(201));
+        scenario.until([&] { return scenario.events(battle_host, 0x40) > returned; },
+                       "Duplicate clear did not replay cached result");
+        require(scenario.record_count(201) == 1, "Duplicate clear wrote rewards more than once");
+        scenario.raise(battle_guest, 0x3f, clear_payload(202));
+        scenario.until([&] { return scenario.events(battle_guest, 0x40) > 0; },
+                       "Guest quest result not delivered");
+        auto guest_result = dawnshard::decode_messagepack(scenario.event_data(battle_guest, 0x40), 65536);
+        auto guest_record = Json::from_msgpack(guest_result[1].get_binary());
+        require(guest_record["test_api_viewer"] == 202 && guest_record["is_host"] == false &&
+                    guest_record["member_count"] == 2 &&
+                    guest_record["connecting_viewer_id_list"] == Json::array({201}),
+                "Guest clear used another actor's identity");
+        require(scenario.record_count(202) == 1, "Guest result was submitted more than once");
+        scenario.raise(battle_host, 0x18, {0x80});
+        auto reopened = scenario.wait_room(2, 201);
+        require(reopened["roomId"] != battle_id, "Room number was not renewed after clear");
+
+        // Load a second battle and exercise the failure responses independently.
+        scenario.load(battle_host, battle_guest);
+        scenario.raise(battle_host, 0x43, Json::to_msgpack(Json::array({1, 0})));
+        scenario.raise(battle_guest, 0x43, Json::to_msgpack(Json::array({1, 1})));
+        scenario.until(
+            [&] { return scenario.events(battle_host, 0x44) && scenario.events(battle_guest, 0x44); },
+            "Quest failure not acknowledged");
+        require(dawnshard::decode_messagepack(scenario.event_data(battle_host, 0x44), 1024)[1] == 0,
+                "Timeup response mismatch");
+        require(dawnshard::decode_messagepack(scenario.event_data(battle_guest, 0x44), 1024)[1] == 1,
+                "AllDead response mismatch");
+        scenario.leave(battle_guest);
+        scenario.leave(battle_host);
+
+        auto &error_host = scenario.join("luxon-http-failure", 991, true);
+        auto &error_guest = scenario.join("luxon-http-failure", 999, false);
+        scenario.wait_room(2, 991);
+        scenario.stage(error_host, 1);
+        scenario.stage(error_guest, 1);
+        scenario.stage(error_host, 2);
+        scenario.stage(error_guest, 2);
+        scenario.until(
+            [&] { return scenario.events(error_host, 0x17) && scenario.events(error_guest, 0x17); },
+            "Preparation API failure did not close the room");
+        require(!scenario.events(error_host, 0x15), "Battle started without role data");
+        scenario.leave(error_guest);
+        scenario.leave(error_host);
+        auto &record_host = scenario.join("luxon-record-failure", 997, true);
+        auto &record_guest = scenario.join("luxon-record-failure", 998, false);
+        scenario.wait_room(2, 997);
+        scenario.load(record_host, record_guest);
+        scenario.raise(record_guest, 0x3f, clear_payload(998));
+        scenario.until([&] { return scenario.events(record_guest, 0x17) > 0; },
+                       "Record API failure did not report room failure");
+        require(scenario.events(record_guest, 0x40) == 0,
+                "Failed API call fabricated a successful quest result");
+        scenario.raise(record_guest, 0x3f, clear_payload(998));
+        scenario.pause(100);
+        require(scenario.record_count(998) == 1, "Failed reward write was automatically retried");
+        scenario.leave(record_guest);
+        scenario.leave(record_host);
+
+        auto &leaving_host = scenario.join("luxon-loading-leave", 901, true);
+        auto &leaving_guest = scenario.join("luxon-loading-leave", 902, false);
+        scenario.wait_room(2, 901);
+        scenario.stage(leaving_host, 1);
+        scenario.stage(leaving_guest, 1);
+        scenario.leave(leaving_guest);
+        scenario.until([&] { return scenario.events(leaving_host, 0x17) > 0; },
+                       "Loading continued after roster changed");
+        require(scenario.events(leaving_host, 0x15) == 0, "Loading disconnect incorrectly started battle");
+        scenario.leave(leaving_host);
+        std::cout << "Two-player loading, Ready barrier, reliable/unreliable actions, isolated results, "
+                     "duplicate clear, room reuse and failure handling passed (synthetic game API)\n";
         return 0;
     } catch (const std::exception &error) {
         std::cerr << "Room UDP smoke failed: " << error.what() << '\n';

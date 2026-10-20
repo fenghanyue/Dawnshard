@@ -28,6 +28,7 @@ COPY Directory.Packages.props nuget.config ./
 COPY PhotonStateManager/DragaliaAPI.Photon.StateManager/ PhotonStateManager/DragaliaAPI.Photon.StateManager/
 COPY Aspire/Dawnshard.ServiceDefaults/ Aspire/Dawnshard.ServiceDefaults/
 COPY Shared/DragaliaAPI.Photon.Shared/ Shared/DragaliaAPI.Photon.Shared/
+COPY PhotonPlugin/DragaliaAPI.Photon.Plugin/Plugins/GameLogic/ PhotonPlugin/DragaliaAPI.Photon.Plugin/Plugins/GameLogic/
 RUN --mount=type=secret,id=ca_bundle \
     if [ -f /run/secrets/ca_bundle ]; then cat /run/secrets/ca_bundle >> /etc/ssl/certs/ca-certificates.crt; fi; \
     dotnet publish PhotonStateManager/DragaliaAPI.Photon.StateManager -c Release -o /publish /p:UseAppHost=false -m:1
@@ -68,5 +69,12 @@ HEALTHCHECK --interval=5s --timeout=3s --start-period=20s --retries=5 \
 ENTRYPOINT ["bash", "/usr/local/bin/rooms-entrypoint"]
 
 FROM final AS verification
+USER root
+RUN --mount=type=secret,id=ca_bundle \
+    if [ -f /run/secrets/ca_bundle ]; then export SSL_CERT_FILE=/run/secrets/ca_bundle; fi; \
+    apt-get -o Acquire::https::CaInfo="${SSL_CERT_FILE:-/etc/ssl/certs/ca-certificates.crt}" update && \
+    apt-get -y install --no-install-recommends python3 python3-msgpack && rm -rf /var/lib/apt/lists/*
 COPY --chmod=0755 --from=native-checks /out/room_protocol_test /out/room_udp_test /checks/
+COPY --chmod=0644 deploy/tencent/photon/rooms/tests/fake_game_api.py /checks/fake_game_api.py
+USER 65532:65532
 ENTRYPOINT ["/checks/room_udp_test"]

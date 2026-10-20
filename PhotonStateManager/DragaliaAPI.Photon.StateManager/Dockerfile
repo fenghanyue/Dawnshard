@@ -16,6 +16,7 @@ COPY [".editorconfig", ".editorconfig"]
 COPY ["PhotonStateManager/", "PhotonStateManager/"]
 COPY ["Aspire/", "Aspire/"]
 COPY ["Shared/", "Shared/"]
+COPY ["PhotonPlugin/DragaliaAPI.Photon.Plugin/Plugins/GameLogic/", "PhotonPlugin/DragaliaAPI.Photon.Plugin/Plugins/GameLogic/"]
 WORKDIR "/src/PhotonStateManager/DragaliaAPI.Photon.StateManager"
 RUN dotnet publish "DragaliaAPI.Photon.StateManager.csproj" -c Release -o /app/publish/ /p:UseAppHost=false
 

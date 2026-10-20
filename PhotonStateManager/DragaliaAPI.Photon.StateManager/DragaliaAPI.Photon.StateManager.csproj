@@ -29,4 +29,31 @@
   <ItemGroup>
     <None Remove="..\.dockerignore" />
   </ItemGroup>
+  <!-- Keep the established MessagePack wire types shared with the original plugin. -->
+  <ItemGroup>
+    <Compile
+      Include="../../PhotonPlugin/DragaliaAPI.Photon.Plugin/Plugins/GameLogic/Events/EventBase.cs"
+      Link="LuxonProtocol/EventBase.cs"
+    />
+    <Compile
+      Include="../../PhotonPlugin/DragaliaAPI.Photon.Plugin/Plugins/GameLogic/Events/PartyEvent.cs"
+      Link="LuxonProtocol/PartyEvent.cs"
+    />
+    <Compile
+      Include="../../PhotonPlugin/DragaliaAPI.Photon.Plugin/Plugins/GameLogic/Events/CharacterData.cs"
+      Link="LuxonProtocol/CharacterData.cs"
+    />
+    <Compile
+      Include="../../PhotonPlugin/DragaliaAPI.Photon.Plugin/Plugins/GameLogic/HeroParamExData.cs"
+      Link="LuxonProtocol/HeroParamExData.cs"
+    />
+    <Compile
+      Include="../../PhotonPlugin/DragaliaAPI.Photon.Plugin/Plugins/GameLogic/QuestHelper.cs"
+      Link="LuxonProtocol/QuestHelper.cs"
+    />
+    <Compile
+      Include="../../PhotonPlugin/DragaliaAPI.Photon.Plugin/Plugins/GameLogic/QuestHelper.Data.cs"
+      Link="LuxonProtocol/QuestHelper.Data.cs"
+    />
+  </ItemGroup>
 </Project>

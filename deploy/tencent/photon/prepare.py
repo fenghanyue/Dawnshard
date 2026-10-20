@@ -14,6 +14,18 @@ HERE = Path(__file__).resolve().parent
 METADATA_URL = "http://metadata.tencentyun.com/latest/meta-data/public-ipv4"
 
 
+def env_setting(env_file: Path, name: str) -> str | None:
+    result = None
+    for line in env_file.read_text().splitlines():
+        key, separator, value = line.strip().partition("=")
+        if separator and key.strip().casefold() == name.casefold():
+            fields = shlex.split(value, comments=True)
+            if len(fields) > 1:
+                raise ValueError("invalid environment setting")
+            result = fields[0] if fields else ""
+    return result
+
+
 def public_host(env_file: Path) -> str:
     configured = None
     for line in env_file.read_text().splitlines():
@@ -84,12 +96,37 @@ def prepare(
             )
             if not re.fullmatch(r"[0-9a-f]{64}", token):
                 raise ValueError("invalid room token")
+            old_options = (
+                json.loads(previous.read_text(encoding="utf-8-sig")).get(
+                    "PhotonOptions", {}
+                )
+                if previous.is_file()
+                else {}
+            )
+            api_token = (
+                env_setting(env_file, "PhotonOptions__Token")
+                or options.get("Token")
+                or old_options.get("Token")
+                or secrets.token_hex(32)
+            )
+            if (
+                not isinstance(api_token, str)
+                or not api_token
+                or len(api_token) > 512
+                or any(char.isspace() for char in api_token)
+            ):
+                raise ValueError("invalid API token")
+            options["Token"] = api_token
             (output / "photon-token").write_text(token + "\n")
             (output / "state-settings.json").write_text(
                 json.dumps(
                     {
                         "PhotonOptions": {"Token": token},
                         "ConnectionStrings": {"Redis": "redis:6379"},
+                        "LuxonApiOptions": {
+                            "BaseUrl": "http://dragaliaapi:8080/2.19.0_20220714193707/",
+                            "Token": api_token,
+                        },
                     }
                 )
                 + "\n"
@@ -105,7 +142,7 @@ def prepare(
             if previous.is_file()
             else {}
         )
-        for key in ("ServerUrl", "StateManagerUrl"):
+        for key in ("ServerUrl", "StateManagerUrl", "Token"):
             if mode == "restore":
                 options.pop(key, None)
             value = old.get("PhotonOptions", {}).get(key)

@@ -83,7 +83,7 @@ start_photon() {
         photon_compose config --quiet && photon_compose up -d --force-recreate --pull never --wait --wait-timeout 40
     ) > "$PHOTON_DIR/deploy.log" 2>&1; then
         rm -rf "$previous"
-        echo "联机服务已启动，容器健康检查通过；仍需手机验证准备界面"
+        echo "联机服务已启动，容器健康检查通过；仍需手机验证进图和通关"
         return
     fi
     # 联机单独回退，不回滚已经健康的游戏服务器。
