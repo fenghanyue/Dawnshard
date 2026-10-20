@@ -36,3 +36,7 @@ PhotonPlugin/
 **/dist
 !Website/.env
 !Website/.env.production
+work/
+!deploy/tencent/photon/rooms/tests/
+!deploy/tencent/photon/rooms/tests/*.cpp
+!LICENSE

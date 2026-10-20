@@ -77,22 +77,31 @@ python3 -m venv /tmp/dawnshard-tat
 工具位于 `tools/`，只改工具和说明文档不会触发游戏服务器自动部署。
 修改工具后可运行 `python3 -m unittest discover -s tools/tencent -v` 做离线检查，再用上面的只读命令验证连接。
 
-## 联机第一步：Luxon 试连（#20）
+## 联机：Luxon 试连与房间准备（#20）
 
-这一阶段只验证手机能否连接、发起建房，还没有龙约专用插件和房间管理服务，不能开始战斗。
-固定使用 [LuxonServer v1.5](https://github.com/niansa/LuxonServer/releases/tag/v1.5) 的静态 Linux x86_64 程序，
-构建时核对 SHA-256；镜像以普通用户运行，保留上游 BSD-3 许可证。
+第一步已由手机验证：连接、加密、认证、服务端创建并加入房间均成功，随后因缺少房间插件而超时。
+原来的固定发布版保留在 `photon/Dockerfile`，便于复现这一结果。
+
+第二步只实现普通联机关卡的房间准备：七位房间号、玩家信息、四人上限、公开/凭编号查房、进出房和房主退出通知。
+`photon/Dockerfile.rooms` 固定编译 [LuxonServer v1.5](https://github.com/niansa/LuxonServer/releases/tag/v1.5)
+（`e4bab98d8d6b3aee9ecf4035309a78a59b584f93`）及其指定的协议子模块，以原生 C++ 注册客户端要求的 `GluonPlugin`。
+同一个独立容器运行 Luxon 和 PhotonStateManager，任一进程退出就重启整个房间服务。
+**这一步没有开战、结算和自动匹配逻辑，必须先由手机确认能稳定停留在准备界面。** 详情见 [房间插件说明](photon/rooms/README.md)。
 
 正常部署会单独构建 `dragalia-photon` 镜像，先按 digest 从南京大学镜像站拉，失败再按 digest 从 ghcr.io 拉。
 联机镜像构建失败、下载失败或无法取得地址时，游戏照常部署，保留之前的联机地址。
 游戏健康检查通过以后才启动独立 compose 项目 `dawnshard-photon`，目录为 `/opt/dawnshard/photon`。
-联机启动失败只回退联机容器、发出警告，不回滚已经健康的游戏服务器。
+联机启动失败会回退联机容器，同时恢复原联机地址和房间列表地址，再重建游戏容器使配置生效。
+新游戏镜像保持不变；恢复配置后游戏仍不健康才执行原有的游戏版本回滚。
 
 公网地址只在服务器上确定：优先读取现有 `.env` 里的 `PHOTON_PUBLIC_HOST`，没有则查询腾讯云元数据服务。
 `PHOTON_PUBLIC_HOST` 可以是 IPv4 或域名，不带协议和端口；无需为了首次部署编辑 `.env`。
 地址会写入服务器上生成的 `photon/config.yml` 和 `appsettings.Production.json` 的 `PhotonOptions.ServerUrl`，
 与设置 `PhotonOptions__ServerUrl` 的作用相同。不要同时在 `.env` 中另设 `PhotonOptions__ServerUrl` 覆盖它。
-地址、配置文件和联机日志不进仓库、issue、PR，也不输出到 Actions。管理页只监听 `127.0.0.1:5088`。
+房间列表地址为 Docker 内部的 `http://photon-rooms:5089`，不发布这个 HTTP 端口；管理页只监听容器里的 `127.0.0.1:5088`。
+联机容器加入现有 `dawnshard_default` 网络，只发布 UDP 5055/5056。
+首次配置会在私有的 `/opt/dawnshard/photon` 目录生成共享令牌，后续部署复用；不修改现有 `.env`。
+地址、令牌、配置文件和联机日志不进仓库、issue、PR，也不输出到 Actions。
 
 第一次手机验证前，用户在轻量服务器控制台的防火墙添加允许规则：UDP 5055、5056，来源为全部 IPv4。
 不需要开 5058、27000–27002 或管理页的端口。
@@ -106,8 +115,8 @@ python3 tools/tencent/tat.py -c 'docker compose --project-directory /opt/dawnsha
 python3 tools/tencent/tat.py -c 'tail -n 80 /opt/dawnshard/photon/deploy.log'
 ```
 
-看手机是否依次到达主服务器连接、认证、请求创建带 `GluonPlugin` 的房间、转到 5056。
-发布版尚未接上插件，创建房间被拒绝也是有价值的试连结果，不能因此标记为“能联机打关”。
+手机验证：彻底退出重开，进入普通联机关卡建房；应显示七位房间号，并在准备界面停留至少一分钟。
+再让朋友凭编号进入，检查双方人物显示、队员退出、房主退出。暂时不要按开始，不把房间成功当成能打关。
 
 只回滚游戏镜像：照旧填写 Actions 的 `image`，联机容器和地址保持原样。
 停用试连：在 **Deploy to Tencent Cloud** 中填写当前游戏镜像，勾选 `disable_photon`；
@@ -115,7 +124,7 @@ python3 tools/tencent/tat.py -c 'tail -n 80 /opt/dawnshard/photon/deploy.log'
 若完整撤回功能，先停用，再开 PR 撤回改动，请用户关掉两个 UDP 端口。
 单次停用后，后续普通部署会重新启用试连。
 
-PR 检查会验证失败回退、日志不泄露地址、回滚保留地址、TAT 包大小，并构建镜像、检查两个 UDP 服务启动及本机健康页。
+PR 检查会验证失败回退、日志不泄露地址、回滚保留地址、TAT 包大小，并在 Redis 8 上使用实际镜像完成加密 UDP 建房、进出、权限和 65 秒房间续期检查。
 本地检查：
 
 ```bash

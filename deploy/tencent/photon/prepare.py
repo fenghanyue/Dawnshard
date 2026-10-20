@@ -5,6 +5,7 @@ import ipaddress
 import json
 import re
 import shlex
+import secrets
 import sys
 import urllib.request
 from pathlib import Path
@@ -46,7 +47,13 @@ def public_host(env_file: Path) -> str:
 
 
 def prepare(
-    mode: str, settings: Path, previous: Path, env_file: Path, output: Path, image: str
+    mode: str,
+    settings: Path,
+    previous: Path,
+    env_file: Path,
+    output: Path,
+    image: str,
+    rooms: bool = False,
 ):
     data = json.loads(settings.read_text(encoding="utf-8-sig"))
     options = data.setdefault("PhotonOptions", {})
@@ -59,22 +66,54 @@ def prepare(
         )
         if not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9._/@:-]+", image):
             raise ValueError("invalid image")
-        compose = (
-            (HERE / "docker-compose.yml").read_text().replace("__PHOTON_IMAGE__", image)
-        )
-        output.mkdir(parents=True, exist_ok=True)
+        template = "docker-compose.rooms.yml" if rooms else "docker-compose.yml"
+        compose = (HERE / template).read_text().replace("__PHOTON_IMAGE__", image)
+        output.mkdir(parents=True, exist_ok=True, mode=0o700)
+        output.chmod(0o700)
         (output / "config.yml").write_text(config)
         (output / "docker-compose.yml").write_text(compose)
         for name in ("config.yml", "docker-compose.yml"):
             (output / name).chmod(0o644)
         options["ServerUrl"] = f"{host}:5055"
-    elif mode == "keep" and previous.is_file():
-        old = json.loads(previous.read_text(encoding="utf-8-sig"))
-        server_url = old.get("PhotonOptions", {}).get("ServerUrl")
-        if server_url:
-            options["ServerUrl"] = server_url
+        if rooms:
+            old_token = env_file.parent / "photon/photon-token"
+            token = (
+                old_token.read_text().strip()
+                if old_token.is_file()
+                else secrets.token_hex(32)
+            )
+            if not re.fullmatch(r"[0-9a-f]{64}", token):
+                raise ValueError("invalid room token")
+            (output / "photon-token").write_text(token + "\n")
+            (output / "state-settings.json").write_text(
+                json.dumps(
+                    {
+                        "PhotonOptions": {"Token": token},
+                        "ConnectionStrings": {"Redis": "redis:6379"},
+                    }
+                )
+                + "\n"
+            )
+            # Only root can traverse the parent directory; the non-root container can
+            # read the individual bind mounts without changing the existing .env.
+            for name in ("photon-token", "state-settings.json"):
+                (output / name).chmod(0o644)
+            options["StateManagerUrl"] = "http://photon-rooms:5089"
+    elif mode in ("keep", "restore"):
+        old = (
+            json.loads(previous.read_text(encoding="utf-8-sig"))
+            if previous.is_file()
+            else {}
+        )
+        for key in ("ServerUrl", "StateManagerUrl"):
+            if mode == "restore":
+                options.pop(key, None)
+            value = old.get("PhotonOptions", {}).get(key)
+            if value:
+                options[key] = value
     elif mode == "disable":
         options.pop("ServerUrl", None)
+        options.pop("StateManagerUrl", None)
     if not options:
         data.pop("PhotonOptions", None)
     settings.write_text(json.dumps(data, ensure_ascii=False, indent=4) + "\n")
@@ -83,13 +122,14 @@ def prepare(
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--mode", choices=["configure", "keep", "disable"], required=True
+        "--mode", choices=["configure", "keep", "restore", "disable"], required=True
     )
     parser.add_argument("--settings", type=Path, required=True)
     parser.add_argument("--previous", type=Path, required=True)
     parser.add_argument("--env-file", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--image", default="")
+    parser.add_argument("--rooms", action="store_true")
     args = parser.parse_args()
     try:
         prepare(
@@ -99,6 +139,7 @@ def main() -> int:
             args.env_file,
             args.output,
             args.image,
+            args.rooms,
         )
     except Exception:
         # 网络异常和配置异常可能带地址，不把异常或 traceback 发到公开的 Actions 日志。

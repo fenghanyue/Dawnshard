@@ -90,6 +90,7 @@ elif args[0]=='compose' and '--project-directory' in args and 'photon' in args[a
             "",
             "ghcr.io/example/photon:test",
             "sha256:" + "b" * 64,
+            photon_rooms=True,
         )
         result = subprocess.run(
             ["bash"], input=script, env=env, capture_output=True, text=True, timeout=15
@@ -108,14 +109,20 @@ elif args[0]=='compose' and '--project-directory' in args and 'photon' in args[a
         self.assertNotIn("private-sentinel", result.stdout + result.stderr)
         self.assertFalse(any("logs" in call for call in calls))
 
-    def test_photon_failure_keeps_healthy_game_and_stops_failed_first_container(self):
+    def test_photon_failure_restores_urls_and_stops_failed_first_container(self):
         result, app, calls, _ = self.run_deploy(photon_healthy=False)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual(
             json.loads((app / "appsettings.Production.json").read_text())[
                 "PhotonOptions"
             ]["ServerUrl"],
-            "private-sentinel.example:5055",
+            "previous.example:5055",
+        )
+        self.assertNotIn(
+            "StateManagerUrl",
+            json.loads((app / "appsettings.Production.json").read_text())[
+                "PhotonOptions"
+            ],
         )
         game_starts = [
             i for i, call in enumerate(calls) if "up" in call and "dragaliaapi" in call
@@ -123,11 +130,34 @@ elif args[0]=='compose' and '--project-directory' in args and 'photon' in args[a
         photon_starts = [
             i for i, call in enumerate(calls) if "up" in call and "--wait" in call
         ]
-        self.assertEqual(len(game_starts), 1)
+        self.assertEqual(len(game_starts), 2)
         self.assertLess(game_starts[0], photon_starts[0])
         self.assertTrue(any("down" in call for call in calls))
         self.assertNotIn("private-sentinel", result.stdout + result.stderr)
         self.assertIn("private-sentinel", (app / "photon/deploy.log").read_text())
+
+    def test_room_deployment_connects_private_list_service_after_game_is_healthy(self):
+        result, app, calls, _ = self.run_deploy()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        options = json.loads((app / "appsettings.Production.json").read_text())[
+            "PhotonOptions"
+        ]
+        self.assertEqual(options["StateManagerUrl"], "http://photon-rooms:5089")
+        state = json.loads((app / "photon/state-settings.json").read_text())
+        token = (app / "photon/photon-token").read_text().strip()
+        self.assertEqual(state["PhotonOptions"]["Token"], token)
+        self.assertEqual(len(token), 64)
+        self.assertNotIn(
+            token, result.stdout + result.stderr + (app / ".env").read_text()
+        )
+        self.assertEqual((app / "photon").stat().st_mode & 0o777, 0o700)
+        game_start = next(
+            i for i, call in enumerate(calls) if "up" in call and "dragaliaapi" in call
+        )
+        room_start = next(
+            i for i, call in enumerate(calls) if "up" in call and "--wait" in call
+        )
+        self.assertLess(game_start, room_start)
 
 
 if __name__ == "__main__":

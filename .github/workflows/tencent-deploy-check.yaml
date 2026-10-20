@@ -5,6 +5,7 @@ on:
     paths:
       - deploy/tencent/**
       - tools/tencent/**
+      - PhotonStateManager/**
       - .github/workflows/tencent-deploy*.yaml
       - "!**/*.md"
 
@@ -19,7 +20,7 @@ jobs:
 
       - name: Check scripts and deployment behavior
         run: |
-          bash -n deploy/tencent/deploy.sh deploy/tencent/photon/manage.sh deploy/tencent/photon/smoke.sh
+          bash -n deploy/tencent/deploy.sh deploy/tencent/photon/manage.sh deploy/tencent/photon/smoke.sh deploy/tencent/photon/smoke-rooms.sh deploy/tencent/photon/rooms/entrypoint.sh deploy/tencent/photon/rooms/fetch-source.sh
           python3 -m unittest discover -s deploy/tencent -p 'test_*.py' -v
           python3 -m unittest discover -s tools/tencent -v
           python3 deploy/tencent/check_config.py
@@ -32,3 +33,11 @@ jobs:
 
       - name: Run Luxon as non-root with the deployment configuration
         run: bash deploy/tencent/photon/smoke.sh dawnshard-luxon:trial
+
+      - name: Build room plugin and protocol verification client
+        run: |
+          docker build -f deploy/tencent/photon/Dockerfile.rooms --target final -t dawnshard-luxon:rooms .
+          docker build -f deploy/tencent/photon/Dockerfile.rooms --target verification -t dawnshard-luxon:checks .
+
+      - name: Verify encrypted UDP rooms and room list with Redis 8
+        run: bash deploy/tencent/photon/smoke-rooms.sh dawnshard-luxon:rooms dawnshard-luxon:checks

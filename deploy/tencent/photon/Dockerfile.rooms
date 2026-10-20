@@ -1,0 +1,72 @@
+# syntax=docker/dockerfile:1
+FROM debian:trixie-slim AS native
+RUN --mount=type=secret,id=ca_bundle \
+    if [ -f /run/secrets/ca_bundle ]; then export SSL_CERT_FILE=/run/secrets/ca_bundle; fi; \
+    apt-get -o Acquire::https::CaInfo="${SSL_CERT_FILE:-/etc/ssl/certs/ca-certificates.crt}" update && \
+    apt-get -y install --no-install-recommends ca-certificates g++ cmake ninja-build git pkg-config libcurl4-openssl-dev
+WORKDIR /src
+COPY deploy/tencent/photon/rooms/fetch-source.sh ./
+RUN --mount=type=secret,id=ca_bundle \
+    if [ -f /run/secrets/ca_bundle ]; then export SSL_CERT_FILE=/run/secrets/ca_bundle CURL_CA_BUNDLE=/run/secrets/ca_bundle GIT_SSL_CAINFO=/run/secrets/ca_bundle; fi; \
+    bash fetch-source.sh upstream
+COPY deploy/tencent/photon/rooms/CMakeLists.txt deploy/tencent/photon/rooms/*.hpp deploy/tencent/photon/rooms/*.cpp ./
+RUN --mount=type=secret,id=ca_bundle --mount=type=cache,id=dawnshard-luxon-build,target=/src/build,sharing=locked \
+    if [ -f /run/secrets/ca_bundle ]; then export SSL_CERT_FILE=/run/secrets/ca_bundle CURL_CA_BUNDLE=/run/secrets/ca_bundle GIT_SSL_CAINFO=/run/secrets/ca_bundle; fi; \
+    cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DDAWNSHARD_BUILD_TESTS=OFF && \
+    cmake --build build --target luxon_server -j 2 && \
+    mkdir -p /out/licenses && cp build/upstream-build/luxon_server /out/ && strip /out/luxon_server && \
+    for dependency in upstream upstream/Luxon build/_deps/*-src; do \
+      for license in "$dependency"/LICENSE* "$dependency"/COPYING*; do \
+        if [ -f "$license" ]; then mkdir -p "/out/licenses/$(basename "$dependency")"; cp "$license" "/out/licenses/$(basename "$dependency")/"; fi; \
+      done; \
+    done
+
+FROM mcr.microsoft.com/dotnet/sdk:10.0.301 AS managed
+WORKDIR /src
+COPY PhotonStateManager/Directory.Build.props Directory.Build.props
+COPY Directory.Packages.props nuget.config ./
+COPY PhotonStateManager/DragaliaAPI.Photon.StateManager/ PhotonStateManager/DragaliaAPI.Photon.StateManager/
+COPY Aspire/Dawnshard.ServiceDefaults/ Aspire/Dawnshard.ServiceDefaults/
+COPY Shared/DragaliaAPI.Photon.Shared/ Shared/DragaliaAPI.Photon.Shared/
+RUN --mount=type=secret,id=ca_bundle \
+    if [ -f /run/secrets/ca_bundle ]; then cat /run/secrets/ca_bundle >> /etc/ssl/certs/ca-certificates.crt; fi; \
+    dotnet publish PhotonStateManager/DragaliaAPI.Photon.StateManager -c Release -o /publish /p:UseAppHost=false -m:1
+
+FROM native AS native-checks
+COPY deploy/tencent/photon/rooms/tests/ tests/
+RUN --mount=type=secret,id=ca_bundle --mount=type=cache,id=dawnshard-luxon-build,target=/src/build,sharing=locked \
+    if [ -f /run/secrets/ca_bundle ]; then export SSL_CERT_FILE=/run/secrets/ca_bundle CURL_CA_BUNDLE=/run/secrets/ca_bundle GIT_SSL_CAINFO=/run/secrets/ca_bundle; fi; \
+    cmake -S . -B build -DDAWNSHARD_BUILD_TESTS=ON && \
+    cmake --build build --target room_protocol_test room_udp_test -j 2 && \
+    ctest --test-dir build --output-on-failure && cp build/room_protocol_test build/room_udp_test /out/
+
+FROM mcr.microsoft.com/dotnet/aspnet:10.0.9-noble AS dotnet
+FROM debian:trixie-slim AS final
+RUN --mount=type=secret,id=ca_bundle \
+    if [ -f /run/secrets/ca_bundle ]; then export SSL_CERT_FILE=/run/secrets/ca_bundle; fi; \
+    apt-get -o Acquire::https::CaInfo="${SSL_CERT_FILE:-/etc/ssl/certs/ca-certificates.crt}" update && \
+    apt-get -y install --no-install-recommends ca-certificates bash curl libstdc++6 libicu76 libssl3t64 libgssapi-krb5-2 zlib1g && \
+    rm -rf /var/lib/apt/lists/*
+COPY --from=dotnet /usr/share/dotnet/ /usr/share/dotnet/
+COPY --from=managed /publish/ /app/state/
+COPY --chmod=0755 --from=native /out/luxon_server /usr/local/bin/luxon_server
+COPY --from=native /out/licenses/ /usr/share/licenses/luxon-dependencies/
+COPY --chmod=0644 deploy/tencent/photon/rooms/entrypoint.sh /usr/local/bin/rooms-entrypoint
+COPY --chmod=0644 deploy/tencent/photon/LICENSE.luxon /usr/share/licenses/luxon-server/LICENSE
+COPY --chmod=0644 LICENSE /usr/share/licenses/dawnshard/LICENSE
+# Console logging only; no application files need to be writable.
+COPY --chmod=0644 deploy/tencent/photon/rooms/appsettings.json /app/state/appsettings.json
+ENV DOTNET_ROOT=/usr/share/dotnet DOTNET_PROCESSOR_COUNT=2 \
+    ASPNETCORE_ENVIRONMENT=Production ASPNETCORE_URLS=http://0.0.0.0:5089 \
+    LUXON_STATE_URL=http://127.0.0.1:5089 LUXON_STATE_TOKEN_FILE=/run/secrets/photon-token
+WORKDIR /app
+USER 65532:65532
+EXPOSE 5055/udp 5056/udp
+HEALTHCHECK --interval=5s --timeout=3s --start-period=20s --retries=5 \
+    CMD curl --noproxy '*' -fsS --max-time 1 http://127.0.0.1:5088/ > /dev/null && \
+        curl --noproxy '*' -fsS --max-time 1 http://127.0.0.1:5089/health > /dev/null || exit 1
+ENTRYPOINT ["bash", "/usr/local/bin/rooms-entrypoint"]
+
+FROM final AS verification
+COPY --chmod=0755 --from=native-checks /out/room_protocol_test /out/room_udp_test /checks/
+ENTRYPOINT ["/checks/room_udp_test"]
