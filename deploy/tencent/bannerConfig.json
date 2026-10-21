@@ -6,7 +6,7 @@
             {
                 "Id": 1020002,
                 "Start": "2026-10-18T06:00:00Z",
-                "End": "2026-11-01T05:59:59Z",
+                "End": "2026-10-21T15:59:59Z",
                 "IsGala": false,
                 "IsPrizeShowcase": false,
                 "PickupCharas": [
@@ -15,6 +15,25 @@
                 "PickupDragons": [
                     "Leviathan"
                 ]
+            },
+            {
+                "Id": 1020003,
+                "IsGala": false,
+                "IsPrizeShowcase": false,
+                "PickupCharas": [
+                    "HalloweenElisanne",
+                    "HalloweenAlthemia",
+                    "HalloweenEdward"
+                ],
+                "PickupDragons": [
+                    "HalloweenSilke"
+                ],
+                "LimitedCharas": [],
+                "LimitedDragons": [],
+                "TradeCharas": [],
+                "TradeDragons": [],
+                "Start": "2026-10-21T16:00:00Z",
+                "End": "2026-11-04T15:59:59Z"
             }
         ]
     }

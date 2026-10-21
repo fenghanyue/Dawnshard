@@ -14,6 +14,13 @@ import prepare_halloween
 class PrepareHalloweenTest(unittest.TestCase):
     def setUp(self):
         self.base = {"EventOptions": {"EventList": [{"Id": 20401, "Start": "2026-10-18T06:00:00Z", "End": "2029-07-14T05:59:59Z"}]}, "Other": {"Keep": True}}
+        self.banner_base = {"SummonBannerOptions": {"FilterPoolByReleaseDate": True, "Banners": [{"Id": 1020002, "Start": "2026-10-18T06:00:00Z", "End": "2026-11-01T05:59:59Z", "PickupCharas": ["Lily"], "PickupDragons": ["Leviathan"]}]}}
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        self.base_path = Path(directory.name) / "base-events.json"
+        self.banner_path = Path(directory.name) / "base-banners.json"
+        self.base_path.write_text(json.dumps(self.base))
+        self.banner_path.write_text(json.dumps(self.banner_base))
         self.start = prepare_halloween.timestamp("2031-10-17T14:00:00+08:00")
 
     def test_preserves_first_event_and_input_and_uses_original_duration(self):
@@ -44,7 +51,7 @@ class PrepareHalloweenTest(unittest.TestCase):
             prepare_halloween.prepare(self.base, self.start, self.start)
 
     def test_banner_starts_with_event_and_preserves_existing_pool(self):
-        base = json.loads(prepare_halloween.BANNERS.read_text())
+        base = self.banner_base
         before = copy.deepcopy(base)
         event = prepare_halloween.prepare(self.base, self.start)["EventOptions"]["EventList"][-1]
         result = prepare_halloween.prepare_banners(base, event)
@@ -75,6 +82,7 @@ class PrepareHalloweenTest(unittest.TestCase):
     def run_cli(self, event_path, banner_path):
         return subprocess.run([
             sys.executable, str(prepare_halloween.HERE / "prepare_halloween.py"),
+            "--base", str(self.base_path), "--banner-base", str(self.banner_path),
             "--start", "2031-10-17T14:00:00+08:00", "--out", str(event_path), "--banner-out", str(banner_path),
         ], capture_output=True, text=True)
 
