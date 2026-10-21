@@ -4,6 +4,7 @@
 tat_run.py 部署前会自动跑；也可以单独跑：python3 deploy/tencent/check_config.py
 """
 
+import argparse
 import json
 import re
 import sys
@@ -40,11 +41,14 @@ def check_period(item: dict, where: str, errors: list[str]) -> None:
         errors.append(f"{where}：开始时间要早于结束时间")
 
 
-def check() -> list[str]:
+def check(
+    events_path: Path = HERE / "appsettings.Production.json",
+    banners_path: Path = HERE / "bannerConfig.json",
+) -> list[str]:
     errors: list[str] = []
 
     event_ids = master_ids("Event/EventData.json")
-    events = read_json(HERE / "appsettings.Production.json").get("EventOptions", {}).get("EventList", [])
+    events = read_json(events_path).get("EventOptions", {}).get("EventList", [])
     for index, event in enumerate(events, 1):
         where = f"appsettings.Production.json 第 {index} 个活动（{event.get('Id')}）"
         if event.get("Id") not in event_ids:
@@ -53,7 +57,7 @@ def check() -> list[str]:
 
     summon_ids = master_ids("Summon/SummonData.json")
     names = {"Charas": enum_names("Charas"), "Dragons": enum_names("DragonId")}
-    summon_options = read_json(HERE / "bannerConfig.json").get("SummonBannerOptions", {})
+    summon_options = read_json(banners_path).get("SummonBannerOptions", {})
     if not isinstance(summon_options.get("FilterPoolByReleaseDate", False), bool):
         errors.append("bannerConfig.json：FilterPoolByReleaseDate 只能写 true 或 false")
     banners = summon_options.get("Banners", [])
@@ -75,7 +79,11 @@ def check() -> list[str]:
 
 
 def main() -> int:
-    errors = check()
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--events", type=Path, default=HERE / "appsettings.Production.json")
+    parser.add_argument("--banners", type=Path, default=HERE / "bannerConfig.json")
+    args = parser.parse_args()
+    errors = check(args.events, args.banners)
     for error in errors:
         print(f"配置有误：{error}", file=sys.stderr)
     if not errors:

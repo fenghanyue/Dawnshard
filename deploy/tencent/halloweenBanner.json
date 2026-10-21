@@ -1,0 +1,17 @@
+{
+    "Id": 1020003,
+    "IsGala": false,
+    "IsPrizeShowcase": false,
+    "PickupCharas": [
+        "HalloweenElisanne",
+        "HalloweenAlthemia",
+        "HalloweenEdward"
+    ],
+    "PickupDragons": [
+        "HalloweenSilke"
+    ],
+    "LimitedCharas": [],
+    "LimitedDragons": [],
+    "TradeCharas": [],
+    "TradeDragons": []
+}
