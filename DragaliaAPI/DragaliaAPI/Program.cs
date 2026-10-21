@@ -176,6 +176,9 @@ if (hangfireOptions is { Enabled: true })
         });
 }
 
+// Self-hosted in-game guides must also be reachable outside the versioned game API.
+app.UseStaticFiles();
+
 app.MapDefaultEndpoints();
 app.MapDragalipatchConfigEndpoint();
 

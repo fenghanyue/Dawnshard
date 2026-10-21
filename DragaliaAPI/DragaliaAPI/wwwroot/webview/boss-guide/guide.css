@@ -1,0 +1,146 @@
+:root {
+  color-scheme: light;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif;
+  color: #17344b;
+  background: #f3f7fa;
+  line-height: 1.65;
+  -webkit-text-size-adjust: 100%;
+}
+
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+}
+main {
+  max-width: 760px;
+  margin: auto;
+  padding: 20px 16px 32px;
+}
+header {
+  margin-bottom: 20px;
+}
+h1 {
+  margin: 2px 0 4px;
+  font-size: 28px;
+  line-height: 1.3;
+}
+h2 {
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.4;
+}
+h3 {
+  margin: 0 0 8px;
+  font-size: 19px;
+}
+p {
+  margin: 0 0 10px;
+}
+a {
+  color: #126b9d;
+  text-underline-offset: 3px;
+  overflow-wrap: anywhere;
+}
+a:focus-visible {
+  outline: 3px solid #d08b16;
+  outline-offset: 4px;
+}
+.eyebrow {
+  margin: 0;
+  color: #557181;
+  font-size: 12px;
+}
+.subtitle {
+  color: #557181;
+  font-size: 14px;
+}
+aside {
+  margin: 0 0 20px;
+  padding: 14px 16px;
+  background: #e5f2fa;
+  border-left: 4px solid #3987b1;
+  border-radius: 4px;
+}
+aside p {
+  font-size: 14px;
+}
+aside a {
+  display: inline-block;
+  padding: 8px 0;
+  font-weight: 600;
+}
+article {
+  scroll-margin-top: 12px;
+}
+.boss-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.element {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  background: #287e64;
+  color: #fff;
+  font-size: 24px;
+  font-weight: 700;
+  border-radius: 50%;
+}
+.scope {
+  margin: 14px 0 20px;
+  padding: 12px 14px;
+  background: #fff4da;
+  border-radius: 6px;
+  color: #75521e;
+  font-size: 13px;
+}
+section {
+  margin: 16px 0;
+  padding: 18px;
+  background: #fff;
+  border: 1px solid #dbe5ec;
+  border-radius: 10px;
+}
+dl {
+  margin: 0;
+}
+dt {
+  margin: 18px 0 4px;
+  font-weight: 700;
+}
+dt:first-child {
+  margin-top: 0;
+}
+dt span {
+  display: block;
+  color: #607785;
+  font-size: 12px;
+  font-weight: 400;
+}
+dd {
+  margin: 0;
+}
+.takeaway {
+  border-left: 4px solid #287e64;
+}
+ol {
+  margin: 0;
+  padding-left: 22px;
+}
+li + li {
+  margin-top: 6px;
+}
+footer {
+  padding-top: 8px;
+  color: #607785;
+  font-size: 12px;
+}
+[hidden] {
+  display: none !important;
+}
