@@ -78,6 +78,18 @@ SOLO_RAID_STAMINA = {"_PayStaminaSingle": 15, "_CampaignStaminaSingle": 7}
 SOLO_RAID_MENU_FIELDS = {"_QuestSubType": 2}
 TABLES = {"EventData", "CharaData", "QuestEventMenu", *FOLLOWING_TABLES, BOX_SUMMON_TABLE[0]}
 
+# 20801 的旧剧情/每日地图在最终客户端中已删除。保留原编号、区域数和解锁顺序，
+# 复用同活动仍存在的森林与首领地图；服务器 QuestData.json 使用相同映射。
+# 每个目标区域 -> (源关卡, 源区域)，所有字符串等长，可继续原地改表。
+HALLOWEEN_AREA_SOURCES = {
+    208010101: ((208010102, 1), (208010102, 2)),
+    208010103: ((208010104, 1), (208010104, 2)),
+    208010105: ((208010102, 1), (208010102, 2)),
+    208010106: ((208010104, 1), (208010104, 2)),
+    208010107: ((208010104, 1), (208010104, 2)),
+    208010201: ((208010102, 1), (208010104, 1), (208010104, 2)),
+}
+
 
 def log(message: str) -> None:
     print(message, file=sys.stderr, flush=True)
@@ -229,6 +241,15 @@ def plan_changes(tables: dict[str, dict], runs: list[EventRun], box_summons: set
     for row in rows(tables["QuestEventMenu"]):
         if row["_GroupId"] in schedules and row["_EntryQuestType"] == 1 and row["_EntryQuestId"] in raid_quests:
             add("QuestEventMenu", row, SOLO_RAID_MENU_FIELDS)
+    if 20801 in schedules:
+        quests = {row["_Id"]: row for row in rows(tables["QuestData"])}
+        for quest_id, sources in HALLOWEEN_AREA_SOURCES.items():
+            values = {
+                f"{field}{area:02}": quests[source_id][f"{field}{source_area:02}"]
+                for area, (source_id, source_area) in enumerate(sources, 1)
+                for field in ("_Scene", "_AreaName")
+            }
+            add("QuestData", quests[quest_id], values)
     return changes
 
 

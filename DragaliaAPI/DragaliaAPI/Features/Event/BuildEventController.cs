@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace DragaliaAPI.Features.Event;
 
 [Route("build_event")]
+[ServiceFilter<EventValidationFilter>]
 public class BuildEventController(
     IUpdateDataService updateDataService,
     IRewardService rewardService,
@@ -21,12 +22,18 @@ public class BuildEventController(
     {
         BuildEventGetEventDataResponse resp = new()
         {
-            IsReceivableEventDailyBonus = await eventService.GetCustomEventFlag(request.EventId),
             BuildEventUserData = await eventService.GetBuildEventUserData(request.EventId),
-            BuildEventRewardList = await eventService.GetEventRewardList<BuildEventRewardList>(
-                request.EventId
-            ),
         };
+
+        if (resp.BuildEventUserData is not null)
+        {
+            resp.IsReceivableEventDailyBonus = await eventService.GetCustomEventFlag(
+                request.EventId
+            );
+            resp.BuildEventRewardList = await eventService.GetEventRewardList<BuildEventRewardList>(
+                request.EventId
+            );
+        }
 
         if (
             MasterAsset
@@ -47,11 +54,14 @@ public class BuildEventController(
         CancellationToken cancellationToken
     )
     {
+        await eventService.CreateEventData(request.EventId);
+        UpdateDataList updateData = await updateDataService.SaveChangesAsync(cancellationToken);
+
         BuildEventEntryResponse resp = new()
         {
             IsReceivableEventDailyBonus = await eventService.GetCustomEventFlag(request.EventId),
             BuildEventUserData = await eventService.GetBuildEventUserData(request.EventId),
-            UpdateDataList = await updateDataService.SaveChangesAsync(cancellationToken),
+            UpdateDataList = updateData,
             EntityResult = rewardService.GetEntityResult(),
         };
 

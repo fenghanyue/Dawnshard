@@ -6,8 +6,10 @@ using DragaliaAPI.Features.Dmode;
 using DragaliaAPI.Features.Event;
 using DragaliaAPI.Features.Fort;
 using DragaliaAPI.Features.Item;
+using DragaliaAPI.Features.Missions;
 using DragaliaAPI.Features.Player;
 using DragaliaAPI.Shared.Definitions.Enums;
+using DragaliaAPI.Shared.MasterAsset.Models.Missions;
 using Microsoft.EntityFrameworkCore;
 
 namespace DragaliaAPI.Features.Shared.Reward.Handlers;
@@ -22,7 +24,8 @@ public partial class GenericRewardHandler(
     IEventRepository eventRepository,
     IDmodeRepository dmodeRepository,
     IItemRepository itemRepository,
-    IUserService userService
+    IUserService userService,
+    IMissionProgressionService missionProgressionService
 ) : IRewardHandler
 {
     public IReadOnlyList<EntityTypes> SupportedTypes { get; } =
@@ -76,6 +79,18 @@ public partial class GenericRewardHandler(
                 await fortRepository.AddToStorage((FortPlants)entity.Id, quantity: entity.Quantity);
                 break;
             case EntityTypes.BuildEventItem:
+                await eventRepository.AddItemQuantityAsync(entity.Id, entity.Quantity);
+                if (entity.Quantity > 0)
+                {
+                    missionProgressionService.EnqueueEvent(
+                        MissionCompleteType.EventItemCollection,
+                        entity.Quantity,
+                        entity.Quantity,
+                        entity.Id
+                    );
+                }
+
+                break;
             case EntityTypes.Clb01EventItem:
             case EntityTypes.CollectEventItem:
             case EntityTypes.RaidEventItem:

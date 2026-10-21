@@ -234978,5 +234978,37 @@
         "_Quantity": 50
       }
     ]
+  },
+  {
+    "_QuestId": 208010501,
+    "_Comment": "Halloween Horrors (original 20801; uses compendium drop profile)",
+    "_Rupies": 250000,
+    "_Mana": 10000,
+    "_Drops": [
+      {
+        "_Id": 103001001,
+        "_EntityType": "Material",
+        "_Comment": "Bronze Whetstone",
+        "_Quantity": 50
+      },
+      {
+        "_Id": 104001051,
+        "_EntityType": "Material",
+        "_Comment": "Shadow Orb",
+        "_Quantity": 50
+      },
+      {
+        "_Id": 104001052,
+        "_EntityType": "Material",
+        "_Comment": "Nightfall Orb",
+        "_Quantity": 50
+      },
+      {
+        "_Id": 113001001,
+        "_EntityType": "Material",
+        "_Comment": "Holy Water",
+        "_Quantity": 50
+      }
+    ]
   }
 ]

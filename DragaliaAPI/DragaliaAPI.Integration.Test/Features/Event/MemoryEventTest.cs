@@ -1,3 +1,5 @@
+using DragaliaAPI.Shared.MasterAsset.Models.Missions;
+
 namespace DragaliaAPI.Integration.Test.Features.Event;
 
 public class MemoryEventTest : TestFixture
@@ -77,7 +79,10 @@ public class MemoryEventTest : TestFixture
                 opts => opts.Including(x => x.MemoryEventMissionId)
             );
 
-        this.ApiContext.PlayerMissions.Should().NotContain(x => x.Id == obsoleteMissionId1);
-        this.ApiContext.PlayerMissions.Should().NotContain(x => x.Id == obsoleteMissionId2);
+        this.ApiContext.PlayerMissions.Where(x =>
+                x.ViewerId == this.ViewerId && x.Type == MissionType.MemoryEvent
+            )
+            .Should()
+            .NotContain(x => x.Id == obsoleteMissionId1 || x.Id == obsoleteMissionId2);
     }
 }

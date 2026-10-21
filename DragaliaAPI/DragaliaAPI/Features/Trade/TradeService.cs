@@ -171,6 +171,25 @@ public partial class TradeService(
             ),
         };
 
+        DbPlayerTrade? existingTrade = await tradeRepository.FindTrade(tradeId);
+        bool resetCount =
+            existingTrade is not null
+            && this.HasResetSinceLastTrade(
+                (TradeResetType)trade.ResetType,
+                existingTrade.LastTradeTime
+            );
+        int currentCount = resetCount ? 0 : existingTrade?.Count ?? 0;
+        if (
+            tradeType == TradeType.Event
+            && (count <= 0 || (trade.Limit > 0 && count > (long)trade.Limit - currentCount))
+        )
+        {
+            throw new DragaliaException(
+                ResultCode.CommonInvalidArgument,
+                "Event trade count exceeds the available quantity"
+            );
+        }
+
         foreach (
             (EntityTypes type, int id, int quantity, int limitBreakCount) in trade.NeedEntities
         )
@@ -229,14 +248,7 @@ public partial class TradeService(
             }
         );
 
-        DbPlayerTrade? existingTrade = await tradeRepository.FindTrade(tradeId);
-        if (
-            existingTrade is not null
-            && this.HasResetSinceLastTrade(
-                (TradeResetType)trade.ResetType,
-                existingTrade.LastTradeTime
-            )
-        )
+        if (existingTrade is not null && resetCount)
         {
             existingTrade.Count = 0;
         }

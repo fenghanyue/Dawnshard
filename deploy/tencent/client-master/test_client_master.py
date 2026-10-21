@@ -1,8 +1,10 @@
 """验证活动菜单的单人入口和原版大逃杀的关闭。"""
 
 import copy
+import json
 import unittest
 from datetime import datetime
+from pathlib import Path
 
 import client_master
 
@@ -95,6 +97,41 @@ class SoloRaidMenuTest(unittest.TestCase):
         run = client_master.EventRun(22301, self.run.start, self.run.end)
         with self.assertRaisesRegex(SystemExit, "22301.*已停用"):
             client_master.plan_changes(self.tables, [run], set())
+
+
+class HalloweenMapsTest(unittest.TestCase):
+    def setUp(self):
+        SoloRaidMenuTest.setUp(self)
+        self.run = client_master.EventRun(20801, datetime(2031, 10, 17, 6), datetime(2031, 10, 26, 5, 59, 59))
+        self.tables["EventData"]["dict"]["entriesValue"][0]["_Id"] = 20801
+        shared = Path(__file__).resolve().parents[3] / "DragaliaAPI/DragaliaAPI.Shared/Resources/QuestData.json"
+        self.server = {row["_Id"]: row for row in json.loads(shared.read_text(encoding="utf-8-sig")) if row["_Gid"] == 20801}
+        quests = copy.deepcopy(list(self.server.values()))
+        for row in quests:
+            if row["_Id"] in client_master.HALLOWEEN_AREA_SOURCES:
+                for area in range(1, 4):
+                    for field in ("_Scene", "_AreaName"):
+                        key = f"{field}{area:02}"
+                        row[key] = row[key].replace("0102", "0199").replace("0104", "0199")
+        self.tables["QuestData"] = table(quests)
+
+    def test_halloween_maps_match_server_without_changing_rewards_or_unlocks(self):
+        before = copy.deepcopy(self.tables)
+        changes = client_master.plan_changes(self.tables, [self.run], set())
+        for name, edit in client_master.make_edits(changes).items():
+            edit(self.tables[name])
+        for row in client_master.rows(self.tables["QuestData"]):
+            self.assertEqual(row, self.server[row["_Id"]])
+        for quest_id, fields in changes["QuestData"].items():
+            self.assertIn(quest_id, client_master.HALLOWEEN_AREA_SOURCES)
+            self.assertTrue(all(key.startswith(("_Scene", "_AreaName")) for key in fields))
+            original = next(r for r in client_master.rows(before["QuestData"]) if r["_Id"] == quest_id)
+            for key, value in fields.items():
+                self.assertEqual(len(original[key]), len(value))
+
+    def test_unscheduled_halloween_maps_are_untouched(self):
+        changes = client_master.plan_changes(self.tables, [], set())
+        self.assertNotIn("QuestData", changes)
 
 
 if __name__ == "__main__":

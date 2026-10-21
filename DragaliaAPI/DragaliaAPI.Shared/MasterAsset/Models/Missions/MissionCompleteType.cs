@@ -203,6 +203,15 @@ public enum MissionCompleteType
     /// </summary>
     WallLevelCleared,
 
+    /// <summary>int build event itemId; quantities received, rather than current inventory.</summary>
+    EventItemCollection,
+
+    /// <summary>int eventId, int questId; cumulative completed challenge waves.</summary>
+    EventChallengeWaveClear,
+
+    /// <summary>int eventId, int questId, int maximum clear seconds; full clears only.</summary>
+    EventChallengeBattleClearTime,
+
     /// <summary>
     /// None
     /// </summary>
