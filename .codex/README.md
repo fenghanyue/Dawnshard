@@ -8,8 +8,9 @@ repo 中的记录已经提交，不代表每个新会话都已自动读取；环
 使用支持项目选择或工作目录设置的客户端时，将项目设为 `/workspace/Dawnshard`。
 repo 的 [AGENTS.md](../AGENTS.md) 要求问答、调研和改代码都先读取交接记录及相关实现。
 
-若当前聊天入口仅附加云环境，不能确认它会自动读取云端 `AGENTS.md`，
-应在该入口提供的项目持久指令或自定义指令中加入以下内容；具体配置位置取决于客户端：
+对当前网页或桌面入口，建议每个 repo 建一个 ChatGPT 项目。在项目右上角的 `…` 菜单进入
+`Project settings`，将下面的内容加入项目指令。项目指令随该项目里的新对话使用，避免把某个 repo 的上下文写进所有聊天的全局指令。
+之后从这个项目里面新建对话，再在 `Work in > Cloud` 选择对应云环境；项目指令不会自动提供对云端文件的访问。
 
 ```text
 这个云环境的默认项目是 /workspace/Dawnshard（fenghanyue/Dawnshard，安卓《失落的龙约》私服）。
@@ -30,9 +31,18 @@ if [ ! -e /workspace/AGENTS.md ] && [ ! -L /workspace/AGENTS.md ]; then
 fi
 ```
 
-模板随 repo 保存；`/workspace/AGENTS.md` 的链接属于云环境本身，重建环境时需要重新创建。
-需要重建后自动恢复时，把上述命令加入环境的安装流程；不要把当前容器中的安装脚本副本视为已经修改了平台配置。
+模板随 repo 保存；`/workspace/AGENTS.md` 的链接属于当前任务的工作区。
+新的云任务从已发布环境的准备状态创建独立工作区，当前任务里新增的文件不会自动写回已发布配置。
+要在后续任务恢复入口，进入 `Settings > Codex Cloud > Environments`，从目标环境的 `…` 菜单选择
+`Edit`，让环境配置流程把上述命令加入安装流程并测试，保存后选择 `Republish`，再新建任务验证。
+仅修改当前容器中的安装脚本副本，不等于已经完成了这次发布。
+
+以后换 repo 时，为其单独建立项目和云环境，替换项目名称、repo 路径和状态文档路径；
+将项目用途、必读文档和问答前检查规则放在该 repo 的 `AGENTS.md`，把依赖准备与入口安装保存在已发布环境配置。
 
 这提供了文件入口，是否自动注入模型上下文仍取决于客户端。
 可在全新会话里问“这个项目目前联机做到哪一步？”，核对它是否实际读取上述文件，
 并根据 repo 说明普通联机、活动关和大型 Raid 各自的验证范围。
+
+官方配置说明：[项目及项目指令](https://learn.chatgpt.com/docs/projects?surface=app)、
+[云环境编辑、发布和任务隔离](https://learn.chatgpt.com/docs/environments/cloud-environments)。
