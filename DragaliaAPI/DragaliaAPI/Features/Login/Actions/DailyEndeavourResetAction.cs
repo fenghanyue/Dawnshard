@@ -50,7 +50,7 @@ public partial class DailyEndeavourResetAction(
         }
 
         IEnumerable<EventRunInformation> activeEvents = this.eventOptions.EventList.Where(x =>
-            lastDailyReset > x.Start && lastDailyReset < x.End
+            x.IsActive(this.timeProvider)
         );
 
         foreach (EventRunInformation activeEvent in activeEvents)
