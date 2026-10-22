@@ -223,6 +223,12 @@ dotnet test --project DragaliaAPI/DragaliaAPI.Integration.Test/DragaliaAPI.Integ
 | 建房成功但卡加载/通讯中断 | `/Luxon/Prepare` 状态、关卡拒绝名单、角色事件与全员 Ready | 错误码 12 不能单凭数字诊断；看这次到达了哪一阶段 |
 | 打完无结果 | `/Luxon/Clear`、`record_multi` 的 ResultCode、逐人结果送回 | HTTP 200 不一定是游戏成功；一次成功也不代表两位都完成 |
 
+查战斗加载时，要分别保留开战结果、后续换区/结算请求、手机实际表现的证据。
+地图替换后，检查场景、逻辑 prefab、敌人模型及清单递归依赖；文件和开战通过仍不能视为客户端初始化通过。
+通过资源缓存或直连上游下载时，复用 `client_master.fetch` 的 User-Agent 或 Unity 请求头：
+上游会拒绝 Python 默认请求头（403/1010），不能把诊断脚本的 403 直接判为手机缺图。
+资源日志含请求令牌和地址，输出前仅保留时间、路径、状态、大小与哈希结果，不打印原始请求。
+
 普通联机的正常日志顺序是：
 
 ```text
