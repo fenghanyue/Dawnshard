@@ -3,6 +3,7 @@
 import copy
 import json
 import unittest
+import tempfile
 from datetime import datetime
 from pathlib import Path
 
@@ -132,6 +133,66 @@ class HalloweenMapsTest(unittest.TestCase):
     def test_unscheduled_halloween_maps_are_untouched(self):
         changes = client_master.plan_changes(self.tables, [], set())
         self.assertNotIn("QuestData", changes)
+
+
+class ArchivedEventTest(unittest.TestCase):
+    def setUp(self):
+        SoloRaidMenuTest.setUp(self)
+        event = self.tables["EventData"]["dict"]["entriesValue"][0]
+        event.update({"_IsMemoryEvent": 0, "_MemoryEventViewType": 0, "_IsPickupMemoryEvent": 0})
+        self.tables["QuestEventGroup"] = table([
+            {"_Id": 20401, "_BaseQuestGroupId": 20401, "_IsHideBanner": 0,
+             "_ViewStartDate": "", "_ViewEndDate": ""},
+            {"_Id": 22301, "_BaseQuestGroupId": 22301, "_IsHideBanner": 0,
+             "_ViewStartDate": "", "_ViewEndDate": ""},
+        ])
+        self.tables["QuestData"] = table([SoloRaidMenuTest.quest(self, 204010301)])
+        self.tables["QuestEventMenu"] = table([SoloRaidMenuTest.menu(self, 1, 204010301)])
+        self.tables["BoxSummonData"] = table([
+            {"_Id": 1, "_EventId": 20401, "_CommenceDate": "2018/10/04 06:00:00",
+             "_CompleteDate": "2018/10/15 05:59:59", "_CostNum": 2},
+        ])
+        self.tables["MyPageBanner"] = table([
+            {"_Id": 1, "_EventId": 20401, "_ViewStartDate": "2018/10/02 06:00:00",
+             "_ViewEndDate": "2018/10/15 05:59:59"},
+        ])
+
+    def test_archive_uses_compendium_parent_and_original_quest_summon_and_unlocks(self):
+        original_banner = copy.deepcopy(self.tables["MyPageBanner"])
+        original_menu = copy.deepcopy(self.tables["QuestEventMenu"])
+        changes = client_master.plan_changes(self.tables, [self.run], {20401}, {20401})
+        for name, edit in client_master.make_edits(changes).items():
+            edit(self.tables[name])
+        event = next(client_master.rows(self.tables["EventData"]))
+        self.assertEqual((event["_Id"], event["_IsMemoryEvent"], event["_MemoryEventViewType"]), (20401, 1, 201))
+        self.assertEqual(event["_EndDate"], "2099/12/31 23:59:59")
+        group = next(client_master.rows(self.tables["QuestEventGroup"]))
+        self.assertEqual(group["_BaseQuestGroupId"], 22100)
+        quest = next(client_master.rows(self.tables["QuestData"]))
+        self.assertEqual((quest["_Id"], quest["_DungeonType"]), (204010301, 10))
+        menu = next(client_master.rows(self.tables["QuestEventMenu"]))
+        self.assertEqual(menu, next(client_master.rows(original_menu)) | {"_QuestSubType": 2})
+        summon = next(client_master.rows(self.tables["BoxSummonData"]))
+        self.assertEqual(summon["_CostNum"], 2)
+        self.assertEqual(summon["_CompleteDate"], "2099/12/31 23:59:59")
+        self.assertEqual(self.tables["MyPageBanner"], original_banner)
+        self.assertEqual(client_master.plan_changes(self.tables, [self.run], {20401}, {20401}), {})
+
+    def test_archive_stays_available_without_any_timed_schedule(self):
+        changes = client_master.plan_changes(self.tables, [], {20401}, {20401})
+        self.assertEqual(changes["QuestData"][204010301]["_DungeonType"], 10)
+        self.assertEqual(changes["QuestEventMenu"][1]["_QuestSubType"], 2)
+        self.assertEqual(changes["EventData"][20401]["_IsMemoryEvent"], 1)
+
+    def test_archive_configuration_rejects_unsupported_or_duplicate_ids(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "events.json"
+            for values in ([20801], [20401, 20401], "20401", [True]):
+                path.write_text(json.dumps({"EventOptions": {"ArchivedEventIds": values}}))
+                with self.subTest(values=values), self.assertRaises(SystemExit):
+                    client_master.load_archives(path)
+            path.write_text(json.dumps({"EventOptions": {"ArchivedEventIds": [20401]}}))
+            self.assertEqual(client_master.load_archives(path), {20401})
 
 
 if __name__ == "__main__":

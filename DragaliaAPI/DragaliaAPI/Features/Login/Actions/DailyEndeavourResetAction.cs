@@ -49,8 +49,8 @@ public partial class DailyEndeavourResetAction(
             );
         }
 
-        IEnumerable<EventRunInformation> activeEvents = this.eventOptions.EventList.Where(x =>
-            x.IsActive(this.timeProvider)
+        IEnumerable<EventRunInformation> activeEvents = this.eventOptions.GetActiveEvents(
+            this.timeProvider
         );
 
         foreach (EventRunInformation activeEvent in activeEvents)

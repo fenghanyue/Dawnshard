@@ -35,9 +35,7 @@ public partial class EventValidationFilter(
             return;
         }
 
-        EventRunInformation? runInfo = optionsMonitor.CurrentValue.EventList.Find(x =>
-            x.Id == request.EventId
-        );
+        EventRunInformation? runInfo = optionsMonitor.CurrentValue.FindRun(request.EventId);
 
         if (runInfo is null)
         {

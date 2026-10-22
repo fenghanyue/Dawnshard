@@ -48,12 +48,24 @@ def check(
     errors: list[str] = []
 
     event_ids = master_ids("Event/EventData.json")
-    events = read_json(events_path).get("EventOptions", {}).get("EventList", [])
+    event_options = read_json(events_path).get("EventOptions", {})
+    events = event_options.get("EventList", [])
     for index, event in enumerate(events, 1):
         where = f"appsettings.Production.json 第 {index} 个活动（{event.get('Id')}）"
         if event.get("Id") not in event_ids:
             errors.append(f"{where}：游戏里没有这个活动编号")
         check_period(event, where, errors)
+
+    archives = event_options.get("ArchivedEventIds", [])
+    if not isinstance(archives, list) or any(type(value) is not int for value in archives):
+        errors.append("ArchivedEventIds 必须是活动编号组成的数组")
+    else:
+        if len(archives) != len(set(archives)):
+            errors.append("ArchivedEventIds 的活动编号不能重复")
+        # Expand only after another original event has passed the compendium compatibility checks.
+        for event_id in archives:
+            if event_id not in event_ids or event_id != 20401:
+                errors.append(f"活动 {event_id} 尚未适配回忆入口")
 
     summon_ids = master_ids("Summon/SummonData.json")
     names = {"Charas": enum_names("Charas"), "Dragons": enum_names("DragonId")}

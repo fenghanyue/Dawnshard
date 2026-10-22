@@ -192,7 +192,7 @@ public partial class MissionService(
     public async Task<IEnumerable<DbPlayerMission>> UnlockEventMissions(int eventId)
     {
         EventRunInformation runInfo =
-            this.eventOptions.EventList.FirstOrDefault(x => x.Id == eventId)
+            this.eventOptions.FindRun(eventId)
             ?? throw new DragaliaException(
                 ResultCode.EventOutThePeriod,
                 "Attempted to start missions for an event without any configuration in appsettings.json"
@@ -206,6 +206,11 @@ public partial class MissionService(
                 ResultCode.EventOutThePeriod,
                 "Attempted to start missions for an event which has either not started or has ended."
             );
+        }
+
+        if (this.eventOptions.IsArchived(eventId))
+        {
+            return await this.UnlockArchivedEventMissions(eventId);
         }
 
         List<PeriodMission> periodMissions = MasterAsset
@@ -246,6 +251,62 @@ public partial class MissionService(
         }
 
         return dbMissions;
+    }
+
+    private async Task<IEnumerable<DbPlayerMission>> UnlockArchivedEventMissions(int eventId)
+    {
+        Dictionary<(MissionType Type, int Id), DbPlayerMission> existing = await this
+            .missionRepository.Missions.Where(x =>
+                x.GroupId == eventId
+                && (x.Type == MissionType.Period || x.Type == MissionType.Daily)
+            )
+            .ToDictionaryAsync(x => new ValueTuple<MissionType, int>(x.Type, x.Id));
+
+        List<DbPlayerMission> result = [];
+        foreach (
+            PeriodMission mission in MasterAsset.MissionPeriodData.Enumerable.Where(x =>
+                x.QuestGroupId == eventId
+            )
+        )
+        {
+            if (existing.TryGetValue((MissionType.Period, mission.Id), out DbPlayerMission? record))
+            {
+                record.Start = DateTimeOffset.UnixEpoch;
+                record.End = DateTimeOffset.UnixEpoch;
+                result.Add(record);
+            }
+            else
+            {
+                result.Add(await this.StartMission(MissionType.Period, mission.Id, eventId));
+            }
+        }
+
+        DateTimeOffset lastReset = this.timeProvider.GetLastDailyReset();
+        foreach (
+            DailyMission mission in MasterAsset.MissionDailyData.Enumerable.Where(x =>
+                x.QuestGroupId == eventId
+            )
+        )
+        {
+            if (existing.TryGetValue((MissionType.Daily, mission.Id), out DbPlayerMission? record))
+            {
+                result.Add(record);
+            }
+            else
+            {
+                result.Add(
+                    await this.StartMission(
+                        MissionType.Daily,
+                        mission.Id,
+                        eventId,
+                        lastReset,
+                        lastReset.AddDays(1)
+                    )
+                );
+            }
+        }
+
+        return result;
     }
 
     public async Task RedeemMission(MissionType type, int id)
