@@ -200,10 +200,7 @@ public partial class MissionService(
 
         Log.StartingMissionsForEventWithRunInfo(this.logger, runInfo);
 
-        if (
-            this.timeProvider.GetLastDailyReset() < runInfo.Start
-            || this.timeProvider.GetLastDailyReset() > runInfo.End
-        )
+        if (!runInfo.IsActive(this.timeProvider))
         {
             throw new DragaliaException(
                 ResultCode.EventOutThePeriod,

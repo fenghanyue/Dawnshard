@@ -10,7 +10,7 @@ public class EventRunInformation
 
     public bool IsActive(TimeProvider timeProvider)
     {
-        DateTimeOffset lastReset = timeProvider.GetLastDailyReset();
-        return lastReset >= this.Start && lastReset < this.End;
+        DateTimeOffset now = timeProvider.GetUtcNow();
+        return now >= this.Start && now < this.End;
     }
 }
