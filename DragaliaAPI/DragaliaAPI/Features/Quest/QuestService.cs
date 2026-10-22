@@ -9,6 +9,7 @@ using DragaliaAPI.Models.Generated;
 using DragaliaAPI.Shared.Definitions.Enums;
 using DragaliaAPI.Shared.MasterAsset;
 using DragaliaAPI.Shared.MasterAsset.Models;
+using DragaliaAPI.Shared.MasterAsset.Models.Missions;
 using DragaliaAPI.Shared.MasterAsset.Models.QuestDrops;
 using DragaliaAPI.Shared.MasterAsset.Models.QuestRewards;
 
@@ -396,6 +397,38 @@ public partial class QuestService(
                     playRecord.Wave >= questScoreMission.WaveCount,
                     questData.Id
                 );
+
+                int completedWaves = Math.Clamp(playRecord.Wave, 0, questScoreMission.WaveCount);
+                missionProgressionService.EnqueueEvent(
+                    MissionCompleteType.EventChallengeWaveClear,
+                    completedWaves,
+                    completedWaves,
+                    questData.Gid,
+                    questData.Id
+                );
+
+                if (playRecord.Wave >= questScoreMission.WaveCount && playRecord.Time >= 0)
+                {
+                    IEnumerable<int> timeLimits = MasterAsset
+                        .MissionProgressionInfo.Enumerable.Where(x =>
+                            x.CompleteType == MissionCompleteType.EventChallengeBattleClearTime
+                            && x.Parameter == questData.Gid
+                            && x.Parameter2 == questData.Id
+                        )
+                        .Select(x => x.Parameter3!.Value)
+                        .Distinct();
+                    foreach (int seconds in timeLimits.Where(x => playRecord.Time <= x))
+                    {
+                        missionProgressionService.EnqueueEvent(
+                            MissionCompleteType.EventChallengeBattleClearTime,
+                            seconds,
+                            seconds,
+                            questData.Gid,
+                            questData.Id,
+                            seconds
+                        );
+                    }
+                }
             }
         }
         else if (questData.IsEventTrial)

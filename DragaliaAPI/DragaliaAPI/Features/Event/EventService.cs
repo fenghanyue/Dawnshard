@@ -367,6 +367,12 @@ public partial class EventService(
 
     public async Task<BuildEventUserList?> GetBuildEventUserData(int eventId)
     {
+        if (!await eventRepository.HasEventDataAsync(eventId))
+        {
+            // An unentered limited event must send the client to /entry.
+            return null;
+        }
+
         IEnumerable<DbPlayerEventItem> eventItems = await eventRepository.GetEventItemsAsync(
             eventId
         );

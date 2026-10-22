@@ -11,6 +11,12 @@ public partial class EventSummonExecRequest : IEventRequest;
 
 public partial class EventSummonResetRequest : IEventRequest;
 
+public partial class BuildEventGetEventDataRequest : IEventRequest;
+
+public partial class BuildEventEntryRequest : IEventRequest;
+
+public partial class BuildEventReceiveBuildPointRewardRequest : IEventRequest;
+
 public partial class EventTradeGetListResponse
 {
     // This can't be initialized as [] or else the game will delete all your materials
