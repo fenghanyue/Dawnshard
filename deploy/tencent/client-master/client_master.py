@@ -54,6 +54,10 @@ DATE_FORMAT = "%Y/%m/%d %H:%M:%S"
 VERSION_FILES = ["client_master.py", "unity_bundle.py", "requirements.txt", "requirements-build.txt"]
 # 大逃杀在原版数据表里一直开放到 2030 年，但服务器不支持；关闭活动显示并隐藏任务页入口。
 CLOSED_EVENTS = {22301}
+# Trial compendium entries for original events. Keep the original IDs and reward tables;
+# the server uses EventOptions.ArchivedEventIds rather than the simplified memory-event rules.
+ARCHIVE_VIEW_TYPES = {20401: 201}
+ARCHIVE_END = datetime(2099, 12, 31, 23, 59, 59)
 
 # 除了活动表，这些表里属于某个活动的行，日期也跟着活动走：表名 → (哪个字段是活动编号, 日期字段)
 FOLLOWING_TABLES = {
@@ -131,7 +135,18 @@ def load_box_summons(path: Path) -> set[int]:
     return {int(item["EventId"]) for item in settings.get("EventSummons", [])}
 
 
-def plan_version(runs: list[EventRun], box_summons: set[int]) -> str:
+def load_archives(path: Path) -> set[int]:
+    values = json.loads(path.read_text(encoding="utf-8-sig")).get("EventOptions", {}).get("ArchivedEventIds", [])
+    if not isinstance(values, list) or any(type(value) is not int for value in values):
+        raise SystemExit("ArchivedEventIds 必须是活动编号组成的数组")
+    if len(values) != len(set(values)):
+        raise SystemExit("ArchivedEventIds 的活动编号不能重复")
+    if unsupported := sorted(set(values) - ARCHIVE_VIEW_TYPES.keys()):
+        raise SystemExit(f"尚未适配回忆入口的活动：{unsupported}")
+    return set(values)
+
+
+def plan_version(runs: list[EventRun], box_summons: set[int], archives: set[int] = frozenset()) -> str:
     code = hashlib.sha256()
     for name in VERSION_FILES:
         code.update((HERE / name).read_bytes())
@@ -139,6 +154,7 @@ def plan_version(runs: list[EventRun], box_summons: set[int]) -> str:
         "source": SOURCE_VERSION,
         "events": [[run.id, to_master_date(run.start), to_master_date(run.end)] for run in runs],
         "box_summons": sorted(box_summons),
+        "archives": sorted(archives),
         "code": code.hexdigest(),
     }
     digest = hashlib.sha256(json.dumps(plan, sort_keys=True).encode()).digest()
@@ -195,16 +211,23 @@ def rows(tree: dict) -> Iterator[dict]:
 Changes = dict[str, dict[int, dict[str, str | int]]]
 
 
-def plan_changes(tables: dict[str, dict], runs: list[EventRun], box_summons: set[int]) -> Changes:
+def plan_changes(
+    tables: dict[str, dict], runs: list[EventRun], box_summons: set[int], archives: set[int] = frozenset()
+) -> Changes:
     """按原版数据表算出每一行要改成什么，只留真的会变的字段。"""
     origins = {row["_Id"]: row for row in rows(tables["EventData"])}
-    if missing := sorted(({run.id for run in runs} | CLOSED_EVENTS) - origins.keys()):
+    if missing := sorted(({run.id for run in runs} | CLOSED_EVENTS | archives) - origins.keys()):
         raise SystemExit(f"数据表里没有这些活动：{missing}")
     if closed := sorted({run.id for run in runs} & CLOSED_EVENTS):
         raise SystemExit(f"活动 {closed} 已停用，不能排期")
+    if unsupported := sorted(archives - ARCHIVE_VIEW_TYPES.keys()):
+        raise SystemExit(f"尚未适配回忆入口的活动：{unsupported}")
     schedules = {run.id: EventSchedule(origins[run.id], run) for run in runs}
     # 活动角色在活动期间只用专属材料养成（2020 年以后的部分活动），时间也要跟服务器一致
-    grow_runs = {origins[run.id]["_EventCharaId"]: run for run in runs if origins[run.id]["_EventCharaId"]}
+    grow_runs = {
+        origins[run.id]["_EventCharaId"]: run
+        for run in runs if run.id not in archives and origins[run.id]["_EventCharaId"]
+    }
     changes: Changes = {}
 
     def add(table: str, row: dict, values: dict[str, str | int]) -> None:
@@ -218,11 +241,21 @@ def plan_changes(tables: dict[str, dict], runs: list[EventRun], box_summons: set
     for row in rows(tables["EventData"]):
         if row["_Id"] in CLOSED_EVENTS:
             add("EventData", row, {"_EndDate": row["_StartDate"], "_ViewCloseDate": row["_StartDate"]})
+        elif row["_Id"] in archives:
+            add("EventData", row, {
+                "_IsMemoryEvent": 1,
+                "_MemoryEventViewType": ARCHIVE_VIEW_TYPES[row["_Id"]],
+                "_IsPickupMemoryEvent": 1,
+                "_EndDate": to_master_date(ARCHIVE_END),
+                "_ViewCloseDate": to_master_date(ARCHIVE_END),
+            })
         elif row["_Id"] in schedules:
             add("EventData", row, schedules[row["_Id"]].event_dates(row))
     for row in rows(tables["QuestEventGroup"]):
         if row["_Id"] in CLOSED_EVENTS:
             add("QuestEventGroup", row, {"_IsHideBanner": 1})
+        elif row["_Id"] in archives:
+            add("QuestEventGroup", row, {"_BaseQuestGroupId": 22100})
     for row in rows(tables["CharaData"]):
         if run := grow_runs.get(row["_Id"]):
             dates = {"_GrowMaterialOnlyStartDate": run.start, "_GrowMaterialOnlyEndDate": run.end}
@@ -231,15 +264,25 @@ def plan_changes(tables: dict[str, dict], runs: list[EventRun], box_summons: set
     following.append((*BOX_SUMMON_TABLE, set(schedules) & box_summons))
     for table, key, fields, events in following:
         for row in rows(tables[table]):
-            if row[key] in events:
+            if row[key] in archives:
+                # Existing start dates are in the past. Keep home-page banners expired;
+                # reopen only the archived event's quests, story, shop, and configured summon.
+                if table in {"QuestData", "QuestEventGroup", "EventStory", "EventTradeGroup", "BoxSummonData"}:
+                    if table != "BoxSummonData" or row[key] in box_summons:
+                        add(table, row, {
+                            field: to_master_date(ARCHIVE_END)
+                            for field in fields
+                            if row[field] and ("End" in field or field == "_CompleteDate")
+                        })
+            elif row[key] in events:
                 add(table, row, {field: schedules[row[key]].move(row[field]) for field in fields})
     raid_quests: set[int] = set()
     for row in rows(tables["QuestData"]):
-        if row["_Gid"] in schedules and row["_DungeonType"] == RAID:
+        if row["_Gid"] in schedules.keys() | archives and row["_DungeonType"] == RAID:
             raid_quests.add(row["_Id"])
             add("QuestData", row, SOLO_RAID_FIELDS | (SOLO_RAID_STAMINA if not row["_PayStaminaSingle"] else {}))
     for row in rows(tables["QuestEventMenu"]):
-        if row["_GroupId"] in schedules and row["_EntryQuestType"] == 1 and row["_EntryQuestId"] in raid_quests:
+        if row["_GroupId"] in schedules.keys() | archives and row["_EntryQuestType"] == 1 and row["_EntryQuestId"] in raid_quests:
             add("QuestEventMenu", row, SOLO_RAID_MENU_FIELDS)
     if 20801 in schedules:
         quests = {row["_Id"]: row for row in rows(tables["QuestData"])}
@@ -332,14 +375,15 @@ class Sources:
 
 
 def build_locale(
-    manifest_name: str, sources: Sources, runs: list[EventRun], box_summons: set[int], out_dir: Path
+    manifest_name: str, sources: Sources, runs: list[EventRun], box_summons: set[int], out_dir: Path,
+    archives: set[int] = frozenset(),
 ) -> tuple[bytes, str]:
     """改一个语言包的数据表，返回新的清单（加密后）和新数据表的文件名。"""
     plain = unity_bundle.decrypt_manifest(sources.manifest(manifest_name))
     master_name, master_size = unity_bundle.manifest_master(plain)
     master = sources.asset(master_name, master_size)
 
-    changes = plan_changes(unity_bundle.read_assets(master, TABLES), runs, box_summons)
+    changes = plan_changes(unity_bundle.read_assets(master, TABLES), runs, box_summons, archives)
     edits = make_edits(changes)
     patched, counts = unity_bundle.patch_assets(master, edits)
 
@@ -392,11 +436,14 @@ def clean_up(out_dir: Path, current: str) -> None:
 
 def generate(args: argparse.Namespace) -> str:
     runs = load_runs(args.events)
-    if not runs and not CLOSED_EVENTS:
+    archives = load_archives(args.events)
+    if not runs and not CLOSED_EVENTS and not archives:
         log("没有排活动，用原版的资源版本")
         return SOURCE_VERSION
-    box_summons = load_box_summons(args.event_summons) & {run.id for run in runs}
-    version = plan_version(runs, box_summons)
+    box_summons = load_box_summons(args.event_summons) & ({run.id for run in runs} | archives)
+    version = plan_version(runs, box_summons, archives)
+    for event_id in sorted(archives):
+        log(f"原版活动 {event_id} 加入回忆入口，保留原编号、关卡和奖励")
     for event_id in sorted(CLOSED_EVENTS):
         log(f"关闭原版活动 {event_id}，隐藏任务页入口")
     for run in runs:
@@ -416,7 +463,7 @@ def generate(args: argparse.Namespace) -> str:
         staging.mkdir(parents=True)
         masters = []
         for manifest_name in SOURCE_MANIFESTS:
-            manifest, master_name = build_locale(manifest_name, sources, runs, box_summons, args.out_dir)
+            manifest, master_name = build_locale(manifest_name, sources, runs, box_summons, args.out_dir, archives)
             write_file(staging / manifest_name, manifest)
             masters.append(master_name)
         write_file(staging / ".masters.json", json.dumps(masters).encode())

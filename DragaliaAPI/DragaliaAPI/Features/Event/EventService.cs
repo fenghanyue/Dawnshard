@@ -1,6 +1,7 @@
 ﻿using DragaliaAPI.Database;
 using DragaliaAPI.Database.Entities;
 using DragaliaAPI.Features.Missions;
+using DragaliaAPI.Features.Shared.Options;
 using DragaliaAPI.Features.Shared.Reward;
 using DragaliaAPI.Infrastructure;
 using DragaliaAPI.Models.Generated;
@@ -11,6 +12,7 @@ using DragaliaAPI.Shared.MasterAsset.Models;
 using DragaliaAPI.Shared.MasterAsset.Models.Event;
 using DragaliaAPI.Shared.PlayerDetails;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace DragaliaAPI.Features.Event;
 
@@ -21,7 +23,8 @@ public partial class EventService(
     IEventRepository eventRepository,
     IRewardService rewardService,
     IMissionProgressionService missionProgressionService,
-    IMissionService missionService
+    IMissionService missionService,
+    IOptionsMonitor<EventOptions> eventOptions
 ) : IEventService
 {
     public async Task<bool> GetCustomEventFlag(int eventId)
@@ -172,6 +175,7 @@ public partial class EventService(
 
         bool firstEventEnter = false;
         EventData data = MasterAsset.EventData[eventId];
+        bool isArchived = eventOptions.CurrentValue.IsArchived(eventId);
 
         if (await eventRepository.GetEventDataAsync(eventId) == null)
         {
@@ -182,7 +186,7 @@ public partial class EventService(
             {
                 await missionService.UnlockMemoryEventMissions(eventId);
             }
-            else
+            else if (!isArchived)
             {
                 await missionService.UnlockEventMissions(eventId);
             }
@@ -190,9 +194,17 @@ public partial class EventService(
             firstEventEnter = true;
         }
 
+        if (isArchived)
+        {
+            // An existing participant may still have expired limited missions. Reopen their
+            // original records without resetting progress or granting a second set of rewards.
+            await missionService.UnlockEventMissions(eventId);
+        }
+
         if (
             firstEventEnter
             && !data.IsMemoryEvent
+            && !isArchived
             && EventQuestLookup.TryGetValue(eventId, out QuestData[]? eventQuests)
             && eventQuests.Length > 0
         )
