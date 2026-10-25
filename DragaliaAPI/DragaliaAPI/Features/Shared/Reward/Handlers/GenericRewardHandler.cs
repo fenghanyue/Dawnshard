@@ -79,6 +79,7 @@ public partial class GenericRewardHandler(
                 await fortRepository.AddToStorage((FortPlants)entity.Id, quantity: entity.Quantity);
                 break;
             case EntityTypes.BuildEventItem:
+            case EntityTypes.RaidEventItem:
                 await eventRepository.AddItemQuantityAsync(entity.Id, entity.Quantity);
                 if (entity.Quantity > 0)
                 {
@@ -93,7 +94,6 @@ public partial class GenericRewardHandler(
                 break;
             case EntityTypes.Clb01EventItem:
             case EntityTypes.CollectEventItem:
-            case EntityTypes.RaidEventItem:
             case EntityTypes.MazeEventItem:
             case EntityTypes.ExRushEventItem:
             case EntityTypes.SimpleEventItem:

@@ -83,16 +83,26 @@ public partial class EventService(
             eventId
         );
 
-        List<IEventReward> availableRewards = (
-            rewardIds != null
-                ? rewardIds.Select(x => rewards[x])
-                : rewards
-                    .Values.ExceptBy(alreadyObtainedRewardIds, x => x.Id)
-                    .Where(x =>
-                        eventItemQuantities.ContainsKey(x.EventItemId)
-                        && eventItemQuantities[x.EventItemId] >= x.EventItemQuantity
-                    )
-        ).ToList();
+        List<int>? requestedRewardIds = rewardIds?.Distinct().ToList();
+        if (requestedRewardIds?.Any(id => !rewards.ContainsKey(id)) == true)
+        {
+            throw new DragaliaException(
+                ResultCode.CommonInvalidArgument,
+                "Requested reward does not belong to this event"
+            );
+        }
+
+        IEnumerable<IEventReward> candidates = requestedRewardIds is null
+            ? rewards.Values
+            : requestedRewardIds.Select(id => rewards[id]);
+
+        List<IEventReward> availableRewards = candidates
+            .ExceptBy(alreadyObtainedRewardIds, reward => reward.Id)
+            .Where(reward =>
+                eventItemQuantities.TryGetValue(reward.EventItemId, out int quantity)
+                && quantity >= reward.EventItemQuantity
+            )
+            .ToList();
 
         if (availableRewards.Count == 0)
         {
@@ -178,16 +188,20 @@ public partial class EventService(
             Log.CreatingEventDataForEvent(logger, eventId);
             eventRepository.CreateEventData(eventId);
 
-            if (data.IsMemoryEvent)
+            firstEventEnter = true;
+        }
+
+        if (data.IsMemoryEvent)
+        {
+            if (firstEventEnter)
             {
                 await missionService.UnlockMemoryEventMissions(eventId);
             }
-            else
-            {
-                await missionService.UnlockEventMissions(eventId);
-            }
-
-            firstEventEnter = true;
+        }
+        else
+        {
+            // Existing event records may come from an imported save or predate newly implemented tasks.
+            await missionService.UnlockEventMissions(eventId);
         }
 
         if (
@@ -263,7 +277,12 @@ public partial class EventService(
             await GrantAlreadyEarnedLocationRewards(eventId);
         }
 
-        if (firstEventEnter && MasterAsset.BoxSummonData.Enumerable.Any(x => x.EventId == eventId))
+        if (
+            MasterAsset.BoxSummonData.Enumerable.Any(x => x.EventId == eventId)
+            && !await apiContext.PlayerEventSummonData.AnyAsync(x =>
+                x.ViewerId == playerIdentityService.ViewerId && x.EventId == eventId
+            )
+        )
         {
             InitializeEventSummon(eventId);
         }

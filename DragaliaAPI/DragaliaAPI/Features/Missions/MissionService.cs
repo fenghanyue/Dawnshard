@@ -218,9 +218,34 @@ public partial class MissionService(
 
         Log.UnlockingEventMissionsForEvent(logger, eventId);
 
+        int[] periodIds = periodMissions.Select(mission => mission.Id).ToArray();
+        int[] dailyIds = dailyMissions.Select(mission => mission.Id).ToArray();
+        List<DbPlayerMission> existingMissions = await this
+            .missionRepository.Missions.Where(mission =>
+                (mission.Type == MissionType.Period && periodIds.Contains(mission.Id))
+                || (mission.Type == MissionType.Daily && dailyIds.Contains(mission.Id))
+            )
+            .ToListAsync();
+        Dictionary<(MissionType Type, int Id), DbPlayerMission> existingById =
+            existingMissions.ToDictionary(mission => (mission.Type, mission.Id));
+
         List<DbPlayerMission> dbMissions = new(periodMissions.Count + dailyMissions.Count);
         foreach (PeriodMission mission in periodMissions)
         {
+            if (
+                existingById.TryGetValue(
+                    (MissionType.Period, mission.Id),
+                    out DbPlayerMission? existing
+                )
+            )
+            {
+                existing.GroupId = mission.QuestGroupId;
+                existing.Start = runInfo.Start;
+                existing.End = runInfo.End;
+                dbMissions.Add(existing);
+                continue;
+            }
+
             dbMissions.Add(
                 await this.StartMission(
                     MissionType.Period,
@@ -234,6 +259,18 @@ public partial class MissionService(
 
         foreach (DailyMission mission in dailyMissions)
         {
+            if (
+                existingById.TryGetValue(
+                    (MissionType.Daily, mission.Id),
+                    out DbPlayerMission? existing
+                )
+            )
+            {
+                existing.GroupId = mission.QuestGroupId;
+                dbMissions.Add(existing);
+                continue;
+            }
+
             dbMissions.Add(
                 await this.StartMission(
                     MissionType.Daily,

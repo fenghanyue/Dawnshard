@@ -87,6 +87,8 @@ public partial class MissionInitialProgressionService(
                 MissionCompleteType.FortPlantBuilt or MissionCompleteType.FortPlantPlaced =>
                     await fortDataService.GetFortPlantCount((FortPlants)progressionInfo.Parameter!),
                 MissionCompleteType.FortLevelUp => await fortDataService.GetTotalFortLevel(),
+                // Daily quest totals start again at reset, rather than inheriting lifetime clears.
+                MissionCompleteType.QuestCleared when mission.Type == MissionType.Daily => 0,
                 MissionCompleteType.QuestCleared => await this.GetQuestClearedCount(
                     progressionInfo.Parameter,
                     progressionInfo.Parameter2,
@@ -181,6 +183,11 @@ public partial class MissionInitialProgressionService(
                 MissionCompleteType.PartyPowerReached =>
                     await partyPowerRepository.GetMaxPartyPowerAsync(),
                 MissionCompleteType.DragonGiftSent => 0, // Unsure about this
+                MissionCompleteType.DragonEarned => await apiContext.PlayerDragonData.AnyAsync(x =>
+                    x.DragonId == (DragonId)progressionInfo.Parameter!.Value
+                )
+                    ? 1
+                    : 0,
                 MissionCompleteType.ItemSummon => 0, // TODO: As daily quests also use this, should we make it actually count the item summons?
                 MissionCompleteType.AccountLinked => 0,
                 MissionCompleteType.PartyOptimized => 0,
