@@ -33,6 +33,11 @@
 下表已随 PR #37 于北京时间 2026-10-22 08:14 左右[部署生效](https://github.com/fenghanyue/Dawnshard/actions/runs/39697967004)。历史 1000 天排期已被本次结束时间取代。
 “未排期”表示当前配置未安排；“未验证”表示没有记录本活动的手机游玩结果。
 
+2026-10-25 补充：同名活动的最新版 20458 已于北京时间 19:37 左右通过 [PR #46](https://github.com/fenghanyue/Dawnshard/pull/46)
+[部署为回忆试运行](https://github.com/fenghanyue/Dawnshard/actions/runs/40189236806)，保留战货、奖章及任务奖励。
+这是对第一期最新版的额外回忆适配，不另计为新的首次活动；20401、20420 不加入回忆列表。
+服务器及五语言资源核对通过，手机游玩尚未验收，详见[本期记录](LOYALTYS_REQUIEM_20458.md)。
+
 | 活动编号 | 私服开始时间 | 私服结束时间 | 游玩验证与问题 |
 |---|---|---|---|
 | 20401 | 2026-10-18 14:00:00 | 2026-10-21 23:59:59 | 用户要求随第二期开启提前结束；已有部分手机验证，具体范围见下节；问题跟踪 [#2](https://github.com/fenghanyue/Dawnshard/issues/2)、[#20](https://github.com/fenghanyue/Dawnshard/issues/20) |
