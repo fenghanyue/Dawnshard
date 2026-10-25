@@ -388,7 +388,7 @@ def changed_assets(old: bytes, new: bytes) -> set[str]:
     return {name for name in before if before[name] != after[name]}
 
 
-def rename_material_asset(bundle: bytes, old: str, new: str) -> bytes:
+def rename_material_asset(bundle: bytes, old: str, new: str, *, texture_size: tuple[int, int] | None = None) -> bytes:
     """复制本期材质供回忆列表使用，只改材质名称和 AssetBundle 导出路径，纹理不动。"""
     replacements = {}
     objects = UnityPy.load(bundle).objects
@@ -409,6 +409,8 @@ def rename_material_asset(bundle: bytes, old: str, new: str) -> bytes:
     for obj in objects:
         original = obj.get_raw_data()
         tree = obj.read_typetree()
+        if texture_size and obj.type.name == "Texture2D" and (tree["m_Width"], tree["m_Height"]) != texture_size:
+            raise ValueError(f"列表图片尺寸应为 {texture_size}，实际为 {tree['m_Width']}×{tree['m_Height']}")
         if obj.save_typetree(tree) != original:
             raise ValueError("列表图片对象不能无损读回")
         updated = rename(tree)

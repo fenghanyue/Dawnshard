@@ -444,20 +444,21 @@ def build_locale(
 
 
 def add_memory_banner(plain: bytes, sources: Sources, out_dir: Path, *, required: bool = False) -> bytes:
-    """给本期增加回忆列表图片路径，复用本期原图并匹配材质的实际资源名。"""
+    """复用本期 266×136 原版小卡图；普通活动的宽横幅会撑出回忆卡片。"""
     tree = unity_bundle.read_assets(plain, {"manifest"})["manifest"]
-    source_name = "images/outgame/eventlocalized/20458/eventquestmenulist02"
+    source_name = "images/outgame/eventlocalized/20458/banner_event_02_mypage"
+    source_material = "Banner_Event_02_Mypage"
     for category in tree["categories"]:
         source = next((asset for asset in category["assets"] if asset["name"] == source_name), None)
         if source is None:
             continue
         original = sources.asset(source["hash"], source["size"])
-        banner = unity_bundle.rename_material_asset(original, "EventQuestMenuList02", "EventQuestMenuListMemory")
+        banner = unity_bundle.rename_material_asset(original, source_material, "EventQuestMenuListMemory", texture_size=(266, 136))
         name = unity_bundle.asset_hash(banner)
         write_file(out_dir / "dl" / "assetbundles" / PLATFORM / name[:2] / name, banner)
         added = copy.deepcopy(source)
-        added.update(name=source_name.replace("eventquestmenulist02", "eventquestmenulistmemory"), hash=name, size=len(banner))
-        added["assets"] = [path.replace("EventQuestMenuList02", "EventQuestMenuListMemory") for path in added["assets"]]
+        added.update(name=source_name.replace("banner_event_02_mypage", "eventquestmenulistmemory"), hash=name, size=len(banner))
+        added["assets"] = [path.replace(source_material, "EventQuestMenuListMemory") for path in added["assets"]]
         if any(asset["name"] == added["name"] for asset in category["assets"]):
             raise ValueError("本期回忆图片路径已经存在，不能重复追加")
 
