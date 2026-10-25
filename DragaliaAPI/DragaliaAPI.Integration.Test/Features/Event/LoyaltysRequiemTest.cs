@@ -4,6 +4,8 @@ using DragaliaAPI.Features.Dungeon;
 using DragaliaAPI.Features.Shared.Options;
 using DragaliaAPI.Infrastructure.Results;
 using DragaliaAPI.Shared.MasterAsset;
+using DragaliaAPI.Shared.MasterAsset.Models;
+using DragaliaAPI.Shared.MasterAsset.Models.Event;
 using DragaliaAPI.Shared.MasterAsset.Models.Missions;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
@@ -44,12 +46,19 @@ public class LoyaltysRequiemTest : TestFixture
         );
     }
 
-    private async Task Enter() =>
+    private async Task Enter()
+    {
+        await this.Client.PostMsgpack<MemoryEventActivateResponse>(
+            "memory_event/activate",
+            new MemoryEventActivateRequest() { EventId = EventId },
+            cancellationToken: Token
+        );
         await this.Client.PostMsgpack<RaidEventEntryResponse>(
             "raid_event/entry",
             new RaidEventEntryRequest(EventId),
             cancellationToken: Token
         );
+    }
 
     private Task<int> SetItem(int id, int quantity) =>
         this
@@ -73,12 +82,116 @@ public class LoyaltysRequiemTest : TestFixture
             cancellationToken: Token
         );
 
-    private Task<DbPlayerMission> GetMission(int id, MissionType type = MissionType.Period) =>
+    private Task<DbPlayerMission> GetMission(int id, MissionType type = MissionType.MemoryEvent) =>
         this.ApiContext.PlayerMissions.SingleAsync(
             x =>
                 x.ViewerId == this.ViewerId && x.GroupId == EventId && x.Id == id && x.Type == type,
             Token
         );
+
+    [Fact]
+    public async Task MemoryActivation_ExposesOriginalRewardsAsCompendiumTasks()
+    {
+        await this.Enter();
+        MissionGetMissionListResponse response = (
+            await this.Client.PostMsgpack<MissionGetMissionListResponse>(
+                "mission/get_mission_list",
+                cancellationToken: Token
+            )
+        ).Data;
+        response.MemoryEventMissionList.Should().HaveCount(25);
+        response.MemoryEventMissionList.Should().Contain(x => x.MemoryEventMissionId == 12080301);
+        (await this.ApiContext.PlayerUserData.SingleAsync(x => x.ViewerId == this.ViewerId, Token))
+            .ActiveMemoryEventId.Should()
+            .Be(EventId);
+        MasterAsset.EventData[EventId].IsMemoryEvent.Should().BeTrue();
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ImportedPeriodAndMemoryTasks_ShareOneReward(bool periodFirst)
+    {
+        await this.AddToDatabase(
+            new DbPlayerMission()
+            {
+                Id = 12080101,
+                Type = MissionType.Period,
+                GroupId = EventId,
+                Progress = 1,
+                State = MissionState.Completed,
+            }
+        );
+        await this.Enter();
+        int before = (
+            await this.ApiContext.PlayerUserData.SingleAsync(
+                x => x.ViewerId == this.ViewerId,
+                Token
+            )
+        ).Crystal;
+        for (int attempt = 0; attempt < 2; attempt++)
+        {
+            bool period = attempt == 0 ? periodFirst : !periodFirst;
+            DragaliaResponse<ResultCodeResponse> result;
+            if (period)
+            {
+                result = await this.Client.PostMsgpack<ResultCodeResponse>(
+                    "mission/receive_period_reward",
+                    new MissionReceivePeriodRewardRequest() { PeriodMissionIdList = [12080101] },
+                    ensureSuccessHeader: false,
+                    cancellationToken: Token
+                );
+            }
+            else
+            {
+                result = await this.Client.PostMsgpack<ResultCodeResponse>(
+                    "mission/receive_memory_event_reward",
+                    new MissionReceiveMemoryEventRewardRequest()
+                    {
+                        MemoryEventMissionIdList = [12080101],
+                    },
+                    ensureSuccessHeader: false,
+                    cancellationToken: Token
+                );
+            }
+
+            result
+                .DataHeaders.ResultCode.Should()
+                .Be(attempt == 0 ? ResultCode.Success : ResultCode.CommonUserStatusError);
+        }
+
+        (await this.ApiContext.PlayerUserData.SingleAsync(x => x.ViewerId == this.ViewerId, Token))
+            .Crystal.Should()
+            .Be(before + 50);
+        (await this.GetMission(12080101)).State.Should().Be(MissionState.Claimed);
+        (await this.GetMission(12080101, MissionType.Period))
+            .State.Should()
+            .Be(MissionState.Claimed);
+    }
+
+    [Fact]
+    public void OtherOfficialMemoryRaids_KeepTheirOriginalDropRules()
+    {
+        EventDropService drops = this.Services.GetRequiredService<EventDropService>();
+        int checkedEvents = 0;
+        foreach (
+            EventData evt in MasterAsset.EventData.Enumerable.Where(x =>
+                x.IsMemoryEvent && x.Id != EventId
+            )
+        )
+        {
+            if (evt.EventKindType != EventKindType.Raid)
+            {
+                continue;
+            }
+
+            QuestData quest = MasterAsset.QuestData.Enumerable.First(x => x.Gid == evt.Id);
+            drops.GenerateEventMaterialDrops(quest).Should().BeEmpty();
+            checkedEvents++;
+        }
+
+        checkedEvents.Should().Be(5);
+    }
 
     [Fact]
     public async Task Entry_InitializesAllOriginalTasksAndKeepsProgressOnReentry()
@@ -89,7 +202,8 @@ public class LoyaltysRequiemTest : TestFixture
                 x.ViewerId == this.ViewerId && x.GroupId == EventId
             )
             .ToListAsync(Token);
-        missions.Count(x => x.Type == MissionType.Period).Should().Be(25);
+        missions.Count(x => x.Type == MissionType.MemoryEvent).Should().Be(25);
+        missions.Count(x => x.Type == MissionType.Period).Should().Be(0);
         missions.Count(x => x.Type == MissionType.Daily).Should().Be(9);
         foreach (DbPlayerMission mission in missions)
         {
@@ -144,7 +258,7 @@ public class LoyaltysRequiemTest : TestFixture
         await this.Enter();
         DbPlayerMission participation = await this.GetMission(12080101);
         participation.State.Should().Be(MissionState.Claimed);
-        participation.End.Should().BeAfter(this.clock.GetUtcNow());
+        participation.End.Should().Be(DateTimeOffset.UnixEpoch);
         (
             await this.ApiContext.PlayerMissions.CountAsync(
                 x => x.ViewerId == this.ViewerId && x.GroupId == EventId,
@@ -152,7 +266,7 @@ public class LoyaltysRequiemTest : TestFixture
             )
         )
             .Should()
-            .Be(34);
+            .Be(35);
         await this.Enter();
         (await this.GetMission(12080101)).State.Should().Be(MissionState.Claimed);
         EventSummonGetDataResponse summon = (

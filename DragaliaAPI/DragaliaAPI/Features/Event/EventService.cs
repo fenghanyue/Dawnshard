@@ -193,12 +193,13 @@ public partial class EventService(
 
         if (data.IsMemoryEvent)
         {
-            if (firstEventEnter)
+            if (firstEventEnter || data.RetainsOriginalRewards())
             {
                 await missionService.UnlockMemoryEventMissions(eventId);
             }
         }
-        else
+
+        if (!data.IsMemoryEvent || data.RetainsOriginalRewards())
         {
             // Existing event records may come from an imported save or predate newly implemented tasks.
             await missionService.UnlockEventMissions(eventId);

@@ -15,46 +15,52 @@ public static class LoyaltysRequiem
 
     [MissionType(MissionType.Period)]
     [EventId(EventId)]
-    public static List<Mission> PeriodMissions { get; } =
-    [
-        new EventParticipationMission() { MissionId = 12080101 },
-        new EventParticipationMission() { MissionId = 12080201 },
-        new DragonEarnedMission() { MissionId = 12080301, Dragon = DragonId.Pele },
-        new ClearProgressionGroupMission()
-        {
-            MissionId = 12080401,
-            ProgressionGroupToClear = CompletedDaysGroup,
-        },
-        new ClearProgressionGroupMission()
-        {
-            MissionId = 12080402,
-            ProgressionGroupToClear = CompletedDaysGroup,
-        },
-        new ClearProgressionGroupMission()
-        {
-            MissionId = 12080403,
-            ProgressionGroupToClear = CompletedDaysGroup,
-        },
-        new EventRegularBattleClearMission() { MissionId = 12080501 },
-        new EventRegularBattleClearMission() { MissionId = 12080502 },
-        new EventRegularBattleClearMission() { MissionId = 12080503 },
-        new EventRegularBattleClearMission() { MissionId = 12080504 },
-        new EventRegularBattleClearMission() { MissionId = 12080505 },
-        new ClearRaidMission() { MissionId = 12080601 },
-        new ClearRaidMission() { MissionId = 12080602 },
-        new ClearRaidMission() { MissionId = 12080603 },
-        new ClearRaidMission() { MissionId = 12080604 },
-        new ClearRaidMission() { MissionId = 12080605 },
-        new ClearRaidMission() { MissionId = 12080606 },
-        new ClearRaidMission() { MissionId = 12080607 },
-        new ClearRaidMission() { MissionId = 12080608 },
-        new ClearRaidMission() { MissionId = 12080609 },
-        new ClearRaidMission() { MissionId = 12080610 },
-        new ClearRaidMission() { MissionId = 12080611 },
-        new ClearQuestMission() { MissionId = 12080701, QuestId = 204580501 },
-        new ClearQuestMission() { MissionId = 12080801, QuestId = 204580602 },
-        new ClearQuestMission() { MissionId = 12080901, QuestId = 204580603 },
-    ];
+    public static List<Mission> PeriodMissions { get; } = CreateEventMissions();
+
+    [MissionType(MissionType.MemoryEvent)]
+    [EventId(EventId)]
+    public static List<Mission> MemoryMissions { get; } = CreateEventMissions();
+
+    private static List<Mission> CreateEventMissions() =>
+        [
+            new EventParticipationMission() { MissionId = 12080101 },
+            new EventParticipationMission() { MissionId = 12080201 },
+            new DragonEarnedMission() { MissionId = 12080301, Dragon = DragonId.Pele },
+            new ClearProgressionGroupMission()
+            {
+                MissionId = 12080401,
+                ProgressionGroupToClear = CompletedDaysGroup,
+            },
+            new ClearProgressionGroupMission()
+            {
+                MissionId = 12080402,
+                ProgressionGroupToClear = CompletedDaysGroup,
+            },
+            new ClearProgressionGroupMission()
+            {
+                MissionId = 12080403,
+                ProgressionGroupToClear = CompletedDaysGroup,
+            },
+            new EventRegularBattleClearMission() { MissionId = 12080501 },
+            new EventRegularBattleClearMission() { MissionId = 12080502 },
+            new EventRegularBattleClearMission() { MissionId = 12080503 },
+            new EventRegularBattleClearMission() { MissionId = 12080504 },
+            new EventRegularBattleClearMission() { MissionId = 12080505 },
+            new ClearRaidMission() { MissionId = 12080601 },
+            new ClearRaidMission() { MissionId = 12080602 },
+            new ClearRaidMission() { MissionId = 12080603 },
+            new ClearRaidMission() { MissionId = 12080604 },
+            new ClearRaidMission() { MissionId = 12080605 },
+            new ClearRaidMission() { MissionId = 12080606 },
+            new ClearRaidMission() { MissionId = 12080607 },
+            new ClearRaidMission() { MissionId = 12080608 },
+            new ClearRaidMission() { MissionId = 12080609 },
+            new ClearRaidMission() { MissionId = 12080610 },
+            new ClearRaidMission() { MissionId = 12080611 },
+            new ClearQuestMission() { MissionId = 12080701, QuestId = 204580501 },
+            new ClearQuestMission() { MissionId = 12080801, QuestId = 204580602 },
+            new ClearQuestMission() { MissionId = 12080901, QuestId = 204580603 },
+        ];
 
     [MissionType(MissionType.Daily)]
     [EventId(EventId)]

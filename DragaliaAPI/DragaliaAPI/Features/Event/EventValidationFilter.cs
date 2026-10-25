@@ -30,6 +30,7 @@ public partial class EventValidationFilter(
         if (
             MasterAsset.EventData.TryGetValue(request.EventId, out EventData? masterAssetItem)
             && masterAssetItem.IsMemoryEvent
+            && !masterAssetItem.RetainsOriginalRewards()
         )
         {
             return;

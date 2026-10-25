@@ -1,7 +1,7 @@
 """读写游戏的资源包（Unity 的 UnityFS 格式）和加密的资源清单，给 client_master.py 用。
 
-只做"原地替换"：改动前后每个对象的字节数不变，包里其余内容一个字节都不动，没改到的压缩块
-照抄原文件。资源清单用 Rijndael（256 位分组）加密，密钥是原作者的改表工具
+默认只做等长原地替换；回忆试运行可显式扩容指定对象，同时更新对象/文件目录，
+其余对象和纹理原始字节保留。未变的压缩块照抄。资源清单用 Rijndael（256 位分组）加密，密钥是原作者的改表工具
 SapiensAnatis/DragaliaModTools 里公开的那一把。
 """
 
@@ -215,29 +215,40 @@ class UnityFS:
                     raise ValueError(f"不支持的压缩方式 {kind}")
         return bytes(out)
 
-    def rebuild(self, contents: bytes) -> bytes:
-        """换上新的内容（大小必须和原来一样）重新打包。内容没变的块照抄原文件。"""
+    def rebuild(self, contents: bytes, directory: bytes | None = None) -> bytes:
+        """重新打包；扩容必须显式提供已更新的文件目录，未变的压缩块照抄。"""
         original = self.contents()
-        if len(contents) != len(original):
+        if len(contents) != len(original) and directory is None:
             raise ValueError("新内容和原来的大小不一样")
         blocks = []
         pos = 0
         for raw_size, flags, packed in self.blocks:
             chunk = contents[pos : pos + raw_size]
+            if not chunk:
+                break
             if chunk != original[pos : pos + raw_size]:
                 packed = lz4.block.compress(chunk, mode="high_compression", compression=12, store_size=False)
                 kind = LZ4HC
                 if len(packed) >= raw_size:  # 压不小就原样存，和 Unity 一样
                     packed, kind = chunk, STORED
                 flags = (flags & ~COMPRESSION_MASK) | kind
-            blocks.append((raw_size, flags, packed))
+            blocks.append((len(chunk), flags, packed))
             pos += raw_size
+
+        while pos < len(contents):
+            chunk = contents[pos : pos + 131072]
+            packed = lz4.block.compress(chunk, mode="high_compression", compression=12, store_size=False)
+            kind = LZ4HC
+            if len(packed) >= len(chunk):
+                packed, kind = chunk, STORED
+            blocks.append((len(chunk), kind, packed))
+            pos += len(chunk)
 
         info = bytearray(self.data_hash)
         info += struct.pack(">i", len(blocks))
         for raw_size, flags, packed in blocks:
             info += struct.pack(">IIH", raw_size, len(packed), flags)
-        info += self.directory
+        info += self.directory if directory is None else directory
         packed_info = lz4.block.compress(bytes(info), mode="high_compression", compression=12, store_size=False)
 
         head = bytearray(self.signature + b"\0")
@@ -265,11 +276,82 @@ def read_assets(bundle: bytes, names: set[str]) -> dict[str, dict]:
     return found
 
 
-def patch_assets(bundle: bytes, edits: dict[str, Callable[[dict], int]]) -> tuple[bytes, dict[str, int]]:
+def _resize_objects(bundle: bytes, replacements: dict[int, bytes]) -> bytes:
+    """只扩容指定对象；复制其余原始字节，更新对象偏移、长度和单文件目录。
+
+    限定本项目的单一 serialized file、little-endian v21 格式；可附带原始纹理流文件。
+    不重写类型树或其他对象，纹理流文件只更新目录偏移。
+    """
+    archive = UnityFS(bundle)
+    contents = archive.contents()
+    objects = sorted(UnityPy.load(bundle).objects, key=lambda obj: obj.byte_start)
+    files = {id(obj.assets_file) for obj in objects}
+    if len(files) != 1 or not objects:
+        raise ValueError("扩容只支持一个 serialized file")
+    header = objects[0].assets_file.header
+    directory = bytearray(archive.directory)
+    (file_count,) = struct.unpack_from(">I", directory)
+    entries = []
+    pos = 4
+    for _ in range(file_count):
+        offset, size, _flags = struct.unpack_from(">qqI", directory, pos)
+        end = directory.index(0, pos + 20)
+        name = bytes(directory[pos + 20 : end]).decode()
+        entries.append((pos, offset, size, name))
+        pos = end + 1
+    target = next((entry for entry in entries if entry[3] == objects[0].assets_file.name), None)
+    if target is None or pos != len(directory):
+        raise ValueError("无法定位 serialized file 的资源目录")
+    _, file_offset, file_size, _ = target
+    original = contents[file_offset : file_offset + file_size]
+    if header.version != 21 or header.endian != "<" or header.file_size != len(original):
+        raise ValueError("扩容只支持实际校验过的 little-endian v21 数据表")
+
+    metadata = original[: header.data_offset]
+    positions = []
+    cursor = 0
+    out = bytearray()
+    for obj in objects:
+        needle = struct.pack("<qIIi", obj.path_id, obj.byte_start - header.data_offset, obj.byte_size, obj.type_id)
+        position = metadata.find(needle)
+        if position < 20 or metadata.find(needle, position + 1) != -1:
+            raise ValueError(f"对象 {obj.path_id} 的 metadata 记录无法唯一定位")
+        if obj.byte_start < cursor:
+            raise ValueError("数据表对象重叠")
+        out += original[cursor : obj.byte_start]
+        start = len(out)
+        raw = replacements.get(obj.byte_start, original[obj.byte_start : obj.byte_start + obj.byte_size])
+        out += raw
+        # 保留原有对象间 padding，并让后续对象仍保持原来的 8-byte 对齐。
+        out += bytes(-(len(raw) - obj.byte_size) % 8)
+        positions.append((position, start - header.data_offset, len(raw)))
+        cursor = obj.byte_start + obj.byte_size
+    out += original[cursor:]
+    for position, start, size in positions:
+        struct.pack_into("<II", out, position + 8, start, size)
+    struct.pack_into(">I", out, 4, len(out))
+    delta = len(out) - len(original)
+    for position, offset, size, name in entries:
+        if name == target[3]:
+            size = len(out)
+        elif offset >= file_offset + file_size:
+            offset += delta
+        elif offset + size > file_offset:
+            raise ValueError("资源目录的文件范围重叠")
+        struct.pack_into(">qq", directory, position, offset, size)
+    updated = contents[:file_offset] + bytes(out) + contents[file_offset + file_size :]
+    return archive.rebuild(updated, bytes(directory))
+
+
+def patch_assets(
+    bundle: bytes, edits: dict[str, Callable[[dict], int]], *, resizable: set[str] | None = None
+) -> tuple[bytes, dict[str, int]]:
     """按名字找到包里的 MonoBehaviour，读成字典交给 edits 里对应的函数去改（函数返回改了几处），
-    再写回原来的位置。写回的字节数必须和原来一样，所以只能换成一样长的值。"""
+    默认等长写回；只有 resizable 明确列出的对象允许扩容。"""
     contents = bytearray(UnityFS(bundle).contents())
     counts = {}
+    replacements = {}
+    resized = False
     for name, obj in _monobehaviours(bundle):
         if name not in edits:
             continue
@@ -282,13 +364,18 @@ def patch_assets(bundle: bytes, edits: dict[str, Callable[[dict], int]]) -> tupl
         counts[name] = edits[name](tree)
         if counts[name]:
             patched = obj.save_typetree(tree)
-            if len(patched) != len(original):
+            if len(patched) != len(original) and name not in (resizable or set()):
                 raise ValueError(f"{name} 改完以后大小变了")
-            contents[obj.byte_start : obj.byte_start + obj.byte_size] = patched
+            replacements[obj.byte_start] = patched
+            resized |= len(patched) != len(original)
     if missing := edits.keys() - counts.keys():
         raise ValueError(f"资源包里没有这些表：{sorted(missing)}")
     if not any(counts.values()):
         return bundle, counts
+    if resized:
+        return _resize_objects(bundle, replacements), counts
+    for start, data in replacements.items():
+        contents[start : start + len(data)] = data
     return UnityFS(bundle).rebuild(bytes(contents)), counts
 
 
@@ -299,6 +386,40 @@ def changed_assets(old: bytes, new: bytes) -> set[str]:
     if before.keys() != after.keys():
         raise ValueError("两个资源包里的表不一样")
     return {name for name in before if before[name] != after[name]}
+
+
+def rename_material_asset(bundle: bytes, old: str, new: str) -> bytes:
+    """复制本期材质供回忆列表使用，只改材质名称和 AssetBundle 导出路径，纹理不动。"""
+    replacements = {}
+    objects = UnityPy.load(bundle).objects
+    old_cab = objects[0].assets_file.name
+    new_cab = "CAB-" + hashlib.sha256(bundle + new.encode()).hexdigest()[:32]
+
+    def rename(value):
+        if isinstance(value, str):
+            return value.replace(old, new).replace(old.lower(), new.lower()).replace(old_cab, new_cab)
+        if isinstance(value, list):
+            return [rename(item) for item in value]
+        if isinstance(value, tuple):
+            return tuple(rename(item) for item in value)
+        if isinstance(value, dict):
+            return {key: rename(item) for key, item in value.items()}
+        return value
+
+    for obj in objects:
+        original = obj.get_raw_data()
+        tree = obj.read_typetree()
+        if obj.save_typetree(tree) != original:
+            raise ValueError("列表图片对象不能无损读回")
+        updated = rename(tree)
+        if updated != tree:
+            replacements[obj.byte_start] = obj.save_typetree(updated)
+    if not replacements:
+        raise ValueError("列表图片里没有预期的材质或导出路径")
+    updated = _resize_objects(bundle, replacements)
+    archive = UnityFS(updated)
+    directory = archive.directory.replace(old_cab.encode(), new_cab.encode())
+    return archive.rebuild(archive.contents(), directory)
 
 
 def _master_entry(tree: dict) -> dict:
