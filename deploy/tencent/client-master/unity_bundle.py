@@ -1,13 +1,9 @@
-"""读写游戏的资源包（Unity 的 UnityFS 格式）和加密的资源清单，给 client_master.py 用。
-
-默认只做等长原地替换；回忆试运行可显式扩容指定对象，同时更新对象/文件目录，
-其余对象和纹理原始字节保留。未变的压缩块照抄。资源清单用 Rijndael（256 位分组）加密，密钥是原作者的改表工具
-SapiensAnatis/DragaliaModTools 里公开的那一把。
-"""
+"""UnityFS 与 Rijndael 清单读写；格式限制见 README.md。"""
 
 import base64
 import hashlib
 import struct
+import zlib
 from collections.abc import Callable
 
 import lz4.block
@@ -277,11 +273,7 @@ def read_assets(bundle: bytes, names: set[str]) -> dict[str, dict]:
 
 
 def _resize_objects(bundle: bytes, replacements: dict[int, bytes]) -> bytes:
-    """只扩容指定对象；复制其余原始字节，更新对象偏移、长度和单文件目录。
-
-    限定本项目的单一 serialized file、little-endian v21 格式；可附带原始纹理流文件。
-    不重写类型树或其他对象，纹理流文件只更新目录偏移。
-    """
+    """只扩容指定对象，保留其余对象及纹理；仅支持单文件 little-endian v21。"""
     archive = UnityFS(bundle)
     contents = archive.contents()
     objects = sorted(UnityPy.load(bundle).objects, key=lambda obj: obj.byte_start)
@@ -346,8 +338,7 @@ def _resize_objects(bundle: bytes, replacements: dict[int, bytes]) -> bytes:
 def patch_assets(
     bundle: bytes, edits: dict[str, Callable[[dict], int]], *, resizable: set[str] | None = None
 ) -> tuple[bytes, dict[str, int]]:
-    """按名字找到包里的 MonoBehaviour，读成字典交给 edits 里对应的函数去改（函数返回改了几处），
-    默认等长写回；只有 resizable 明确列出的对象允许扩容。"""
+    """按名称改表；只有 resizable 显式列出的对象允许扩容。"""
     contents = bytearray(UnityFS(bundle).contents())
     counts = {}
     replacements = {}
@@ -388,8 +379,30 @@ def changed_assets(old: bytes, new: bytes) -> set[str]:
     return {name for name in before if before[name] != after[name]}
 
 
+def clear_memory_card_caption(bundle: bytes) -> bytes:
+    """仅修补20458小卡底部的固定字样。"""
+    textures = [obj.read() for obj in UnityPy.load(bundle).objects if obj.type.name == "Texture2D"]
+    colors = [tex for tex in textures if tex.m_TextureFormat == 7]
+    if len(colors) != 1 or (colors[0].m_Width, colors[0].m_Height) != (266, 136):
+        raise ValueError("小卡补片仅支持 266×136 RGB565 图片")
+    raw = colors[0].get_image_data()
+    patch = zlib.decompress(base64.b64decode("eNrNlr2RwjAQRgMIrgSFpgOX4BkSWiB0duG1YEVuA0e0QEgtNHLsfSy7Xlm2hH/m5g1YkiX8dr0yLr4KReX6rcr5J9SunIb6Tbk/EHXBo3WBNh2BjPv3aFNOczkNwWfFEQb7g3cMj2BMehb2aUrxhGmKnzbFJxzrj7Kxn0UVQTIeggjzosIaWxMWXQ0W/6oGye2wt41gKpqxSFKc41HYTEoPLX2V1Nxb26FqlnrOJ6cWpvbZ1C7sn8Nd924ZY9lD4no5Hc/Hs762uOAMfQtjkWA1778832HnWLYlBjvCFmIaVq9egzjJIcd5zNVap81KhZxxJ3Kc03zTyfGVPFNtpNXztq6xSvbfBIy2dY55p/yLw3ns2Rz7N1kv2zFvVDLyjJl4D1ors3l7TXuHOWaePdd/o1sjo/bZLW5D919T/zAy1pTeza2CqTzFPXKQ9fQ2GctyaJKelaXp14Z12cpijvX/MovTtYQ1D0F08Vi3i7lrH9fdbXeDedeyCx35Oah9eJ6eKXP1+TWBM3hc86DVtrUFf7b39/ddIliA/i+Gvc+u91rzC4Bg8No="))
+    if len(raw) != 266 * 136 * 2 or len(patch) != 90 * 23 * 2:
+        raise ValueError("小卡原图或补片长度不符")
+    archive = UnityFS(bundle)
+    contents = archive.contents()
+    start = contents.find(raw)
+    if start < 0 or contents.find(raw, start + 1) >= 0:
+        raise ValueError("不能唯一定位小卡彩色纹理")
+    updated = bytearray(contents)
+    for y in range(23):
+        offset = start + ((135 - 102 - y) * 266 + 7) * 2
+        updated[offset : offset + 180] = patch[y * 180 : (y + 1) * 180]
+    return archive.rebuild(bytes(updated))
+
+
 def rename_material_asset(bundle: bytes, old: str, new: str, *, texture_size: tuple[int, int] | None = None) -> bytes:
-    """复制本期材质供回忆列表使用，只改材质名称和 AssetBundle 导出路径，纹理不动。"""
+    """复制并重命名材质及导出路径，保留纹理。"""
     replacements = {}
     objects = UnityPy.load(bundle).objects
     old_cab = objects[0].assets_file.name

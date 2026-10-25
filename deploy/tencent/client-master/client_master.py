@@ -1,24 +1,4 @@
-"""按服务器的活动安排，改手机端游戏数据表（master）里的活动日期，生成新的资源清单和资源版本号。
-
-游戏里显示哪些活动，看的是手机从资源站下载的数据表里写的日期（还是当年的日期）；服务器的
-EventOptions 只管放不放行。所以要把数据表里的日期改成服务器排的时间，再让手机重新下载：
-
-1. 下载原版的资源清单和 5 个语言包的数据表，按写死的校验值核对，存在 --cache-dir 里，下次不用再下；
-2. 把 appsettings.Production.json 的 EventOptions.EventList 里排的活动，日期改成服务器的时间
-   （规则见 EventSchedule），活动里的讨伐战和菜单入口改成单人（见 SOLO_RAID_FIELDS、SOLO_RAID_MENU_FIELDS）。只换成一样长的值
-   （日期一样长，数字本来就是定长的）；20458 回忆试运行另增任务行和本期图片别名，
-   扩容仅更新指定对象及文件偏移，其余对象原始字节保留；
-3. 改过的数据表按内容重新取文件名，更新资源清单里这个文件的名字和大小，重新加密清单；
-4. 写到 --out-dir：dl/manifests/Android/<新版本号>/ 下是清单，dl/assetbundles/Android/xx/ 下是数据表。
-   资源缓存（../asset-cache/default.conf）先从这里找文件，找不到再去资源站。
-
-新版本号由输入算出来：活动安排、活动召唤配置、这个脚本和依赖都没变，版本号就不变，生成过的直接跳过。
-没排活动且没有要关闭的原版活动时，直接用原版的版本号。标准输出只有最后一行的版本号，其他信息都在标准错误里。
-
-用法（部署时 deploy.sh 会自动跑）：
-    python3 client_master.py --events appsettings.Production.json --event-summons eventSummon.json \\
-        --cache-dir /opt/dawnshard/client-master/cache --out-dir /opt/asset-cache/overrides
-"""
+"""按活动排期生成五语言客户端资源；用法与格式限制见 README.md。"""
 
 import argparse
 import base64
@@ -452,7 +432,7 @@ def add_memory_banner(plain: bytes, sources: Sources, out_dir: Path, *, required
         source = next((asset for asset in category["assets"] if asset["name"] == source_name), None)
         if source is None:
             continue
-        original = sources.asset(source["hash"], source["size"])
+        original = unity_bundle.clear_memory_card_caption(sources.asset(source["hash"], source["size"]))
         banner = unity_bundle.rename_material_asset(original, source_material, "EventQuestMenuListMemory", texture_size=(266, 136))
         name = unity_bundle.asset_hash(banner)
         write_file(out_dir / "dl" / "assetbundles" / PLATFORM / name[:2] / name, banner)
