@@ -6,6 +6,10 @@ namespace DragaliaAPI.Features.Event;
 
 internal static class EventDataExtensions
 {
+    // The full-reward compendium trial is limited to the latest Loyalty's Requiem rerun.
+    public static bool RetainsOriginalRewards(this EventData data) =>
+        data.IsMemoryEvent && data.Id == 20458;
+
     public static IEnumerable<(int Id, int Type)> GetEventSpecificItemIds(this EventData data)
     {
         int eventId = data.Id;

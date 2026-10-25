@@ -1,8 +1,10 @@
 using System.Diagnostics;
 using DragaliaAPI.Database;
 using DragaliaAPI.Database.Entities;
+using DragaliaAPI.Features.Missions;
 using DragaliaAPI.Shared.Definitions.Enums;
 using DragaliaAPI.Shared.MasterAsset;
+using DragaliaAPI.Shared.MasterAsset.Models.Missions;
 using DragaliaAPI.Shared.MasterAsset.Models.Story;
 using DragaliaAPI.Shared.PlayerDetails;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +14,7 @@ namespace DragaliaAPI.Features.Shared.Reward.Handlers;
 public partial class DragonHandler(
     ApiContext apiContext,
     IPlayerIdentityService playerIdentityService,
+    IMissionProgressionService missionProgressionService,
     ILogger<DragonHandler> logger
 ) : IRewardHandler, IBatchRewardHandler
 {
@@ -55,6 +58,11 @@ public partial class DragonHandler(
             apiContext.PlayerDragonReliability.Add(reliability);
             this.AddDefaultLevelStories(dragon, reliability.Level);
         }
+
+        missionProgressionService.EnqueueEvent(
+            MissionCompleteType.DragonEarned,
+            parameter: entity.Id
+        );
 
         return GrantReturn.Added();
     }
@@ -110,6 +118,12 @@ public partial class DragonHandler(
                 ownedReliabilities.Add(dragon);
                 this.AddDefaultLevelStories(dragon, reliability.Level);
             }
+
+            missionProgressionService.EnqueueEvent(
+                MissionCompleteType.DragonEarned,
+                entity.Quantity,
+                parameter: entity.Id
+            );
 
             resultDict.Add(key, GrantReturn.Added());
             dragonCount++;

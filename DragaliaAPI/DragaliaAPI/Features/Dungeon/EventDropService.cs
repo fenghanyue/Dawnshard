@@ -33,7 +33,10 @@ public class EventDropService(IEventRepository eventRepository)
             return Enumerable.Empty<AtgenEventPassiveUpList>();
         }
 
-        if (evt.IsMemoryEvent || evt.EventKindType != EventKindType.Raid)
+        if (
+            (evt.IsMemoryEvent && !evt.RetainsOriginalRewards())
+            || evt.EventKindType != EventKindType.Raid
+        )
         {
             return Enumerable.Empty<AtgenEventPassiveUpList>();
         }
@@ -198,7 +201,7 @@ public class EventDropService(IEventRepository eventRepository)
     private IEnumerable<DropEntity> GenerateRaidEventDrops(QuestData quest, EventData evt)
     {
         // All quests cost stamina, without any need for Otherworld Fragments, Otherworld Gems, Omega Keys.
-        if (evt.IsMemoryEvent)
+        if (evt.IsMemoryEvent && !evt.RetainsOriginalRewards())
         {
             yield break;
         }

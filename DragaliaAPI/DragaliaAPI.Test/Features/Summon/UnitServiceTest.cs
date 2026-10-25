@@ -1,6 +1,7 @@
 ﻿using DragaliaAPI.Database.Entities;
 using DragaliaAPI.Database.Repositories;
 using DragaliaAPI.Database.Test;
+using DragaliaAPI.Features.Missions;
 using DragaliaAPI.Features.Present;
 using DragaliaAPI.Features.Shared.Reward;
 using DragaliaAPI.Features.Summoning;
@@ -39,6 +40,7 @@ public class UnitServiceTest : IClassFixture<DbTestFixture>
         DragonHandler dragonHandler = new(
             this.fixture.ApiContext,
             this.mockPlayerIdentityService.Object,
+            new Mock<IMissionProgressionService>().Object,
             NullLogger<DragonHandler>.Instance
         );
         RewardService rewardService = new(

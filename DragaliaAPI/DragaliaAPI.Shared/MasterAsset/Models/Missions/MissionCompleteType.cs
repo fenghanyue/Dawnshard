@@ -212,6 +212,9 @@ public enum MissionCompleteType
     /// <summary>int eventId, int questId, int maximum clear seconds; full clears only.</summary>
     EventChallengeBattleClearTime,
 
+    /// <summary>DragonId dragon; successfully added dragon copies.</summary>
+    DragonEarned,
+
     /// <summary>
     /// None
     /// </summary>

@@ -6,7 +6,8 @@ EventOptions 只管放不放行。所以要把数据表里的日期改成服务�
 1. 下载原版的资源清单和 5 个语言包的数据表，按写死的校验值核对，存在 --cache-dir 里，下次不用再下；
 2. 把 appsettings.Production.json 的 EventOptions.EventList 里排的活动，日期改成服务器的时间
    （规则见 EventSchedule），活动里的讨伐战和菜单入口改成单人（见 SOLO_RAID_FIELDS、SOLO_RAID_MENU_FIELDS）。只换成一样长的值
-   （日期一样长，数字本来就是定长的），数据表别的地方一个字节都不动；
+   （日期一样长，数字本来就是定长的）；20458 回忆试运行另增任务行和本期图片别名，
+   扩容仅更新指定对象及文件偏移，其余对象原始字节保留；
 3. 改过的数据表按内容重新取文件名，更新资源清单里这个文件的名字和大小，重新加密清单；
 4. 写到 --out-dir：dl/manifests/Android/<新版本号>/ 下是清单，dl/assetbundles/Android/xx/ 下是数据表。
    资源缓存（../asset-cache/default.conf）先从这里找文件，找不到再去资源站。
@@ -21,6 +22,7 @@ EventOptions 只管放不放行。所以要把数据表里的日期改成服务�
 
 import argparse
 import base64
+import copy
 import hashlib
 import http.client
 import json
@@ -54,6 +56,8 @@ DATE_FORMAT = "%Y/%m/%d %H:%M:%S"
 VERSION_FILES = ["client_master.py", "unity_bundle.py", "requirements.txt", "requirements-build.txt"]
 # 大逃杀在原版数据表里一直开放到 2030 年，但服务器不支持；关闭活动显示并隐藏任务页入口。
 CLOSED_EVENTS = {22301}
+# Explicit trial only; existing official compendium entries and their pages are untouched.
+MEMORY_TRIALS = {20458}
 
 # 除了活动表，这些表里属于某个活动的行，日期也跟着活动走：表名 → (哪个字段是活动编号, 日期字段)
 FOLLOWING_TABLES = {
@@ -76,7 +80,10 @@ SOLO_RAID_STAMINA = {"_PayStaminaSingle": 15, "_CampaignStaminaSingle": 7}
 # QuestEventMenu 的入口分类独立于 QuestData：3/4/5 是原来的讨伐战入口。只改关卡类型，老活动点进去仍会转圈。
 # 把转换的关卡放到已有的首领战列表（分类 2），走单人准备入口；关卡编号、解锁条件、战斗和奖励不变。
 SOLO_RAID_MENU_FIELDS = {"_QuestSubType": 2}
-TABLES = {"EventData", "CharaData", "QuestEventMenu", *FOLLOWING_TABLES, BOX_SUMMON_TABLE[0]}
+TABLES = {
+    "EventData", "CharaData", "QuestEventMenu", "MissionPeriodData", "MissionMemoryEventData",
+    *FOLLOWING_TABLES, BOX_SUMMON_TABLE[0],
+}
 
 # 20801 的旧剧情/每日地图在最终客户端中已删除。保留原编号、区域数和解锁顺序，
 # 复用同活动仍存在的森林与首领地图；服务器 QuestData.json 使用相同映射。
@@ -156,7 +163,11 @@ class EventSchedule:
     def __init__(self, origin: dict, run: EventRun):
         try:
             self.origin_start = from_master_date(origin["_StartDate"])
-            self.origin_ends = {from_master_date(origin["_EndDate"]), from_master_date(origin["_ViewCloseDate"])}
+            self.origin_ends = {
+                from_master_date(value) for value in (origin["_EndDate"], origin["_ViewCloseDate"]) if value
+            }
+            if not self.origin_ends and run.id not in MEMORY_TRIALS:
+                raise ValueError("普通活动没有结束日期")
         except ValueError:
             raise SystemExit(f"活动 {run.id} 在数据表里没有完整的时间，不能排") from None
         self.run = run
@@ -169,7 +180,13 @@ class EventSchedule:
             return to_master_date(self.run.end)
         return to_master_date(min(date + (self.run.start - self.origin_start), self.run.end))
 
-    def event_dates(self, row: dict) -> dict[str, str]:
+    def event_dates(self, row: dict) -> dict[str, str | int]:
+        if self.run.id in MEMORY_TRIALS:
+            return {
+                "_StartDate": to_master_date(self.run.start), "_EndDate": "", "_ViewCloseDate": "",
+                "_ViewAnnounceDate": "", "_ViewNewDate": "", "_IsMemoryEvent": 1,
+                "_MemoryEventViewType": 201, "_IsPickupMemoryEvent": 1, "_IsNotAddFriendshipPoint": 1,
+            }
         dates = {
             "_StartDate": to_master_date(self.run.start),
             "_EndDate": to_master_date(self.run.end),
@@ -191,6 +208,47 @@ def rows(tree: dict) -> Iterator[dict]:
             yield table["entriesValue"][index]
 
 
+def compendium_missions(tables: dict[str, dict], runs: list[EventRun]) -> list[dict]:
+    enabled = MEMORY_TRIALS & {run.id for run in runs}
+    result = []
+    for source in rows(tables["MissionPeriodData"]):
+        if source["_QuestGroupId"] not in enabled:
+            continue
+        row = copy.deepcopy(source)
+        row["_EventId"] = row.pop("_QuestGroupId")
+        if row["_MissionTransportType"] == 10104:
+            row["_MissionTransportType"], row["_TransportValue"] = 10102, 0
+        result.append(row)
+    return result
+
+
+def add_compendium_missions(tree: dict, additions: list[dict]) -> int:
+    """利用原字典的空槽新增任务，按原版 zero-based bucket/hash 链维护索引。"""
+    data = tree["dict"]
+    existing = {row["_Id"]: row for row in rows(tree)}
+    changed = 0
+    for row in additions:
+        key = row["_Id"]
+        if key in existing:
+            if existing[key] != row:
+                raise ValueError(f"回忆任务 {key} 与已有记录冲突")
+            continue
+        index = data["count"]
+        if data["freeCount"] or index >= len(data["entriesValue"]):
+            raise ValueError("原版回忆任务字典空槽不足，停止生成")
+        hash_code = key & 0x7fffffff
+        bucket = hash_code % len(data["buckets"])
+        data["entriesHashCode"][index] = hash_code
+        data["entriesKey"][index] = key
+        data["entriesNext"][index] = data["buckets"][bucket]
+        data["entriesValue"][index] = copy.deepcopy(row)
+        data["buckets"][bucket] = index
+        data["count"] += 1
+        existing[key] = row
+        changed += 1
+    return changed
+
+
 # 每张表要改的行：表名 → {行的 _Id → {字段: 新值}}
 Changes = dict[str, dict[int, dict[str, str | int]]]
 
@@ -210,7 +268,10 @@ def plan_changes(tables: dict[str, dict], runs: list[EventRun], box_summons: set
     def add(table: str, row: dict, values: dict[str, str | int]) -> None:
         values = {key: value for key, value in values.items() if row[key] != value}
         for key, value in values.items():
-            if type(row[key]) is not type(value) or isinstance(value, str) and len(row[key]) != len(value):
+            resizing_trial = table == "EventData" and row["_Id"] in MEMORY_TRIALS
+            if type(row[key]) is not type(value) or (
+                isinstance(value, str) and len(row[key]) != len(value) and not resizing_trial
+            ):
                 raise SystemExit(f"{table} {row['_Id']} 的 {key} 新旧值类型或长度不一样：{row[key]!r} → {value!r}")
         if values:
             changes.setdefault(table, {}).setdefault(row["_Id"], {}).update(values)
@@ -223,6 +284,8 @@ def plan_changes(tables: dict[str, dict], runs: list[EventRun], box_summons: set
     for row in rows(tables["QuestEventGroup"]):
         if row["_Id"] in CLOSED_EVENTS:
             add("QuestEventGroup", row, {"_IsHideBanner": 1})
+        elif row["_Id"] in MEMORY_TRIALS & schedules.keys():
+            add("QuestEventGroup", row, {"_BaseQuestGroupId": 22100})
     for row in rows(tables["CharaData"]):
         if run := grow_runs.get(row["_Id"]):
             dates = {"_GrowMaterialOnlyStartDate": run.start, "_GrowMaterialOnlyEndDate": run.end}
@@ -232,7 +295,15 @@ def plan_changes(tables: dict[str, dict], runs: list[EventRun], box_summons: set
     for table, key, fields, events in following:
         for row in rows(tables[table]):
             if row[key] in events:
-                add(table, row, {field: schedules[row[key]].move(row[field]) for field in fields})
+                schedule = schedules[row[key]]
+                values = {field: schedule.move(row[field]) for field in fields}
+                if row[key] in MEMORY_TRIALS:
+                    values = {
+                        field: (to_master_date(schedule.run.end if "End" in field or "Complete" in field else schedule.run.start)
+                                if row[field] else "")
+                        for field in fields
+                    }
+                add(table, row, values)
     raid_quests: set[int] = set()
     for row in rows(tables["QuestData"]):
         if row["_Gid"] in schedules and row["_DungeonType"] == RAID:
@@ -339,28 +410,67 @@ def build_locale(
     master_name, master_size = unity_bundle.manifest_master(plain)
     master = sources.asset(master_name, master_size)
 
-    changes = plan_changes(unity_bundle.read_assets(master, TABLES), runs, box_summons)
+    tables = unity_bundle.read_assets(master, TABLES)
+    changes = plan_changes(tables, runs, box_summons)
     edits = make_edits(changes)
-    patched, counts = unity_bundle.patch_assets(master, edits)
+    additions = compendium_missions(tables, runs)
+    if additions:
+        edits["MissionMemoryEventData"] = lambda tree: add_compendium_missions(tree, additions)
+    resizable = {"EventData", "MissionMemoryEventData"} if additions else set()
+    patched, counts = unity_bundle.patch_assets(master, edits, resizable=resizable)
 
     # 核对：写进去的处数和算好的一样，只有这些表变了，读回来再写一遍没有要改的
     planned = {table: sum(len(values) for values in targets.values()) for table, targets in changes.items()}
+    if additions:
+        planned["MissionMemoryEventData"] = len(additions)
     if counts != planned:
         raise SystemExit(f"{manifest_name}：改了的处数和算好的不一样：{counts} / {planned}")
-    if unity_bundle.changed_assets(master, patched) != set(changes):
+    if unity_bundle.changed_assets(master, patched) != set(planned):
         raise SystemExit(f"{manifest_name}：改完的数据表里，变了的表和预期不一样")
-    _, again = unity_bundle.patch_assets(patched, edits)
+    _, again = unity_bundle.patch_assets(patched, edits, resizable=resizable)
     if any(again.values()):
         raise SystemExit(f"{manifest_name}：改完的数据表读回来，还有没改对的：{again}")
 
     new_name = unity_bundle.asset_hash(patched)
     write_file(out_dir / "dl" / "assetbundles" / PLATFORM / new_name[:2] / new_name, patched)
     new_plain = unity_bundle.set_manifest_master(plain, new_name, len(patched))
+    if additions:
+        new_plain = add_memory_banner(new_plain, sources, out_dir, required=manifest_name == "assetbundle.manifest")
     if unity_bundle.manifest_master(new_plain) != (new_name, len(patched)):
         raise SystemExit(f"{manifest_name}：新清单里的数据表对不上")
     summary = "，".join(f"{name} {count} 处" for name, count in sorted(counts.items()) if count)
     log(f"  {manifest_name}：{summary}")
     return unity_bundle.encrypt_manifest(new_plain), new_name
+
+
+def add_memory_banner(plain: bytes, sources: Sources, out_dir: Path, *, required: bool = False) -> bytes:
+    """给本期增加回忆列表图片路径，复用本期原图并匹配材质的实际资源名。"""
+    tree = unity_bundle.read_assets(plain, {"manifest"})["manifest"]
+    source_name = "images/outgame/eventlocalized/20458/eventquestmenulist02"
+    for category in tree["categories"]:
+        source = next((asset for asset in category["assets"] if asset["name"] == source_name), None)
+        if source is None:
+            continue
+        original = sources.asset(source["hash"], source["size"])
+        banner = unity_bundle.rename_material_asset(original, "EventQuestMenuList02", "EventQuestMenuListMemory")
+        name = unity_bundle.asset_hash(banner)
+        write_file(out_dir / "dl" / "assetbundles" / PLATFORM / name[:2] / name, banner)
+        added = copy.deepcopy(source)
+        added.update(name=source_name.replace("eventquestmenulist02", "eventquestmenulistmemory"), hash=name, size=len(banner))
+        added["assets"] = [path.replace("EventQuestMenuList02", "EventQuestMenuListMemory") for path in added["assets"]]
+        if any(asset["name"] == added["name"] for asset in category["assets"]):
+            raise ValueError("本期回忆图片路径已经存在，不能重复追加")
+
+        def append_banner(manifest: dict) -> int:
+            target = next(c for c in manifest["categories"] if any(a["name"] == source_name for a in c["assets"]))
+            target["assets"].append(added)
+            return 1
+
+        return unity_bundle.patch_assets(plain, {"manifest": append_banner}, resizable={"manifest"})[0]
+    if required:
+        raise ValueError("原版基础清单里缺少 20458 的列表图片")
+    # 与原版其他图片相同：无本语言覆盖项时，使用基础清单里的资源。
+    return plain
 
 
 def clean_up(out_dir: Path, current: str) -> None:
@@ -384,7 +494,8 @@ def clean_up(out_dir: Path, current: str) -> None:
     for path in kept:
         if not (path / ".masters.json").exists():
             return
-        used.update(json.loads((path / ".masters.json").read_text()))
+        index = path / ".assets.json"
+        used.update(json.loads((index if index.exists() else path / ".masters.json").read_text()))
     for path in (out_dir / "dl" / "assetbundles" / PLATFORM).glob("*/*"):
         if path.name not in used:
             path.unlink()
@@ -415,11 +526,20 @@ def generate(args: argparse.Namespace) -> str:
         shutil.rmtree(staging, ignore_errors=True)
         staging.mkdir(parents=True)
         masters = []
+        generated_assets = set()
         for manifest_name in SOURCE_MANIFESTS:
             manifest, master_name = build_locale(manifest_name, sources, runs, box_summons, args.out_dir)
             write_file(staging / manifest_name, manifest)
             masters.append(master_name)
+            generated_assets.add(master_name)
+            if MEMORY_TRIALS & {run.id for run in runs}:
+                tree = unity_bundle.read_assets(unity_bundle.decrypt_manifest(manifest), {"manifest"})["manifest"]
+                generated_assets.update(
+                    asset["hash"] for category in tree["categories"] for asset in category["assets"]
+                    if asset["name"] == "images/outgame/eventlocalized/20458/eventquestmenulistmemory"
+                )
         write_file(staging / ".masters.json", json.dumps(masters).encode())
+        write_file(staging / ".assets.json", json.dumps(sorted(generated_assets)).encode())
         staging.chmod(0o755)
         os.replace(staging, target)
     clean_up(args.out_dir, version)

@@ -3,6 +3,7 @@ using System.Diagnostics;
 using DragaliaAPI.Database.Entities;
 using DragaliaAPI.Database.Repositories;
 using DragaliaAPI.Database.Utils;
+using DragaliaAPI.Features.Event;
 using DragaliaAPI.Features.Missions.InitialProgress;
 using DragaliaAPI.Features.Shared.Options;
 using DragaliaAPI.Features.Shared.Reward;
@@ -159,31 +160,57 @@ public partial class MissionService(
             .ExceptBy(ObsoleteMemoryEventMissions, mission => mission.Id)
             .ToList();
 
-        if (
-            await this.missionRepository.Missions.AnyAsync(x =>
+        List<DbPlayerMission> existing = await this
+            .missionRepository.Missions.Where(x =>
                 x.GroupId == eventId && x.Type == MissionType.MemoryEvent
             )
-        )
+            .ToListAsync();
+        bool retainsRewards = MasterAsset.EventData[eventId].RetainsOriginalRewards();
+        if (existing.Count > 0 && !retainsRewards)
         {
-            return await this
-                .missionRepository.Missions.Where(x =>
-                    x.GroupId == eventId && x.Type == MissionType.MemoryEvent
-                )
-                .ToListAsync();
+            return existing;
         }
 
+        int[] ids = missions.Select(x => x.Id).ToArray();
+        Dictionary<int, DbPlayerMission> legacy = retainsRewards
+            ? await this
+                .missionRepository.Missions.Where(x =>
+                    x.Type == MissionType.Period && ids.Contains(x.Id)
+                )
+                .ToDictionaryAsync(x => x.Id)
+            : [];
+        Dictionary<int, DbPlayerMission> existingById = existing.ToDictionary(x => x.Id);
         Log.UnlockingMemoryEventMissionGroup(logger, eventId, missions.Select(x => x.Id));
 
         List<DbPlayerMission> dbMissions = new();
         foreach (MemoryEventMission mission in missions)
         {
-            dbMissions.Add(
-                await this.StartMission(
+            DbPlayerMission dbMission = existingById.TryGetValue(
+                mission.Id,
+                out DbPlayerMission? found
+            )
+                ? found
+                : await this.StartMission(
                     MissionType.MemoryEvent,
                     mission.Id,
                     groupId: mission.EventId
+                );
+            if (legacy.TryGetValue(mission.Id, out DbPlayerMission? previous))
+            {
+                dbMission.Progress = Math.Max(dbMission.Progress, previous.Progress);
+                if (
+                    previous.State == MissionState.Claimed
+                    || (
+                        previous.State == MissionState.Completed
+                        && dbMission.State == MissionState.InProgress
+                    )
                 )
-            );
+                {
+                    dbMission.State = previous.State;
+                }
+            }
+
+            dbMissions.Add(dbMission);
         }
 
         return dbMissions;
@@ -209,7 +236,10 @@ public partial class MissionService(
         }
 
         List<PeriodMission> periodMissions = MasterAsset
-            .MissionPeriodData.Enumerable.Where(x => x.QuestGroupId == eventId)
+            .MissionPeriodData.Enumerable.Where(x =>
+                x.QuestGroupId == eventId
+                && !MasterAsset.EventData[eventId].RetainsOriginalRewards()
+            )
             .ToList();
 
         List<DailyMission> dailyMissions = MasterAsset
@@ -218,9 +248,34 @@ public partial class MissionService(
 
         Log.UnlockingEventMissionsForEvent(logger, eventId);
 
+        int[] periodIds = periodMissions.Select(mission => mission.Id).ToArray();
+        int[] dailyIds = dailyMissions.Select(mission => mission.Id).ToArray();
+        List<DbPlayerMission> existingMissions = await this
+            .missionRepository.Missions.Where(mission =>
+                (mission.Type == MissionType.Period && periodIds.Contains(mission.Id))
+                || (mission.Type == MissionType.Daily && dailyIds.Contains(mission.Id))
+            )
+            .ToListAsync();
+        Dictionary<(MissionType Type, int Id), DbPlayerMission> existingById =
+            existingMissions.ToDictionary(mission => (mission.Type, mission.Id));
+
         List<DbPlayerMission> dbMissions = new(periodMissions.Count + dailyMissions.Count);
         foreach (PeriodMission mission in periodMissions)
         {
+            if (
+                existingById.TryGetValue(
+                    (MissionType.Period, mission.Id),
+                    out DbPlayerMission? existing
+                )
+            )
+            {
+                existing.GroupId = mission.QuestGroupId;
+                existing.Start = runInfo.Start;
+                existing.End = runInfo.End;
+                dbMissions.Add(existing);
+                continue;
+            }
+
             dbMissions.Add(
                 await this.StartMission(
                     MissionType.Period,
@@ -234,6 +289,18 @@ public partial class MissionService(
 
         foreach (DailyMission mission in dailyMissions)
         {
+            if (
+                existingById.TryGetValue(
+                    (MissionType.Daily, mission.Id),
+                    out DbPlayerMission? existing
+                )
+            )
+            {
+                existing.GroupId = mission.QuestGroupId;
+                dbMissions.Add(existing);
+                continue;
+            }
+
             dbMissions.Add(
                 await this.StartMission(
                     MissionType.Daily,
@@ -250,6 +317,20 @@ public partial class MissionService(
 
     public async Task RedeemMission(MissionType type, int id)
     {
+        // Imported period tasks and their compendium counterparts share one reward entitlement.
+        if (
+            type == MissionType.Period
+            && MasterAsset.MissionMemoryEventData.TryGetValue(
+                id,
+                out MemoryEventMission? memoryMission
+            )
+            && MasterAsset.EventData[memoryMission.EventId].RetainsOriginalRewards()
+        )
+        {
+            await this.UnlockMemoryEventMissions(memoryMission.EventId);
+            type = MissionType.MemoryEvent;
+        }
+
         Log.RedeemingMission(logger, id);
 
         DbPlayerMission dbMission = await missionRepository.GetMissionByIdAsync(type, id);
@@ -264,6 +345,19 @@ public partial class MissionService(
         await this.GrantMissionReward(type, id);
 
         dbMission.State = MissionState.Claimed;
+
+        if (
+            type == MissionType.MemoryEvent
+            && MasterAsset
+                .EventData[MasterAsset.MissionMemoryEventData[id].EventId]
+                .RetainsOriginalRewards()
+        )
+        {
+            DbPlayerMission? previous = await this.missionRepository.Missions.FirstOrDefaultAsync(
+                x => x.Type == MissionType.Period && x.Id == id
+            );
+            previous?.State = MissionState.Claimed;
+        }
     }
 
     private async Task GrantMissionReward(MissionType type, int id)
