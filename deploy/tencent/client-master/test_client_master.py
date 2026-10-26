@@ -161,7 +161,8 @@ class CompendiumTrialTest(unittest.TestCase):
         self.assertEqual(by_id[20427], old[20427])
         self.assertEqual(by_id[20458]["_IsMemoryEvent"], 1)
         self.assertEqual(by_id[20458]["_MemoryEventViewType"], 201)
-        self.assertEqual(by_id[20458]["_EndDate"], "")
+        for key in ("_EndDate", "_ViewCloseDate"):
+            self.assertEqual(by_id[20458][key], "2099/01/01 06:00:00")
         for key in ("_RewardMasterName", "_EventRewardText", "_ViewEntityType4", "_ViewEntityId4", "_IsUseEventPassive"):
             self.assertEqual(by_id[20458][key], old[20458][key])
         group = next(row for row in client_master.rows(self.tables["QuestEventGroup"]) if row["_Id"] == 20458)
