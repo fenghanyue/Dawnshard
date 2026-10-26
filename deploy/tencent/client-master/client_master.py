@@ -163,7 +163,8 @@ class EventSchedule:
     def event_dates(self, row: dict) -> dict[str, str | int]:
         if self.run.id in MEMORY_TRIALS:
             return {
-                "_StartDate": to_master_date(self.run.start), "_EndDate": "", "_ViewCloseDate": "",
+                "_StartDate": to_master_date(self.run.start),
+                "_EndDate": to_master_date(self.run.end), "_ViewCloseDate": to_master_date(self.run.end),
                 "_ViewAnnounceDate": "", "_ViewNewDate": "", "_IsMemoryEvent": 1,
                 "_MemoryEventViewType": 201, "_IsPickupMemoryEvent": 1, "_IsNotAddFriendshipPoint": 1,
             }

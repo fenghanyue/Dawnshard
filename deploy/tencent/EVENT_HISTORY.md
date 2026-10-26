@@ -40,9 +40,10 @@
 同活动原版小卡图修正已通过 [PR #48](https://github.com/fenghanyue/Dawnshard/pull/48) 于北京时间 22:55 左右
 [部署](https://github.com/fenghanyue/Dawnshard/actions/runs/40204157062)，30 项线上核对通过，手机新排版待确认。
 用户随后确认尺寸正常，但底部固定字样重叠；重字修正 [PR #50](https://github.com/fenghanyue/Dawnshard/pull/50)
-于北京时间 23:54 左右[部署成功](https://github.com/fenghanyue/Dawnshard/actions/runs/40208769707)，30 项线上核对通过，手机重字新效果待确认。
+于北京时间 23:54 左右[部署成功](https://github.com/fenghanyue/Dawnshard/actions/runs/40208769707)，30 项线上核对通过；10-26 用户确认卡片 UI 正常。
 手机确认活动主页缺战货召唤和奖章入口；单次通关且掉落看起来正常，不代表完整奖励循环通过。
-奖励按钮及战斗尚未单独验收，详见[本期记录](LOYALTYS_REQUIEM_20458.md)。
+10-26 同意仅恢复本期客户端结束、关闭日期，试验奖励入口是否受日期影响；当前本地准备，未部署，未确认转普通活动。
+完整奖励循环仍待验收，详见[本期记录](LOYALTYS_REQUIEM_20458.md)。
 
 | 活动编号 | 私服开始时间 | 私服结束时间 | 游玩验证与问题 |
 |---|---|---|---|
