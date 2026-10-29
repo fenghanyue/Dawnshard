@@ -4,6 +4,7 @@ using DragaliaAPI.Features.Shared;
 using DragaliaAPI.Features.Shared.Reward;
 using DragaliaAPI.Infrastructure;
 using DragaliaAPI.Models.Generated;
+using DragaliaAPI.Shared.MasterAsset;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DragaliaAPI.Features.Event;
@@ -22,6 +23,11 @@ public class MemoryEventController(
         CancellationToken cancellationToken
     )
     {
+        if (request.EventId == 20458 && !MasterAsset.EventData[20458].IsMemoryEvent)
+        {
+            return this.Code(ResultCode.EventOutThePeriod);
+        }
+
         MemoryEventActivateResponse resp = new();
 
         DbPlayerUserData userData = await userDataRepository.GetUserDataAsync();

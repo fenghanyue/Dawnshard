@@ -15,6 +15,11 @@ public class MissionRepository(
     TimeProvider timeProvider
 ) : IMissionRepository
 {
+    private static readonly int[] TrialDailyMissionIds = MasterAsset
+        .MissionDailyData.Enumerable.Where(x => x.QuestGroupId == 20458)
+        .Select(x => x.Id)
+        .ToArray();
+
     private readonly ApiContext apiContext = apiContext;
     private readonly IPlayerIdentityService playerIdentityService = playerIdentityService;
     private readonly TimeProvider timeProvider = timeProvider;
@@ -22,11 +27,14 @@ public class MissionRepository(
     public IQueryable<DbPlayerMission> Missions =>
         this.apiContext.PlayerMissions.Where(x =>
             x.ViewerId == this.playerIdentityService.ViewerId
+            // Retain trial progress in storage without exposing retired tasks or their notices.
+            && (MasterAsset.EventData[20458].IsMemoryEvent || x.GroupId != 20458)
         );
 
     public IQueryable<DbCompletedDailyMission> CompletedDailyMissions =>
         this.apiContext.CompletedDailyMissions.Where(x =>
             x.ViewerId == this.playerIdentityService.ViewerId
+            && (MasterAsset.EventData[20458].IsMemoryEvent || !TrialDailyMissionIds.Contains(x.Id))
         );
 
     public IQueryable<DbPlayerMission> GetMissionsByType(MissionType type)
