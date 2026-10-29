@@ -33,7 +33,24 @@
                 "TradeCharas": [],
                 "TradeDragons": [],
                 "Start": "2026-10-21T16:00:00Z",
-                "End": "2026-11-04T15:59:59Z"
+                "End": "2026-10-29T02:30:00Z"
+            },
+            {
+                "Id": 1020004,
+                "IsGala": false,
+                "IsPrizeShowcase": false,
+                "PickupCharas": [
+                    "Naveed"
+                ],
+                "PickupDragons": [
+                    "Cerberus"
+                ],
+                "LimitedCharas": [],
+                "LimitedDragons": [],
+                "TradeCharas": [],
+                "TradeDragons": [],
+                "Start": "2026-10-29T02:30:00Z",
+                "End": "2029-07-24T02:29:59Z"
             }
         ]
     }
