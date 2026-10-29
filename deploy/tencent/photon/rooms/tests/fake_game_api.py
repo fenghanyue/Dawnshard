@@ -11,6 +11,7 @@ TOKEN = json.loads(Path("/app/appsettings.json").read_text())["LuxonApiOptions"]
     "Token"
 ]
 RECORDS = {}
+PREPARATIONS = 0
 PREFIX = "/2.19.0_20220714193707/"
 
 
@@ -26,7 +27,9 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_GET(self):
-        if self.path.startswith("/records/"):
+        if self.path == "/preparations":
+            self.reply(200, str(PREPARATIONS).encode())
+        elif self.path.startswith("/records/"):
             self.reply(
                 200,
                 json.dumps(RECORDS.get(int(self.path.rsplit("/", 1)[1]), 0)).encode(),
@@ -48,6 +51,8 @@ class Handler(BaseHTTPRequestHandler):
         else:
             body = self.rfile.read(int(self.headers["Content-Length"]))
         if self.path == PREFIX + "heroparam/batch":
+            global PREPARATIONS
+            PREPARATIONS += 1
             actors = json.loads(body)
             if any(actor["viewerId"] == 999 for actor in actors):
                 time.sleep(0.15)

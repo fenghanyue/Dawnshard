@@ -61,6 +61,7 @@ for evidence in (
     "code=0x02 decision=relay",
     "code=0x15 decision=cancel",
     "code=0x15 decision=server-broadcast-submitted",
+    "start confirmation repeated",
     "detail limit reached",
     "reason=5s-after-start",
 ):
@@ -70,6 +71,6 @@ for private in ("diagnostic-private-value", "diagnostic-private-payload", "diagn
 details = [line for line in lines if "Co-op trace event:" in line
            or "Co-op trace properties:" in line or "Co-op trace stage:" in line]
 assert len(details) <= 160, "Diagnostic details exceeded the per-room limit"
-print("真风诊断：事件转发、原有拒绝策略、开战后采样及日志内容隔离检查通过")
+print("真风诊断：Ready 重试确认、事件转发、原有拒绝策略、开战后采样及日志内容隔离检查通过")
 PY
 echo "联机镜像：普通用户、只读文件系统、真实 UDP 房间/加载/战斗消息/结算接口检查通过（游戏 API 为测试替身）"
