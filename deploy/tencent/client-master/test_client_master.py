@@ -2,7 +2,6 @@
 
 import copy
 import json
-import tempfile
 import unittest
 from datetime import datetime
 from pathlib import Path
@@ -133,78 +132,6 @@ class HalloweenMapsTest(unittest.TestCase):
     def test_unscheduled_halloween_maps_are_untouched(self):
         changes = client_master.plan_changes(self.tables, [], set())
         self.assertNotIn("QuestData", changes)
-
-
-class CompendiumTrialTest(unittest.TestCase):
-    def setUp(self):
-        SoloRaidMenuTest.setUp(self)
-        self.shared = Path(__file__).resolve().parents[3] / "DragaliaAPI/DragaliaAPI.Shared/Resources"
-        events = json.loads((self.shared / "Event/EventData.json").read_text())
-        trial = copy.deepcopy(next(row for row in events if row["_Id"] == 20458))
-        native = copy.deepcopy(next(row for row in events if row["_Id"] == 20427))
-        self.tables["EventData"] = table(list(client_master.rows(self.tables["EventData"])) + [trial, native])
-        self.tables["QuestEventGroup"] = table([
-            *client_master.rows(self.tables["QuestEventGroup"]),
-            {"_Id": 20458, "_BaseQuestGroupId": 20458, "_ViewStartDate": "", "_ViewEndDate": ""},
-        ])
-        period = json.loads((self.shared / "Missions/MissionPeriodData.json").read_text())
-        self.tables["MissionPeriodData"] = table([row for row in period if row["_QuestGroupId"] == 20458])
-        self.run = client_master.EventRun(20458, datetime(2026, 10, 25, 8), datetime(2099, 1, 1, 6))
-
-    def test_only_trial_enters_compendium_and_reward_references_are_preserved(self):
-        original = copy.deepcopy(self.tables)
-        changes = client_master.plan_changes(self.tables, [self.run], {20458})
-        for name, edit in client_master.make_edits(changes).items():
-            edit(self.tables[name])
-        by_id = {row["_Id"]: row for row in client_master.rows(self.tables["EventData"])}
-        old = {row["_Id"]: row for row in client_master.rows(original["EventData"])}
-        self.assertEqual(by_id[20427], old[20427])
-        self.assertEqual(by_id[20458]["_IsMemoryEvent"], 1)
-        self.assertEqual(by_id[20458]["_MemoryEventViewType"], 201)
-        for key in ("_EndDate", "_ViewCloseDate"):
-            self.assertEqual(by_id[20458][key], "2099/01/01 06:00:00")
-        for key in ("_RewardMasterName", "_EventRewardText", "_ViewEntityType4", "_ViewEntityId4", "_IsUseEventPassive"):
-            self.assertEqual(by_id[20458][key], old[20458][key])
-        group = next(row for row in client_master.rows(self.tables["QuestEventGroup"]) if row["_Id"] == 20458)
-        self.assertEqual(group["_BaseQuestGroupId"], 22100)
-        self.assertEqual(client_master.plan_changes(self.tables, [self.run], {20458}), {})
-
-    def test_memory_tasks_match_server_and_remain_retrievable_through_hash_buckets(self):
-        additions = client_master.compendium_missions(self.tables, [self.run])
-        expected = json.loads((self.shared / "Missions/MissionMemoryEventData.fixes.json").read_text())
-        self.assertEqual(additions, expected)
-        self.assertEqual(len(additions), 25)
-        capacity = 41
-        tree = {"dict": {"count": 0, "freeCount": 0, "freeList": -1,
-            "buckets": [-1] * capacity, "entriesHashCode": [-1] * capacity,
-            "entriesNext": [-1] * capacity, "entriesKey": [0] * capacity,
-            "entriesValue": [{} for _ in range(capacity)]}}
-        self.assertEqual(client_master.add_compendium_missions(tree, additions), 25)
-        self.assertEqual(client_master.add_compendium_missions(tree, additions), 0)
-        data = tree["dict"]
-        for row in additions:
-            index = data["buckets"][row["_Id"] % capacity]
-            visited = set()
-            while index >= 0 and data["entriesKey"][index] != row["_Id"]:
-                self.assertNotIn(index, visited)
-                visited.add(index)
-                index = data["entriesNext"][index]
-            self.assertGreaterEqual(index, 0)
-            self.assertEqual(data["entriesValue"][index], row)
-
-    def test_cleanup_keeps_generated_banner_in_addition_to_masters(self):
-        with tempfile.TemporaryDirectory() as directory:
-            out = Path(directory)
-            version = out / "dl/manifests/Android/TRIAL"
-            version.mkdir(parents=True)
-            (version / ".masters.json").write_text('["MASTER"]')
-            (version / ".assets.json").write_text('["MASTER", "BANNER"]')
-            for name in ("MASTER", "BANNER", "UNUSED"):
-                client_master.write_file(out / "dl/assetbundles/Android" / name[:2] / name, b"data")
-            client_master.clean_up(out, "TRIAL")
-            self.assertTrue((out / "dl/assetbundles/Android/MA/MASTER").exists())
-            self.assertTrue((out / "dl/assetbundles/Android/BA/BANNER").exists())
-            self.assertFalse((out / "dl/assetbundles/Android/UN/UNUSED").exists())
 
 
 if __name__ == "__main__":

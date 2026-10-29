@@ -334,6 +334,12 @@ public partial class MissionService(
         Log.RedeemingMission(logger, id);
 
         DbPlayerMission dbMission = await missionRepository.GetMissionByIdAsync(type, id);
+        // FindAsync bypasses the repository's list filter; cached clients must not redeem retired tasks.
+        if (dbMission.GroupId == 20458 && !MasterAsset.EventData[20458].IsMemoryEvent)
+        {
+            throw new DragaliaException(ResultCode.EventOutThePeriod, "Event trial has ended");
+        }
+
         if (dbMission.State != MissionState.Completed)
         {
             throw new DragaliaException(
@@ -408,6 +414,16 @@ public partial class MissionService(
         Log.ClaimingDailyMissions(this.logger, missions);
 
         int[] ids = missions.Select(x => x.DailyMissionId).ToArray();
+        if (
+            !MasterAsset.EventData[20458].IsMemoryEvent
+            && ids.Any(id =>
+                MasterAsset.MissionDailyData.TryGetValue(id, out DailyMission? mission)
+                && mission.QuestGroupId == 20458
+            )
+        )
+        {
+            throw new DragaliaException(ResultCode.EventOutThePeriod, "Event trial has ended");
+        }
 
         List<DbCompletedDailyMission> completed = await this
             .missionRepository.CompletedDailyMissions.Where(x => ids.Contains(x.Id))
