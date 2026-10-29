@@ -1,0 +1,5331 @@
+{
+  "schema_version": 1,
+  "as_of_beijing": "2026-10-23",
+  "scope": "All 166 EventData rows in the preserved final client; distinct-ID variants only. Reopenings under the same ID are not reconstructed.",
+  "date_policy": "Original client dates; null means absent. latest_version_event_id is null when any version lacks a start date. Memory versions are not counted as limited reruns.",
+  "usage": "Reference data only; not loaded by the game, deployment or event scheduling. No event activation or save migration is performed.",
+  "provenance": {
+    "resource_version": "y2XM6giU6zz56wCm",
+    "locale": "zh_cn",
+    "manifest_url": "https://cdn.minty.sbs/dl/manifests/universe/y2XM6giU6zz56wCm/assetbundle.zh_cn.manifest",
+    "manifest_sha256": "dc1c22a423a16dcd4c13a6266c1629c211fbd150320c741490c31e7b1dc7a6d2",
+    "master_url": "https://cdn.minty.sbs/dl/assetbundles/universe/ZX/ZX7PBPNRWQJM3BEG2RTTLVKJCIXJLKRQWS5IFDI22TTVUJBI4TJQ",
+    "master_size": 6651109,
+    "master_sha256": "cdfef0bdb1b412cd8486d46735d549122e95aa30b4ba828d1ad4e75a2428e4d3",
+    "master_asset_hash": "ZX7PBPNRWQJM3BEG2RTTLVKJCIXJLKRQWS5IFDI22TTVUJBI4TJQ",
+    "repository": "fenghanyue/Dawnshard",
+    "repository_commit": "70b9c245ce42b402f279c2782be536405e9f92e2",
+    "event_data_path": "DragaliaAPI/DragaliaAPI.Shared/Resources/Event/EventData.json",
+    "event_data_sha256": "7a82a0fd8b398ebf7daa944b31acede1de983f96da3a0bce6b96b05620ef2b97",
+    "quest_story_path": "DragaliaAPI/DragaliaAPI.Shared/Resources/Story/QuestStory.json",
+    "quest_story_sha256": "47a9b0b2a0b1840a8cac35988bc3a77d1ef53f1d84f26ca8118dd3ea117cfeaa",
+    "client_event_data_exactly_matches_repository": true,
+    "client_quest_story_exactly_matches_repository": true
+  },
+  "summary": {
+    "event_records": 166,
+    "families": 71,
+    "original_records": 71,
+    "limited_rerun_records": 67,
+    "memory_records": 28,
+    "families_with_limited_rerun": 48,
+    "families_with_memory_version": 28,
+    "families_with_both": 14,
+    "families_with_memory_only": 14,
+    "families_with_no_later_record": 9,
+    "undated_records": 6
+  },
+  "families": [
+    {
+      "family_id": 20401,
+      "name_zh_cn": "忠龙之愿王之魂葬",
+      "event_kind_type": 1,
+      "event_kind": "Raid",
+      "original_event_id": 20401,
+      "has_limited_rerun": true,
+      "limited_rerun_event_ids": [
+        20420,
+        20458
+      ],
+      "has_memory_version": false,
+      "memory_event_ids": [],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 20458,
+      "latest_dated_event_id": 20458,
+      "latest_version_event_id": 20458,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_20401"
+        ],
+        "explicit_base_links": [
+          {
+            "event_id": 20458,
+            "base_event_id": 20401
+          }
+        ],
+        "shared_localized_story_title_count": 7,
+        "shared_story_title_samples": [
+          "邂逅骑士教官",
+          "火山的传说",
+          "负伤的龙"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": [
+          10240201
+        ]
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 20401,
+          "version_type": "original",
+          "name_zh_cn": "忠龙之愿王之魂葬",
+          "name_key": "EVENT_NAME_20401",
+          "reported_base_event_id": 20401,
+          "is_memory_event": false,
+          "start_utc": "2018-10-04T06:00:00Z",
+          "end_utc": "2018-10-15T05:59:59Z",
+          "start_beijing": "2018-10-04 14:00:00",
+          "end_beijing": "2018-10-15 13:59:59",
+          "quest_story_count": 8,
+          "localized_story_title_count": 7
+        },
+        {
+          "event_id": 20420,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "忠龙之愿王之魂葬",
+          "name_key": "EVENT_NAME_20401",
+          "reported_base_event_id": 20420,
+          "is_memory_event": false,
+          "start_utc": "2020-05-12T06:00:00Z",
+          "end_utc": "2020-05-22T05:59:59Z",
+          "start_beijing": "2020-05-12 14:00:00",
+          "end_beijing": "2020-05-22 13:59:59",
+          "quest_story_count": 9,
+          "localized_story_title_count": 7
+        },
+        {
+          "event_id": 20458,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "忠龙之愿王之魂葬",
+          "name_key": "EVENT_NAME_20401",
+          "reported_base_event_id": 20401,
+          "is_memory_event": false,
+          "start_utc": "2022-10-10T06:00:00Z",
+          "end_utc": "2022-10-20T05:59:59Z",
+          "start_beijing": "2022-10-10 14:00:00",
+          "end_beijing": "2022-10-20 13:59:59",
+          "quest_story_count": 7,
+          "localized_story_title_count": 7
+        }
+      ]
+    },
+    {
+      "family_id": 20801,
+      "name_zh_cn": "糖果的万圣节派对之夜",
+      "event_kind_type": 4,
+      "event_kind": "Build",
+      "original_event_id": 20801,
+      "has_limited_rerun": true,
+      "limited_rerun_event_ids": [
+        20811,
+        20821
+      ],
+      "has_memory_version": true,
+      "memory_event_ids": [
+        20826
+      ],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 20821,
+      "latest_dated_event_id": 20826,
+      "latest_version_event_id": 20826,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_20801",
+          "EVENT_NAME_20811"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 5,
+        "shared_story_title_samples": [
+          "万圣节的脚步",
+          "糖果大盗与变装作战",
+          "三位吸血鬼"
+        ],
+        "event_fort_ids": [
+          101501
+        ],
+        "event_chara_ids": []
+      },
+      "notes": [
+        "旧版与后续版本的名称索引不同；简中正式名称、设施编号和全部五章剧情标题一致。"
+      ],
+      "versions": [
+        {
+          "event_id": 20801,
+          "version_type": "original",
+          "name_zh_cn": "糖果的万圣节派对之夜",
+          "name_key": "EVENT_NAME_20801",
+          "reported_base_event_id": 20801,
+          "is_memory_event": false,
+          "start_utc": "2018-10-17T06:00:00Z",
+          "end_utc": "2018-10-26T05:59:59Z",
+          "start_beijing": "2018-10-17 14:00:00",
+          "end_beijing": "2018-10-26 13:59:59",
+          "quest_story_count": 5,
+          "localized_story_title_count": 5
+        },
+        {
+          "event_id": 20811,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "糖果的万圣节派对之夜",
+          "name_key": "EVENT_NAME_20811",
+          "reported_base_event_id": 20811,
+          "is_memory_event": false,
+          "start_utc": "2019-10-18T06:00:00Z",
+          "end_utc": "2019-10-31T05:59:59Z",
+          "start_beijing": "2019-10-18 14:00:00",
+          "end_beijing": "2019-10-31 13:59:59",
+          "quest_story_count": 5,
+          "localized_story_title_count": 5
+        },
+        {
+          "event_id": 20821,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "糖果的万圣节派对之夜",
+          "name_key": "EVENT_NAME_20811",
+          "reported_base_event_id": 20821,
+          "is_memory_event": false,
+          "start_utc": "2020-06-19T06:00:00Z",
+          "end_utc": "2020-06-29T05:59:59Z",
+          "start_beijing": "2020-06-19 14:00:00",
+          "end_beijing": "2020-06-29 13:59:59",
+          "quest_story_count": 5,
+          "localized_story_title_count": 5
+        },
+        {
+          "event_id": 20826,
+          "version_type": "memory",
+          "name_zh_cn": "糖果的万圣节派对之夜",
+          "name_key": "EVENT_NAME_20811",
+          "reported_base_event_id": 20826,
+          "is_memory_event": true,
+          "start_utc": "2020-09-25T06:00:00Z",
+          "end_utc": null,
+          "start_beijing": "2020-09-25 14:00:00",
+          "end_beijing": null,
+          "quest_story_count": 5,
+          "localized_story_title_count": 5
+        }
+      ]
+    },
+    {
+      "family_id": 20402,
+      "name_zh_cn": "心地善良的少女与被困的守护龙",
+      "event_kind_type": 1,
+      "event_kind": "Raid",
+      "original_event_id": 20402,
+      "has_limited_rerun": true,
+      "limited_rerun_event_ids": [
+        20416,
+        20459
+      ],
+      "has_memory_version": false,
+      "memory_event_ids": [],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 20459,
+      "latest_dated_event_id": 20459,
+      "latest_version_event_id": 20459,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_20402"
+        ],
+        "explicit_base_links": [
+          {
+            "event_id": 20459,
+            "base_event_id": 20402
+          }
+        ],
+        "shared_localized_story_title_count": 7,
+        "shared_story_title_samples": [
+          "寻求救援的少女",
+          "跟随梅露莎",
+          "与希尔维亚的回忆"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": [
+          10340101
+        ]
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 20402,
+          "version_type": "original",
+          "name_zh_cn": "心地善良的少女与被困的守护龙",
+          "name_key": "EVENT_NAME_20402",
+          "reported_base_event_id": 20402,
+          "is_memory_event": false,
+          "start_utc": "2018-10-31T06:00:00Z",
+          "end_utc": "2018-11-12T05:59:59Z",
+          "start_beijing": "2018-10-31 14:00:00",
+          "end_beijing": "2018-11-12 13:59:59",
+          "quest_story_count": 8,
+          "localized_story_title_count": 7
+        },
+        {
+          "event_id": 20416,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "心地善良的少女与被困的守护龙",
+          "name_key": "EVENT_NAME_20402",
+          "reported_base_event_id": 20416,
+          "is_memory_event": false,
+          "start_utc": "2019-11-13T06:00:00Z",
+          "end_utc": "2019-11-25T05:59:59Z",
+          "start_beijing": "2019-11-13 14:00:00",
+          "end_beijing": "2019-11-25 13:59:59",
+          "quest_story_count": 9,
+          "localized_story_title_count": 7
+        },
+        {
+          "event_id": 20459,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "心地善良的少女与被困的守护龙",
+          "name_key": "EVENT_NAME_20402",
+          "reported_base_event_id": 20402,
+          "is_memory_event": false,
+          "start_utc": "2022-10-20T06:00:00Z",
+          "end_utc": "2022-10-31T05:59:59Z",
+          "start_beijing": "2022-10-20 14:00:00",
+          "end_beijing": "2022-10-31 13:59:59",
+          "quest_story_count": 7,
+          "localized_story_title_count": 7
+        }
+      ]
+    },
+    {
+      "family_id": 20802,
+      "name_zh_cn": "寄愿于苍穹之风",
+      "event_kind_type": 4,
+      "event_kind": "Build",
+      "original_event_id": 20802,
+      "has_limited_rerun": true,
+      "limited_rerun_event_ids": [
+        20809
+      ],
+      "has_memory_version": true,
+      "memory_event_ids": [
+        20818
+      ],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 20809,
+      "latest_dated_event_id": 20818,
+      "latest_version_event_id": 20818,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_20802"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 5,
+        "shared_story_title_samples": [
+          "烈风迫近",
+          "扭曲的姐弟情",
+          "交错的情感"
+        ],
+        "event_fort_ids": [
+          101101
+        ],
+        "event_chara_ids": []
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 20802,
+          "version_type": "original",
+          "name_zh_cn": "寄愿于苍穹之风",
+          "name_key": "EVENT_NAME_20802",
+          "reported_base_event_id": 20802,
+          "is_memory_event": false,
+          "start_utc": "2018-11-15T06:00:00Z",
+          "end_utc": "2018-11-26T05:59:59Z",
+          "start_beijing": "2018-11-15 14:00:00",
+          "end_beijing": "2018-11-26 13:59:59",
+          "quest_story_count": 5,
+          "localized_story_title_count": 5
+        },
+        {
+          "event_id": 20809,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "寄愿于苍穹之风",
+          "name_key": "EVENT_NAME_20802",
+          "reported_base_event_id": 20809,
+          "is_memory_event": false,
+          "start_utc": "2019-06-20T06:00:00Z",
+          "end_utc": "2019-06-30T05:59:59Z",
+          "start_beijing": "2019-06-20 14:00:00",
+          "end_beijing": "2019-06-30 13:59:59",
+          "quest_story_count": 5,
+          "localized_story_title_count": 5
+        },
+        {
+          "event_id": 20818,
+          "version_type": "memory",
+          "name_zh_cn": "寄愿于苍穹之风",
+          "name_key": "EVENT_NAME_20802",
+          "reported_base_event_id": 20818,
+          "is_memory_event": true,
+          "start_utc": "2020-03-27T06:00:00Z",
+          "end_utc": null,
+          "start_beijing": "2020-03-27 14:00:00",
+          "end_beijing": null,
+          "quest_story_count": 5,
+          "localized_story_title_count": 5
+        }
+      ]
+    },
+    {
+      "family_id": 20403,
+      "name_zh_cn": "划破黑暗的光之歌声",
+      "event_kind_type": 1,
+      "event_kind": "Raid",
+      "original_event_id": 20403,
+      "has_limited_rerun": true,
+      "limited_rerun_event_ids": [
+        20412,
+        20447
+      ],
+      "has_memory_version": false,
+      "memory_event_ids": [],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 20447,
+      "latest_dated_event_id": 20447,
+      "latest_version_event_id": 20447,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_20403"
+        ],
+        "explicit_base_links": [
+          {
+            "event_id": 20447,
+            "base_event_id": 20403
+          }
+        ],
+        "shared_localized_story_title_count": 7,
+        "shared_story_title_samples": [
+          "循着歌声",
+          "明日之约",
+          "少年的阴影"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": [
+          10640403
+        ]
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 20403,
+          "version_type": "original",
+          "name_zh_cn": "划破黑暗的光之歌声",
+          "name_key": "EVENT_NAME_20403",
+          "reported_base_event_id": 20403,
+          "is_memory_event": false,
+          "start_utc": "2018-11-30T06:00:00Z",
+          "end_utc": "2018-12-12T05:59:59Z",
+          "start_beijing": "2018-11-30 14:00:00",
+          "end_beijing": "2018-12-12 13:59:59",
+          "quest_story_count": 8,
+          "localized_story_title_count": 7
+        },
+        {
+          "event_id": 20412,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "划破黑暗的光之歌声",
+          "name_key": "EVENT_NAME_20403",
+          "reported_base_event_id": 20412,
+          "is_memory_event": false,
+          "start_utc": "2019-05-14T06:00:00Z",
+          "end_utc": "2019-05-24T05:59:59Z",
+          "start_beijing": "2019-05-14 14:00:00",
+          "end_beijing": "2019-05-24 13:59:59",
+          "quest_story_count": 8,
+          "localized_story_title_count": 7
+        },
+        {
+          "event_id": 20447,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "划破黑暗的光之歌声",
+          "name_key": "EVENT_NAME_20403",
+          "reported_base_event_id": 20403,
+          "is_memory_event": false,
+          "start_utc": "2022-04-22T06:00:00Z",
+          "end_utc": "2022-04-29T05:59:59Z",
+          "start_beijing": "2022-04-22 14:00:00",
+          "end_beijing": "2022-04-29 13:59:59",
+          "quest_story_count": 7,
+          "localized_story_title_count": 7
+        }
+      ]
+    },
+    {
+      "family_id": 20803,
+      "name_zh_cn": "飘雪之夜的星龙树下",
+      "event_kind_type": 4,
+      "event_kind": "Build",
+      "original_event_id": 20803,
+      "has_limited_rerun": true,
+      "limited_rerun_event_ids": [
+        20813
+      ],
+      "has_memory_version": true,
+      "memory_event_ids": [
+        20817
+      ],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 20813,
+      "latest_dated_event_id": 20817,
+      "latest_version_event_id": 20817,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_20803"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 5,
+        "shared_story_title_samples": [
+          "星龙祭在即！",
+          "圣星使者大显身手！",
+          "心动不已的浪漫之夜♪"
+        ],
+        "event_fort_ids": [
+          101601
+        ],
+        "event_chara_ids": []
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 20803,
+          "version_type": "original",
+          "name_zh_cn": "飘雪之夜的星龙树下",
+          "name_key": "EVENT_NAME_20803",
+          "reported_base_event_id": 20803,
+          "is_memory_event": false,
+          "start_utc": "2018-12-17T06:00:00Z",
+          "end_utc": "2018-12-27T05:59:59Z",
+          "start_beijing": "2018-12-17 14:00:00",
+          "end_beijing": "2018-12-27 13:59:59",
+          "quest_story_count": 5,
+          "localized_story_title_count": 5
+        },
+        {
+          "event_id": 20813,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "飘雪之夜的星龙树下",
+          "name_key": "EVENT_NAME_20803",
+          "reported_base_event_id": 20813,
+          "is_memory_event": false,
+          "start_utc": "2019-12-12T06:00:00Z",
+          "end_utc": "2019-12-26T05:59:59Z",
+          "start_beijing": "2019-12-12 14:00:00",
+          "end_beijing": "2019-12-26 13:59:59",
+          "quest_story_count": 5,
+          "localized_story_title_count": 5
+        },
+        {
+          "event_id": 20817,
+          "version_type": "memory",
+          "name_zh_cn": "飘雪之夜的星龙树下",
+          "name_key": "EVENT_NAME_20803",
+          "reported_base_event_id": 20817,
+          "is_memory_event": true,
+          "start_utc": "2020-03-27T06:00:00Z",
+          "end_utc": null,
+          "start_beijing": "2020-03-27 14:00:00",
+          "end_beijing": null,
+          "quest_story_count": 5,
+          "localized_story_title_count": 5
+        }
+      ]
+    },
+    {
+      "family_id": 20404,
+      "name_zh_cn": "新春初曦招福开运",
+      "event_kind_type": 1,
+      "event_kind": "Raid",
+      "original_event_id": 20404,
+      "has_limited_rerun": true,
+      "limited_rerun_event_ids": [
+        20414,
+        20418,
+        20456
+      ],
+      "has_memory_version": false,
+      "memory_event_ids": [],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 20456,
+      "latest_dated_event_id": 20456,
+      "latest_version_event_id": 20456,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_20404"
+        ],
+        "explicit_base_links": [
+          {
+            "event_id": 20456,
+            "base_event_id": 20404
+          }
+        ],
+        "shared_localized_story_title_count": 10,
+        "shared_story_title_samples": [
+          "日出之国的访客",
+          "十二龙氏·家康",
+          "日出之国的龙"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": [
+          10540501
+        ]
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 20404,
+          "version_type": "original",
+          "name_zh_cn": "新春初曦招福开运",
+          "name_key": "EVENT_NAME_20404",
+          "reported_base_event_id": 20404,
+          "is_memory_event": false,
+          "start_utc": "2018-12-31T06:00:00Z",
+          "end_utc": "2019-01-10T05:59:59Z",
+          "start_beijing": "2018-12-31 14:00:00",
+          "end_beijing": "2019-01-10 13:59:59",
+          "quest_story_count": 11,
+          "localized_story_title_count": 10
+        },
+        {
+          "event_id": 20414,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "新春初曦招福开运",
+          "name_key": "EVENT_NAME_20404",
+          "reported_base_event_id": 20414,
+          "is_memory_event": false,
+          "start_utc": "2019-06-30T06:00:00Z",
+          "end_utc": "2019-07-11T05:59:59Z",
+          "start_beijing": "2019-06-30 14:00:00",
+          "end_beijing": "2019-07-11 13:59:59",
+          "quest_story_count": 11,
+          "localized_story_title_count": 10
+        },
+        {
+          "event_id": 20418,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "新春初曦招福开运",
+          "name_key": "EVENT_NAME_20404",
+          "reported_base_event_id": 20418,
+          "is_memory_event": false,
+          "start_utc": "2019-12-26T06:00:00Z",
+          "end_utc": "2019-12-31T05:59:59Z",
+          "start_beijing": "2019-12-26 14:00:00",
+          "end_beijing": "2019-12-31 13:59:59",
+          "quest_story_count": 10,
+          "localized_story_title_count": 10
+        },
+        {
+          "event_id": 20456,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "新春初曦招福开运",
+          "name_key": "EVENT_NAME_20404",
+          "reported_base_event_id": 20404,
+          "is_memory_event": false,
+          "start_utc": "2022-09-20T06:00:00Z",
+          "end_utc": "2022-09-30T05:59:59Z",
+          "start_beijing": "2022-09-20 14:00:00",
+          "end_beijing": "2022-09-30 13:59:59",
+          "quest_story_count": 10,
+          "localized_story_title_count": 10
+        }
+      ]
+    },
+    {
+      "family_id": 20804,
+      "name_zh_cn": "马戏团帐篷中的欢乐时光",
+      "event_kind_type": 4,
+      "event_kind": "Build",
+      "original_event_id": 20804,
+      "has_limited_rerun": false,
+      "limited_rerun_event_ids": [],
+      "has_memory_version": true,
+      "memory_event_ids": [
+        20820
+      ],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 20804,
+      "latest_dated_event_id": 20820,
+      "latest_version_event_id": 20820,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_20804"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 5,
+        "shared_story_title_samples": [
+          "驯龙师与短剑使",
+          "新团员招募中",
+          "短剑使的秘密"
+        ],
+        "event_fort_ids": [
+          100901
+        ],
+        "event_chara_ids": []
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 20804,
+          "version_type": "original",
+          "name_zh_cn": "马戏团帐篷中的欢乐时光",
+          "name_key": "EVENT_NAME_20804",
+          "reported_base_event_id": 20804,
+          "is_memory_event": false,
+          "start_utc": "2019-01-15T06:00:00Z",
+          "end_utc": "2019-01-25T05:59:59Z",
+          "start_beijing": "2019-01-15 14:00:00",
+          "end_beijing": "2019-01-25 13:59:59",
+          "quest_story_count": 5,
+          "localized_story_title_count": 5
+        },
+        {
+          "event_id": 20820,
+          "version_type": "memory",
+          "name_zh_cn": "马戏团帐篷中的欢乐时光",
+          "name_key": "EVENT_NAME_20804",
+          "reported_base_event_id": 20820,
+          "is_memory_event": true,
+          "start_utc": "2020-05-22T06:00:00Z",
+          "end_utc": null,
+          "start_beijing": "2020-05-22 14:00:00",
+          "end_beijing": null,
+          "quest_story_count": 5,
+          "localized_story_title_count": 5
+        }
+      ]
+    },
+    {
+      "family_id": 20405,
+      "name_zh_cn": "乡愁夜空下绽放之花",
+      "event_kind_type": 1,
+      "event_kind": "Raid",
+      "original_event_id": 20405,
+      "has_limited_rerun": true,
+      "limited_rerun_event_ids": [
+        20415,
+        20419,
+        20450
+      ],
+      "has_memory_version": false,
+      "memory_event_ids": [],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 20450,
+      "latest_dated_event_id": 20450,
+      "latest_version_event_id": 20450,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_20405"
+        ],
+        "explicit_base_links": [
+          {
+            "event_id": 20450,
+            "base_event_id": 20405
+          }
+        ],
+        "shared_localized_story_title_count": 8,
+        "shared_story_title_samples": [
+          "温柔的仙花焰工匠",
+          "功夫少女登场！",
+          "云游侠客归来"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": [
+          10340301
+        ]
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 20405,
+          "version_type": "original",
+          "name_zh_cn": "乡愁夜空下绽放之花",
+          "name_key": "EVENT_NAME_20405",
+          "reported_base_event_id": 20405,
+          "is_memory_event": false,
+          "start_utc": "2019-01-31T06:00:00Z",
+          "end_utc": "2019-02-12T05:59:59Z",
+          "start_beijing": "2019-01-31 14:00:00",
+          "end_beijing": "2019-02-12 13:59:59",
+          "quest_story_count": 9,
+          "localized_story_title_count": 8
+        },
+        {
+          "event_id": 20415,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "乡愁夜空下绽放之花",
+          "name_key": "EVENT_NAME_20405",
+          "reported_base_event_id": 20415,
+          "is_memory_event": false,
+          "start_utc": "2019-08-31T06:00:00Z",
+          "end_utc": "2019-09-12T05:59:59Z",
+          "start_beijing": "2019-08-31 14:00:00",
+          "end_beijing": "2019-09-12 13:59:59",
+          "quest_story_count": 9,
+          "localized_story_title_count": 8
+        },
+        {
+          "event_id": 20419,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "乡愁夜空下绽放之花",
+          "name_key": "EVENT_NAME_20405",
+          "reported_base_event_id": 20419,
+          "is_memory_event": false,
+          "start_utc": "2020-03-12T06:00:00Z",
+          "end_utc": "2020-03-23T05:59:59Z",
+          "start_beijing": "2020-03-12 14:00:00",
+          "end_beijing": "2020-03-23 13:59:59",
+          "quest_story_count": 10,
+          "localized_story_title_count": 8
+        },
+        {
+          "event_id": 20450,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "乡愁夜空下绽放之花",
+          "name_key": "EVENT_NAME_20405",
+          "reported_base_event_id": 20405,
+          "is_memory_event": false,
+          "start_utc": "2022-05-30T06:00:00Z",
+          "end_utc": "2022-06-10T05:59:59Z",
+          "start_beijing": "2022-05-30 14:00:00",
+          "end_beijing": "2022-06-10 13:59:59",
+          "quest_story_count": 8,
+          "localized_story_title_count": 8
+        }
+      ]
+    },
+    {
+      "family_id": 21301,
+      "name_zh_cn": "情人节·甜美佳肴",
+      "event_kind_type": 5,
+      "event_kind": "Collect",
+      "original_event_id": 21301,
+      "has_limited_rerun": true,
+      "limited_rerun_event_ids": [
+        21302,
+        21304
+      ],
+      "has_memory_version": false,
+      "memory_event_ids": [],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 21304,
+      "latest_dated_event_id": 21304,
+      "latest_version_event_id": 21304,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_21301"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 20,
+        "shared_story_title_samples": [
+          "情人节的选择",
+          "少女们的情人节",
+          "身着围裙"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": []
+      },
+      "notes": [
+        "后续版本扩充了剧情；共有的20个剧情标题仍一致，归为同活动后续版本，不代表内容完全相同。"
+      ],
+      "versions": [
+        {
+          "event_id": 21301,
+          "version_type": "original",
+          "name_zh_cn": "情人节·甜美佳肴",
+          "name_key": "EVENT_NAME_21301",
+          "reported_base_event_id": 21301,
+          "is_memory_event": false,
+          "start_utc": "2019-02-14T06:00:00Z",
+          "end_utc": "2019-02-22T05:59:59Z",
+          "start_beijing": "2019-02-14 14:00:00",
+          "end_beijing": "2019-02-22 13:59:59",
+          "quest_story_count": 20,
+          "localized_story_title_count": 20
+        },
+        {
+          "event_id": 21302,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "情人节·甜美佳肴",
+          "name_key": "EVENT_NAME_21301",
+          "reported_base_event_id": 21302,
+          "is_memory_event": false,
+          "start_utc": "2019-08-22T06:00:00Z",
+          "end_utc": "2019-08-31T05:59:59Z",
+          "start_beijing": "2019-08-22 14:00:00",
+          "end_beijing": "2019-08-31 13:59:59",
+          "quest_story_count": 26,
+          "localized_story_title_count": 26
+        },
+        {
+          "event_id": 21304,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "情人节·甜美佳肴",
+          "name_key": "EVENT_NAME_21301",
+          "reported_base_event_id": 21304,
+          "is_memory_event": false,
+          "start_utc": "2020-02-14T06:00:00Z",
+          "end_utc": "2020-02-28T05:59:59Z",
+          "start_beijing": "2020-02-14 14:00:00",
+          "end_beijing": "2020-02-28 13:59:59",
+          "quest_story_count": 54,
+          "localized_story_title_count": 54
+        }
+      ]
+    },
+    {
+      "family_id": 20406,
+      "name_zh_cn": "舞姬与魔龙的圆舞曲",
+      "event_kind_type": 1,
+      "event_kind": "Raid",
+      "original_event_id": 20406,
+      "has_limited_rerun": true,
+      "limited_rerun_event_ids": [
+        20432,
+        20446
+      ],
+      "has_memory_version": false,
+      "memory_event_ids": [],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 20446,
+      "latest_dated_event_id": 20446,
+      "latest_version_event_id": 20446,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_20406"
+        ],
+        "explicit_base_links": [
+          {
+            "event_id": 20432,
+            "base_event_id": 20406
+          },
+          {
+            "event_id": 20446,
+            "base_event_id": 20406
+          }
+        ],
+        "shared_localized_story_title_count": 7,
+        "shared_story_title_samples": [
+          "死亡的赋格曲",
+          "为舞姬而奏的协奏曲",
+          "诅咒的狂想曲"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": [
+          10840403
+        ]
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 20406,
+          "version_type": "original",
+          "name_zh_cn": "舞姬与魔龙的圆舞曲",
+          "name_key": "EVENT_NAME_20406",
+          "reported_base_event_id": 20406,
+          "is_memory_event": false,
+          "start_utc": "2019-02-28T06:00:00Z",
+          "end_utc": "2019-03-12T05:59:59Z",
+          "start_beijing": "2019-02-28 14:00:00",
+          "end_beijing": "2019-03-12 13:59:59",
+          "quest_story_count": 8,
+          "localized_story_title_count": 7
+        },
+        {
+          "event_id": 20432,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "舞姬与魔龙的圆舞曲",
+          "name_key": "EVENT_NAME_20406",
+          "reported_base_event_id": 20406,
+          "is_memory_event": false,
+          "start_utc": "2021-02-16T06:00:00Z",
+          "end_utc": "2021-02-26T05:59:59Z",
+          "start_beijing": "2021-02-16 14:00:00",
+          "end_beijing": "2021-02-26 13:59:59",
+          "quest_story_count": 8,
+          "localized_story_title_count": 7
+        },
+        {
+          "event_id": 20446,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "舞姬与魔龙的圆舞曲",
+          "name_key": "EVENT_NAME_20406",
+          "reported_base_event_id": 20406,
+          "is_memory_event": false,
+          "start_utc": "2022-03-22T06:00:00Z",
+          "end_utc": "2022-03-30T05:59:59Z",
+          "start_beijing": "2022-03-22 14:00:00",
+          "end_beijing": "2022-03-30 13:59:59",
+          "quest_story_count": 7,
+          "localized_story_title_count": 7
+        }
+      ]
+    },
+    {
+      "family_id": 20806,
+      "name_zh_cn": "禁忌召唤·封印图书馆",
+      "event_kind_type": 4,
+      "event_kind": "Build",
+      "original_event_id": 20806,
+      "has_limited_rerun": true,
+      "limited_rerun_event_ids": [
+        20812,
+        20827
+      ],
+      "has_memory_version": true,
+      "memory_event_ids": [
+        20831
+      ],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 20827,
+      "latest_dated_event_id": 20831,
+      "latest_version_event_id": 20831,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_20806",
+          "EVENT_NAME_20812"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 5,
+        "shared_story_title_samples": [
+          "禁书之影",
+          "栖身黑暗之物",
+          "赫希伍徳之谜"
+        ],
+        "event_fort_ids": [
+          101701
+        ],
+        "event_chara_ids": []
+      },
+      "notes": [
+        "旧版与后续版本的名称索引不同；简中正式名称、设施编号和全部五章剧情标题一致。"
+      ],
+      "versions": [
+        {
+          "event_id": 20806,
+          "version_type": "original",
+          "name_zh_cn": "禁忌召唤·封印图书馆",
+          "name_key": "EVENT_NAME_20806",
+          "reported_base_event_id": 20806,
+          "is_memory_event": false,
+          "start_utc": "2019-03-12T06:00:00Z",
+          "end_utc": "2019-03-20T05:59:59Z",
+          "start_beijing": "2019-03-12 14:00:00",
+          "end_beijing": "2019-03-20 13:59:59",
+          "quest_story_count": 5,
+          "localized_story_title_count": 5
+        },
+        {
+          "event_id": 20812,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "禁忌召唤·封印图书馆",
+          "name_key": "EVENT_NAME_20812",
+          "reported_base_event_id": 20812,
+          "is_memory_event": false,
+          "start_utc": "2019-10-31T06:00:00Z",
+          "end_utc": "2019-11-13T05:59:59Z",
+          "start_beijing": "2019-10-31 14:00:00",
+          "end_beijing": "2019-11-13 13:59:59",
+          "quest_story_count": 5,
+          "localized_story_title_count": 5
+        },
+        {
+          "event_id": 20827,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "禁忌召唤·封印图书馆",
+          "name_key": "EVENT_NAME_20812",
+          "reported_base_event_id": 20827,
+          "is_memory_event": false,
+          "start_utc": "2020-10-19T06:00:00Z",
+          "end_utc": "2020-10-27T05:59:59Z",
+          "start_beijing": "2020-10-19 14:00:00",
+          "end_beijing": "2020-10-27 13:59:59",
+          "quest_story_count": 5,
+          "localized_story_title_count": 5
+        },
+        {
+          "event_id": 20831,
+          "version_type": "memory",
+          "name_zh_cn": "禁忌召唤·封印图书馆",
+          "name_key": "EVENT_NAME_20812",
+          "reported_base_event_id": 20831,
+          "is_memory_event": true,
+          "start_utc": "2021-01-27T06:00:00Z",
+          "end_utc": null,
+          "start_beijing": "2021-01-27 14:00:00",
+          "end_beijing": null,
+          "quest_story_count": 5,
+          "localized_story_title_count": 5
+        }
+      ]
+    },
+    {
+      "family_id": 20807,
+      "name_zh_cn": "希望与友情的寻蛋之旅",
+      "event_kind_type": 4,
+      "event_kind": "Build",
+      "original_event_id": 20807,
+      "has_limited_rerun": true,
+      "limited_rerun_event_ids": [
+        20819
+      ],
+      "has_memory_version": true,
+      "memory_event_ids": [
+        20822
+      ],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 20819,
+      "latest_dated_event_id": 20822,
+      "latest_version_event_id": 20822,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_20807"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 5,
+        "shared_story_title_samples": [
+          "森隐族的春季祭典",
+          "劲敌参战！",
+          "意外发生！"
+        ],
+        "event_fort_ids": [
+          101801
+        ],
+        "event_chara_ids": []
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 20807,
+          "version_type": "original",
+          "name_zh_cn": "希望与友情的寻蛋之旅",
+          "name_key": "EVENT_NAME_20807",
+          "reported_base_event_id": 20807,
+          "is_memory_event": false,
+          "start_utc": "2019-03-31T06:00:00Z",
+          "end_utc": "2019-04-12T05:59:59Z",
+          "start_beijing": "2019-03-31 14:00:00",
+          "end_beijing": "2019-04-12 13:59:59",
+          "quest_story_count": 5,
+          "localized_story_title_count": 5
+        },
+        {
+          "event_id": 20819,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "希望与友情的寻蛋之旅",
+          "name_key": "EVENT_NAME_20807",
+          "reported_base_event_id": 20819,
+          "is_memory_event": false,
+          "start_utc": "2020-04-13T06:00:00Z",
+          "end_utc": "2020-04-20T05:59:59Z",
+          "start_beijing": "2020-04-13 14:00:00",
+          "end_beijing": "2020-04-20 13:59:59",
+          "quest_story_count": 5,
+          "localized_story_title_count": 5
+        },
+        {
+          "event_id": 20822,
+          "version_type": "memory",
+          "name_zh_cn": "希望与友情的寻蛋之旅",
+          "name_key": "EVENT_NAME_20807",
+          "reported_base_event_id": 20822,
+          "is_memory_event": true,
+          "start_utc": "2020-07-13T06:00:00Z",
+          "end_utc": null,
+          "start_beijing": "2020-07-13 14:00:00",
+          "end_beijing": null,
+          "quest_story_count": 5,
+          "localized_story_title_count": 5
+        }
+      ]
+    },
+    {
+      "family_id": 21401,
+      "name_zh_cn": "FIRE EMBLEM 彼此相连的世界",
+      "event_kind_type": 6,
+      "event_kind": "Clb01",
+      "original_event_id": 21401,
+      "has_limited_rerun": true,
+      "limited_rerun_event_ids": [
+        21402
+      ],
+      "has_memory_version": true,
+      "memory_event_ids": [
+        21404
+      ],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 21402,
+      "latest_dated_event_id": 21404,
+      "latest_version_event_id": 21404,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_21401"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 9,
+        "shared_story_title_samples": [
+          "龙的世界",
+          "王子与皇女",
+          "交错的王子们"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": [
+          10150402
+        ]
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 21401,
+          "version_type": "original",
+          "name_zh_cn": "FIRE EMBLEM 彼此相连的世界",
+          "name_key": "EVENT_NAME_21401",
+          "reported_base_event_id": 21401,
+          "is_memory_event": false,
+          "start_utc": "2019-04-26T06:00:00Z",
+          "end_utc": "2019-05-14T05:59:59Z",
+          "start_beijing": "2019-04-26 14:00:00",
+          "end_beijing": "2019-05-14 13:59:59",
+          "quest_story_count": 9,
+          "localized_story_title_count": 9
+        },
+        {
+          "event_id": 21402,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "FIRE EMBLEM 彼此相连的世界",
+          "name_key": "EVENT_NAME_21401",
+          "reported_base_event_id": 21402,
+          "is_memory_event": false,
+          "start_utc": "2020-04-20T06:00:00Z",
+          "end_utc": "2020-05-12T05:59:59Z",
+          "start_beijing": "2020-04-20 14:00:00",
+          "end_beijing": "2020-05-12 13:59:59",
+          "quest_story_count": 9,
+          "localized_story_title_count": 9
+        },
+        {
+          "event_id": 21404,
+          "version_type": "memory",
+          "name_zh_cn": "FIRE EMBLEM 彼此相连的世界",
+          "name_key": "EVENT_NAME_21401",
+          "reported_base_event_id": 21404,
+          "is_memory_event": true,
+          "start_utc": "2021-05-17T06:00:00Z",
+          "end_utc": null,
+          "start_beijing": "2021-05-17 14:00:00",
+          "end_beijing": null,
+          "quest_story_count": 9,
+          "localized_story_title_count": 9
+        }
+      ]
+    },
+    {
+      "family_id": 20407,
+      "name_zh_cn": "仙境苍穹路",
+      "event_kind_type": 1,
+      "event_kind": "Raid",
+      "original_event_id": 20407,
+      "has_limited_rerun": true,
+      "limited_rerun_event_ids": [
+        20434,
+        20448
+      ],
+      "has_memory_version": false,
+      "memory_event_ids": [],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 20448,
+      "latest_dated_event_id": 20448,
+      "latest_version_event_id": 20448,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_20407"
+        ],
+        "explicit_base_links": [
+          {
+            "event_id": 20434,
+            "base_event_id": 20407
+          },
+          {
+            "event_id": 20448,
+            "base_event_id": 20407
+          }
+        ],
+        "shared_localized_story_title_count": 7,
+        "shared_story_title_samples": [
+          "封印师来也",
+          "翻山越岭",
+          "仙宝的威胁"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": [
+          10540102
+        ]
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 20407,
+          "version_type": "original",
+          "name_zh_cn": "仙境苍穹路",
+          "name_key": "EVENT_NAME_20407",
+          "reported_base_event_id": 20407,
+          "is_memory_event": false,
+          "start_utc": "2019-05-31T06:00:00Z",
+          "end_utc": "2019-06-12T05:59:59Z",
+          "start_beijing": "2019-05-31 14:00:00",
+          "end_beijing": "2019-06-12 13:59:59",
+          "quest_story_count": 9,
+          "localized_story_title_count": 7
+        },
+        {
+          "event_id": 20434,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "仙境苍穹路",
+          "name_key": "EVENT_NAME_20407",
+          "reported_base_event_id": 20407,
+          "is_memory_event": false,
+          "start_utc": "2021-03-19T06:00:00Z",
+          "end_utc": "2021-03-27T05:59:59Z",
+          "start_beijing": "2021-03-19 14:00:00",
+          "end_beijing": "2021-03-27 13:59:59",
+          "quest_story_count": 8,
+          "localized_story_title_count": 7
+        },
+        {
+          "event_id": 20448,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "仙境苍穹路",
+          "name_key": "EVENT_NAME_20407",
+          "reported_base_event_id": 20407,
+          "is_memory_event": false,
+          "start_utc": "2022-04-29T06:00:00Z",
+          "end_utc": "2022-05-10T05:59:59Z",
+          "start_beijing": "2022-04-29 14:00:00",
+          "end_beijing": "2022-05-10 13:59:59",
+          "quest_story_count": 7,
+          "localized_story_title_count": 7
+        }
+      ]
+    },
+    {
+      "family_id": 20808,
+      "name_zh_cn": "三姐妹情深！温情满工坊",
+      "event_kind_type": 4,
+      "event_kind": "Build",
+      "original_event_id": 20808,
+      "has_limited_rerun": true,
+      "limited_rerun_event_ids": [
+        20814
+      ],
+      "has_memory_version": true,
+      "memory_event_ids": [
+        20816
+      ],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 20814,
+      "latest_dated_event_id": 20816,
+      "latest_version_event_id": 20816,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_20808"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 8,
+        "shared_story_title_samples": [
+          "与铁匠铺三姐妹的初遇",
+          "挑战最佳铁匠杯！",
+          "竞争对手的实力"
+        ],
+        "event_fort_ids": [
+          102001
+        ],
+        "event_chara_ids": []
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 20808,
+          "version_type": "original",
+          "name_zh_cn": "三姐妹情深！温情满工坊",
+          "name_key": "EVENT_NAME_20808",
+          "reported_base_event_id": 20808,
+          "is_memory_event": false,
+          "start_utc": "2019-07-11T06:00:00Z",
+          "end_utc": "2019-07-22T05:59:59Z",
+          "start_beijing": "2019-07-11 14:00:00",
+          "end_beijing": "2019-07-22 13:59:59",
+          "quest_story_count": 8,
+          "localized_story_title_count": 8
+        },
+        {
+          "event_id": 20814,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "三姐妹情深！温情满工坊",
+          "name_key": "EVENT_NAME_20808",
+          "reported_base_event_id": 20814,
+          "is_memory_event": false,
+          "start_utc": "2020-01-14T06:00:00Z",
+          "end_utc": "2020-01-23T05:59:59Z",
+          "start_beijing": "2020-01-14 14:00:00",
+          "end_beijing": "2020-01-23 13:59:59",
+          "quest_story_count": 8,
+          "localized_story_title_count": 8
+        },
+        {
+          "event_id": 20816,
+          "version_type": "memory",
+          "name_zh_cn": "三姐妹情深！温情满工坊",
+          "name_key": "EVENT_NAME_20808",
+          "reported_base_event_id": 20816,
+          "is_memory_event": true,
+          "start_utc": "2020-03-27T06:00:00Z",
+          "end_utc": null,
+          "start_beijing": "2020-03-27 14:00:00",
+          "end_beijing": null,
+          "quest_story_count": 8,
+          "localized_story_title_count": 8
+        }
+      ]
+    },
+    {
+      "family_id": 20411,
+      "name_zh_cn": "金银岛大冒险！",
+      "event_kind_type": 1,
+      "event_kind": "Raid",
+      "original_event_id": 20411,
+      "has_limited_rerun": true,
+      "limited_rerun_event_ids": [
+        20421,
+        20453
+      ],
+      "has_memory_version": false,
+      "memory_event_ids": [],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 20453,
+      "latest_dated_event_id": 20453,
+      "latest_version_event_id": 20453,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_20411"
+        ],
+        "explicit_base_links": [
+          {
+            "event_id": 20453,
+            "base_event_id": 20411
+          }
+        ],
+        "shared_localized_story_title_count": 7,
+        "shared_story_title_samples": [
+          "藏宝图的诱惑",
+          "状况百出的寻宝冒险",
+          "地图上标记的地点"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": [
+          10740202
+        ]
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 20411,
+          "version_type": "original",
+          "name_zh_cn": "金银岛大冒险！",
+          "name_key": "EVENT_NAME_20411",
+          "reported_base_event_id": 20411,
+          "is_memory_event": false,
+          "start_utc": "2019-07-31T06:00:00Z",
+          "end_utc": "2019-08-13T05:59:59Z",
+          "start_beijing": "2019-07-31 14:00:00",
+          "end_beijing": "2019-08-13 13:59:59",
+          "quest_story_count": 8,
+          "localized_story_title_count": 7
+        },
+        {
+          "event_id": 20421,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "金银岛大冒险！",
+          "name_key": "EVENT_NAME_20411",
+          "reported_base_event_id": 20421,
+          "is_memory_event": false,
+          "start_utc": "2020-07-20T06:00:00Z",
+          "end_utc": "2020-07-28T04:29:59Z",
+          "start_beijing": "2020-07-20 14:00:00",
+          "end_beijing": "2020-07-28 12:29:59",
+          "quest_story_count": 9,
+          "localized_story_title_count": 7
+        },
+        {
+          "event_id": 20453,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "金银岛大冒险！",
+          "name_key": "EVENT_NAME_20411",
+          "reported_base_event_id": 20411,
+          "is_memory_event": false,
+          "start_utc": "2022-08-01T06:00:00Z",
+          "end_utc": "2022-08-10T05:59:59Z",
+          "start_beijing": "2022-08-01 14:00:00",
+          "end_beijing": "2022-08-10 13:59:59",
+          "quest_story_count": 7,
+          "localized_story_title_count": 7
+        }
+      ]
+    },
+    {
+      "family_id": 20810,
+      "name_zh_cn": "Melodious Summer♪",
+      "event_kind_type": 4,
+      "event_kind": "Build",
+      "original_event_id": 20810,
+      "has_limited_rerun": true,
+      "limited_rerun_event_ids": [
+        20824
+      ],
+      "has_memory_version": true,
+      "memory_event_ids": [
+        20829
+      ],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 20824,
+      "latest_dated_event_id": 20829,
+      "latest_version_event_id": 20829,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_20810"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 5,
+        "shared_story_title_samples": [
+          "梦想中的舞台☆",
+          "盛夏忆影",
+          "遥不可及的光芒"
+        ],
+        "event_fort_ids": [
+          101301
+        ],
+        "event_chara_ids": []
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 20810,
+          "version_type": "original",
+          "name_zh_cn": "Melodious Summer♪",
+          "name_key": "EVENT_NAME_20810",
+          "reported_base_event_id": 20810,
+          "is_memory_event": false,
+          "start_utc": "2019-08-13T06:00:00Z",
+          "end_utc": "2019-08-22T05:59:59Z",
+          "start_beijing": "2019-08-13 14:00:00",
+          "end_beijing": "2019-08-22 13:59:59",
+          "quest_story_count": 5,
+          "localized_story_title_count": 5
+        },
+        {
+          "event_id": 20824,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "Melodious Summer♪",
+          "name_key": "EVENT_NAME_20810",
+          "reported_base_event_id": 20824,
+          "is_memory_event": false,
+          "start_utc": "2020-08-18T06:00:00Z",
+          "end_utc": "2020-08-28T05:59:59Z",
+          "start_beijing": "2020-08-18 14:00:00",
+          "end_beijing": "2020-08-28 13:59:59",
+          "quest_story_count": 5,
+          "localized_story_title_count": 5
+        },
+        {
+          "event_id": 20829,
+          "version_type": "memory",
+          "name_zh_cn": "Melodious Summer♪",
+          "name_key": "EVENT_NAME_20810",
+          "reported_base_event_id": 20829,
+          "is_memory_event": true,
+          "start_utc": "2020-11-27T06:00:00Z",
+          "end_utc": null,
+          "start_beijing": "2020-11-27 14:00:00",
+          "end_beijing": null,
+          "quest_story_count": 5,
+          "localized_story_title_count": 5
+        }
+      ]
+    },
+    {
+      "family_id": 20413,
+      "name_zh_cn": "克洛诺斯～轮回的命运指针～",
+      "event_kind_type": 1,
+      "event_kind": "Raid",
+      "original_event_id": 20413,
+      "has_limited_rerun": true,
+      "limited_rerun_event_ids": [
+        20422
+      ],
+      "has_memory_version": true,
+      "memory_event_ids": [
+        20427
+      ],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 20422,
+      "latest_dated_event_id": 20427,
+      "latest_version_event_id": 20427,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_20413"
+        ],
+        "explicit_base_links": [
+          {
+            "event_id": 20422,
+            "base_event_id": 20413
+          },
+          {
+            "event_id": 20427,
+            "base_event_id": 20413
+          }
+        ],
+        "shared_localized_story_title_count": 7,
+        "shared_story_title_samples": [
+          "昔日的悔恨",
+          "跨越时空",
+          "命运的分歧点"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": [
+          10140503
+        ]
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 20413,
+          "version_type": "original",
+          "name_zh_cn": "克洛诺斯～轮回的命运指针～",
+          "name_key": "EVENT_NAME_20413",
+          "reported_base_event_id": 20413,
+          "is_memory_event": false,
+          "start_utc": "2019-09-30T06:00:00Z",
+          "end_utc": "2019-10-11T05:59:59Z",
+          "start_beijing": "2019-09-30 14:00:00",
+          "end_beijing": "2019-10-11 13:59:59",
+          "quest_story_count": 11,
+          "localized_story_title_count": 7
+        },
+        {
+          "event_id": 20422,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "克洛诺斯～轮回的命运指针～",
+          "name_key": "EVENT_NAME_20413",
+          "reported_base_event_id": 20413,
+          "is_memory_event": false,
+          "start_utc": "2020-09-21T06:00:00Z",
+          "end_utc": "2020-09-30T05:59:59Z",
+          "start_beijing": "2020-09-21 14:00:00",
+          "end_beijing": "2020-09-30 13:59:59",
+          "quest_story_count": 11,
+          "localized_story_title_count": 7
+        },
+        {
+          "event_id": 20427,
+          "version_type": "memory",
+          "name_zh_cn": "克洛诺斯～轮回的命运指针～",
+          "name_key": "EVENT_NAME_20413",
+          "reported_base_event_id": 20413,
+          "is_memory_event": true,
+          "start_utc": "2020-12-23T06:00:00Z",
+          "end_utc": null,
+          "start_beijing": "2020-12-23 14:00:00",
+          "end_beijing": null,
+          "quest_story_count": 7,
+          "localized_story_title_count": 7
+        }
+      ]
+    },
+    {
+      "family_id": 21303,
+      "name_zh_cn": "暗影下的少女",
+      "event_kind_type": 5,
+      "event_kind": "Collect",
+      "original_event_id": 21303,
+      "has_limited_rerun": true,
+      "limited_rerun_event_ids": [
+        21305
+      ],
+      "has_memory_version": false,
+      "memory_event_ids": [],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 21305,
+      "latest_dated_event_id": 21305,
+      "latest_version_event_id": 21305,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_21303"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 6,
+        "shared_story_title_samples": [
+          "彷徨于黑暗中的少女",
+          "笼罩汀索姆的暗影",
+          "黄衣之村"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": []
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 21303,
+          "version_type": "original",
+          "name_zh_cn": "暗影下的少女",
+          "name_key": "EVENT_NAME_21303",
+          "reported_base_event_id": 21303,
+          "is_memory_event": false,
+          "start_utc": "2019-10-31T06:00:00Z",
+          "end_utc": "2019-11-13T05:59:59Z",
+          "start_beijing": "2019-10-31 14:00:00",
+          "end_beijing": "2019-11-13 13:59:59",
+          "quest_story_count": 6,
+          "localized_story_title_count": 6
+        },
+        {
+          "event_id": 21305,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "暗影下的少女",
+          "name_key": "EVENT_NAME_21303",
+          "reported_base_event_id": 21305,
+          "is_memory_event": false,
+          "start_utc": "2020-10-19T06:00:00Z",
+          "end_utc": "2020-10-27T05:59:59Z",
+          "start_beijing": "2020-10-19 14:00:00",
+          "end_beijing": "2020-10-27 13:59:59",
+          "quest_story_count": 6,
+          "localized_story_title_count": 6
+        }
+      ]
+    },
+    {
+      "family_id": 21801,
+      "name_zh_cn": "洛克人　异世界的决战！！",
+      "event_kind_type": 7,
+      "event_kind": "ExRush",
+      "original_event_id": 21801,
+      "has_limited_rerun": false,
+      "limited_rerun_event_ids": [],
+      "has_memory_version": false,
+      "memory_event_ids": [],
+      "has_later_version": false,
+      "latest_non_memory_event_id": 21801,
+      "latest_dated_event_id": 21801,
+      "latest_version_event_id": 21801,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_21801"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 2,
+        "shared_story_title_samples": [
+          "序章",
+          "终章"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": [
+          10750102
+        ]
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 21801,
+          "version_type": "original",
+          "name_zh_cn": "洛克人　异世界的决战！！",
+          "name_key": "EVENT_NAME_21801",
+          "reported_base_event_id": 21801,
+          "is_memory_event": false,
+          "start_utc": "2019-11-29T06:00:00Z",
+          "end_utc": "2019-12-16T05:59:59Z",
+          "start_beijing": "2019-11-29 14:00:00",
+          "end_beijing": "2019-12-16 13:59:59",
+          "quest_story_count": 4,
+          "localized_story_title_count": 2
+        }
+      ]
+    },
+    {
+      "family_id": 31001,
+      "name_zh_cn": "辞旧！迎新！大扫除！",
+      "event_kind_type": 9,
+      "event_kind": "Simple",
+      "original_event_id": 31001,
+      "has_limited_rerun": true,
+      "limited_rerun_event_ids": [
+        31004,
+        31007
+      ],
+      "has_memory_version": false,
+      "memory_event_ids": [],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 31007,
+      "latest_dated_event_id": 31007,
+      "latest_version_event_id": 31007,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "same_name_special_reopening",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_31001"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 4,
+        "shared_story_title_samples": [
+          "今年最后的大灾难",
+          "阳光下绽放的笑容",
+          "点缀年末的热情"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": []
+      },
+      "notes": [
+        "小型特殊活动的同名再开放，单列于此；不等同于普通剧情活动复刻。"
+      ],
+      "versions": [
+        {
+          "event_id": 31001,
+          "version_type": "original",
+          "name_zh_cn": "辞旧！迎新！大扫除！",
+          "name_key": "EVENT_NAME_31001",
+          "reported_base_event_id": 31001,
+          "is_memory_event": false,
+          "start_utc": "2019-12-26T06:00:00Z",
+          "end_utc": "2019-12-31T05:59:59Z",
+          "start_beijing": "2019-12-26 14:00:00",
+          "end_beijing": "2019-12-31 13:59:59",
+          "quest_story_count": 4,
+          "localized_story_title_count": 4
+        },
+        {
+          "event_id": 31004,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "辞旧！迎新！大扫除！",
+          "name_key": "EVENT_NAME_31001",
+          "reported_base_event_id": 31004,
+          "is_memory_event": false,
+          "start_utc": "2020-12-25T06:00:00Z",
+          "end_utc": "2020-12-31T05:59:59Z",
+          "start_beijing": "2020-12-25 14:00:00",
+          "end_beijing": "2020-12-31 13:59:59",
+          "quest_story_count": 4,
+          "localized_story_title_count": 4
+        },
+        {
+          "event_id": 31007,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "辞旧！迎新！大扫除！",
+          "name_key": "EVENT_NAME_31001",
+          "reported_base_event_id": 31007,
+          "is_memory_event": false,
+          "start_utc": "2021-12-24T06:00:00Z",
+          "end_utc": "2021-12-31T05:59:59Z",
+          "start_beijing": "2021-12-24 14:00:00",
+          "end_beijing": "2021-12-31 13:59:59",
+          "quest_story_count": 4,
+          "localized_story_title_count": 4
+        }
+      ]
+    },
+    {
+      "family_id": 20417,
+      "name_zh_cn": "猫鼠大战闹新春",
+      "event_kind_type": 1,
+      "event_kind": "Raid",
+      "original_event_id": 20417,
+      "has_limited_rerun": true,
+      "limited_rerun_event_ids": [
+        20426,
+        20451
+      ],
+      "has_memory_version": false,
+      "memory_event_ids": [],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 20451,
+      "latest_dated_event_id": 20451,
+      "latest_version_event_id": 20451,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_20417"
+        ],
+        "explicit_base_links": [
+          {
+            "event_id": 20426,
+            "base_event_id": 20417
+          },
+          {
+            "event_id": 20451,
+            "base_event_id": 20417
+          }
+        ],
+        "shared_localized_story_title_count": 7,
+        "shared_story_title_samples": [
+          "“子”之十二龙氏来也",
+          "光秀公主和她的伙伴们",
+          "鱼作饵钓猫，愿者上钩？"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": [
+          10240402
+        ]
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 20417,
+          "version_type": "original",
+          "name_zh_cn": "猫鼠大战闹新春",
+          "name_key": "EVENT_NAME_20417",
+          "reported_base_event_id": 20417,
+          "is_memory_event": false,
+          "start_utc": "2019-12-31T06:00:00Z",
+          "end_utc": "2020-01-14T05:59:59Z",
+          "start_beijing": "2019-12-31 14:00:00",
+          "end_beijing": "2020-01-14 13:59:59",
+          "quest_story_count": 9,
+          "localized_story_title_count": 7
+        },
+        {
+          "event_id": 20426,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "猫鼠大战闹新春",
+          "name_key": "EVENT_NAME_20417",
+          "reported_base_event_id": 20417,
+          "is_memory_event": false,
+          "start_utc": "2020-11-16T06:00:00Z",
+          "end_utc": "2020-11-30T05:59:59Z",
+          "start_beijing": "2020-11-16 14:00:00",
+          "end_beijing": "2020-11-30 13:59:59",
+          "quest_story_count": 9,
+          "localized_story_title_count": 7
+        },
+        {
+          "event_id": 20451,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "猫鼠大战闹新春",
+          "name_key": "EVENT_NAME_20417",
+          "reported_base_event_id": 20417,
+          "is_memory_event": false,
+          "start_utc": "2022-06-30T06:00:00Z",
+          "end_utc": "2022-07-11T05:59:59Z",
+          "start_beijing": "2022-06-30 14:00:00",
+          "end_beijing": "2022-07-11 13:59:59",
+          "quest_story_count": 7,
+          "localized_story_title_count": 7
+        }
+      ]
+    },
+    {
+      "family_id": 22001,
+      "name_zh_cn": "MONSTER HUNTER STRANGELAND",
+      "event_kind_type": 8,
+      "event_kind": "ExHunter",
+      "original_event_id": 22001,
+      "has_limited_rerun": false,
+      "limited_rerun_event_ids": [],
+      "has_memory_version": false,
+      "memory_event_ids": [],
+      "has_later_version": false,
+      "latest_non_memory_event_id": 22001,
+      "latest_dated_event_id": 22001,
+      "latest_version_event_id": 22001,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_22001"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 12,
+        "shared_story_title_samples": [
+          "异世界的迷路猫",
+          "潜伏于树海者",
+          "追踪火龙！"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": []
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 22001,
+          "version_type": "original",
+          "name_zh_cn": "MONSTER HUNTER STRANGELAND",
+          "name_key": "EVENT_NAME_22001",
+          "reported_base_event_id": 22001,
+          "is_memory_event": false,
+          "start_utc": "2020-01-29T06:00:00Z",
+          "end_utc": "2020-02-17T05:59:59Z",
+          "start_beijing": "2020-01-29 14:00:00",
+          "end_beijing": "2020-02-17 13:59:59",
+          "quest_story_count": 15,
+          "localized_story_title_count": 12
+        }
+      ]
+    },
+    {
+      "family_id": 20815,
+      "name_zh_cn": "盛宴！美食梦之味",
+      "event_kind_type": 4,
+      "event_kind": "Build",
+      "original_event_id": 20815,
+      "has_limited_rerun": true,
+      "limited_rerun_event_ids": [
+        20830
+      ],
+      "has_memory_version": true,
+      "memory_event_ids": [
+        20841
+      ],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 20830,
+      "latest_dated_event_id": 20830,
+      "latest_version_event_id": null,
+      "latest_version_status": "unknown_due_to_missing_date",
+      "undated_event_ids": [
+        20841
+      ],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_20815"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 6,
+        "shared_story_title_samples": [
+          "美食梦之味，开幕！",
+          "热血沸腾的对手们",
+          "不能输的理由"
+        ],
+        "event_fort_ids": [
+          102401
+        ],
+        "event_chara_ids": []
+      },
+      "notes": [
+        "原始客户端和仓库均缺少回忆版开放日期；最新限时编号可确定，不能仅凭较大编号断言回忆版开放日期。"
+      ],
+      "versions": [
+        {
+          "event_id": 20815,
+          "version_type": "original",
+          "name_zh_cn": "盛宴！美食梦之味",
+          "name_key": "EVENT_NAME_20815",
+          "reported_base_event_id": 20815,
+          "is_memory_event": false,
+          "start_utc": "2020-02-28T06:00:00Z",
+          "end_utc": "2020-03-12T05:59:59Z",
+          "start_beijing": "2020-02-28 14:00:00",
+          "end_beijing": "2020-03-12 13:59:59",
+          "quest_story_count": 6,
+          "localized_story_title_count": 6
+        },
+        {
+          "event_id": 20830,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "盛宴！美食梦之味",
+          "name_key": "EVENT_NAME_20815",
+          "reported_base_event_id": 20830,
+          "is_memory_event": false,
+          "start_utc": "2020-12-21T06:00:00Z",
+          "end_utc": "2020-12-31T05:59:59Z",
+          "start_beijing": "2020-12-21 14:00:00",
+          "end_beijing": "2020-12-31 13:59:59",
+          "quest_story_count": 6,
+          "localized_story_title_count": 6
+        },
+        {
+          "event_id": 20841,
+          "version_type": "memory",
+          "name_zh_cn": "盛宴！美食梦之味",
+          "name_key": "EVENT_NAME_20815",
+          "reported_base_event_id": 20841,
+          "is_memory_event": true,
+          "start_utc": null,
+          "end_utc": null,
+          "start_beijing": null,
+          "end_beijing": null,
+          "quest_story_count": 6,
+          "localized_story_title_count": 6
+        }
+      ]
+    },
+    {
+      "family_id": 20408,
+      "name_zh_cn": "罪人之路·龙眸轨迹",
+      "event_kind_type": 1,
+      "event_kind": "Raid",
+      "original_event_id": 20408,
+      "has_limited_rerun": true,
+      "limited_rerun_event_ids": [
+        20430,
+        20455
+      ],
+      "has_memory_version": false,
+      "memory_event_ids": [],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 20455,
+      "latest_dated_event_id": 20455,
+      "latest_version_event_id": 20455,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_20408"
+        ],
+        "explicit_base_links": [
+          {
+            "event_id": 20430,
+            "base_event_id": 20408
+          },
+          {
+            "event_id": 20455,
+            "base_event_id": 20408
+          }
+        ],
+        "shared_localized_story_title_count": 7,
+        "shared_story_title_samples": [
+          "赐此臂复仇之力",
+          "此躯乃罪行之证",
+          "牺牲自我的价值"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": [
+          10240503
+        ]
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 20408,
+          "version_type": "original",
+          "name_zh_cn": "罪人之路·龙眸轨迹",
+          "name_key": "EVENT_NAME_20408",
+          "reported_base_event_id": 20408,
+          "is_memory_event": false,
+          "start_utc": "2020-03-31T06:00:00Z",
+          "end_utc": "2020-04-13T05:59:59Z",
+          "start_beijing": "2020-03-31 14:00:00",
+          "end_beijing": "2020-04-13 13:59:59",
+          "quest_story_count": 9,
+          "localized_story_title_count": 7
+        },
+        {
+          "event_id": 20430,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "罪人之路·龙眸轨迹",
+          "name_key": "EVENT_NAME_20408",
+          "reported_base_event_id": 20408,
+          "is_memory_event": false,
+          "start_utc": "2021-01-21T06:00:00Z",
+          "end_utc": "2021-01-31T05:59:59Z",
+          "start_beijing": "2021-01-21 14:00:00",
+          "end_beijing": "2021-01-31 13:59:59",
+          "quest_story_count": 7,
+          "localized_story_title_count": 7
+        },
+        {
+          "event_id": 20455,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "罪人之路·龙眸轨迹",
+          "name_key": "EVENT_NAME_20408",
+          "reported_base_event_id": 20408,
+          "is_memory_event": false,
+          "start_utc": "2022-08-30T06:00:00Z",
+          "end_utc": "2022-09-09T05:59:59Z",
+          "start_beijing": "2022-08-30 14:00:00",
+          "end_beijing": "2022-09-09 13:59:59",
+          "quest_story_count": 7,
+          "localized_story_title_count": 7
+        }
+      ]
+    },
+    {
+      "family_id": 31002,
+      "name_zh_cn": "圣城多彩一日！",
+      "event_kind_type": 9,
+      "event_kind": "Simple",
+      "original_event_id": 31002,
+      "has_limited_rerun": false,
+      "limited_rerun_event_ids": [],
+      "has_memory_version": false,
+      "memory_event_ids": [],
+      "has_later_version": false,
+      "latest_non_memory_event_id": 31002,
+      "latest_dated_event_id": 31002,
+      "latest_version_event_id": 31002,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "same_name_special_reopening",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_31002"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 2,
+        "shared_story_title_samples": [
+          "迷路的小狗",
+          "今后再会"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": []
+      },
+      "notes": [
+        "小型特殊活动的同名再开放，单列于此；不等同于普通剧情活动复刻。"
+      ],
+      "versions": [
+        {
+          "event_id": 31002,
+          "version_type": "original",
+          "name_zh_cn": "圣城多彩一日！",
+          "name_key": "EVENT_NAME_31002",
+          "reported_base_event_id": 31002,
+          "is_memory_event": false,
+          "start_utc": "2020-04-01T06:00:00Z",
+          "end_utc": "2020-04-02T05:59:59Z",
+          "start_beijing": "2020-04-01 14:00:00",
+          "end_beijing": "2020-04-02 13:59:59",
+          "quest_story_count": 2,
+          "localized_story_title_count": 2
+        }
+      ]
+    },
+    {
+      "family_id": 21403,
+      "name_zh_cn": "FIRE EMBLEM 新启之门",
+      "event_kind_type": 6,
+      "event_kind": "Clb01",
+      "original_event_id": 21403,
+      "has_limited_rerun": false,
+      "limited_rerun_event_ids": [],
+      "has_memory_version": true,
+      "memory_event_ids": [
+        21405
+      ],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 21403,
+      "latest_dated_event_id": 21405,
+      "latest_version_event_id": 21405,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_21403"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 12,
+        "shared_story_title_samples": [
+          "再次相连的世界",
+          "龙之血的世界",
+          "倘若能在梦中相会"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": [
+          10550404
+        ]
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 21403,
+          "version_type": "original",
+          "name_zh_cn": "FIRE EMBLEM 新启之门",
+          "name_key": "EVENT_NAME_21403",
+          "reported_base_event_id": 21403,
+          "is_memory_event": false,
+          "start_utc": "2020-04-30T06:00:00Z",
+          "end_utc": "2020-05-12T05:59:59Z",
+          "start_beijing": "2020-04-30 14:00:00",
+          "end_beijing": "2020-05-12 13:59:59",
+          "quest_story_count": 12,
+          "localized_story_title_count": 12
+        },
+        {
+          "event_id": 21405,
+          "version_type": "memory",
+          "name_zh_cn": "FIRE EMBLEM 新启之门",
+          "name_key": "EVENT_NAME_21403",
+          "reported_base_event_id": 21405,
+          "is_memory_event": true,
+          "start_utc": "2021-05-17T06:00:00Z",
+          "end_utc": null,
+          "start_beijing": "2021-05-17 14:00:00",
+          "end_beijing": null,
+          "quest_story_count": 12,
+          "localized_story_title_count": 12
+        }
+      ]
+    },
+    {
+      "family_id": 31003,
+      "name_zh_cn": "荣光之路",
+      "event_kind_type": 9,
+      "event_kind": "Simple",
+      "original_event_id": 31003,
+      "has_limited_rerun": true,
+      "limited_rerun_event_ids": [
+        31005,
+        31006
+      ],
+      "has_memory_version": false,
+      "memory_event_ids": [],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 31006,
+      "latest_dated_event_id": 31006,
+      "latest_version_event_id": 31006,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "same_name_special_reopening",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_31003"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 0,
+        "shared_story_title_samples": [],
+        "event_fort_ids": [],
+        "event_chara_ids": []
+      },
+      "notes": [
+        "小型特殊活动的同名再开放，单列于此；不等同于普通剧情活动复刻。",
+        "三个编号均无QuestStory剧情；关系依据同一名称索引和同一类型，按同名再开放归组。"
+      ],
+      "versions": [
+        {
+          "event_id": 31003,
+          "version_type": "original",
+          "name_zh_cn": "荣光之路",
+          "name_key": "EVENT_NAME_31003",
+          "reported_base_event_id": 31003,
+          "is_memory_event": false,
+          "start_utc": "2020-05-22T06:00:00Z",
+          "end_utc": "2020-05-29T05:59:59Z",
+          "start_beijing": "2020-05-22 14:00:00",
+          "end_beijing": "2020-05-29 13:59:59",
+          "quest_story_count": 0,
+          "localized_story_title_count": 0
+        },
+        {
+          "event_id": 31005,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "荣光之路",
+          "name_key": "EVENT_NAME_31003",
+          "reported_base_event_id": 31005,
+          "is_memory_event": false,
+          "start_utc": "2021-05-03T06:00:00Z",
+          "end_utc": "2021-05-10T05:59:59Z",
+          "start_beijing": "2021-05-03 14:00:00",
+          "end_beijing": "2021-05-10 13:59:59",
+          "quest_story_count": 0,
+          "localized_story_title_count": 0
+        },
+        {
+          "event_id": 31006,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "荣光之路",
+          "name_key": "EVENT_NAME_31003",
+          "reported_base_event_id": 31006,
+          "is_memory_event": false,
+          "start_utc": "2021-07-19T06:00:00Z",
+          "end_utc": "2021-07-30T05:59:59Z",
+          "start_beijing": "2021-07-19 14:00:00",
+          "end_beijing": "2021-07-30 13:59:59",
+          "quest_story_count": 0,
+          "localized_story_title_count": 0
+        }
+      ]
+    },
+    {
+      "family_id": 20410,
+      "name_zh_cn": "仙光烁于晦暗",
+      "event_kind_type": 1,
+      "event_kind": "Raid",
+      "original_event_id": 20410,
+      "has_limited_rerun": true,
+      "limited_rerun_event_ids": [
+        20436,
+        20449
+      ],
+      "has_memory_version": false,
+      "memory_event_ids": [],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 20449,
+      "latest_dated_event_id": 20449,
+      "latest_version_event_id": 20449,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_20410"
+        ],
+        "explicit_base_links": [
+          {
+            "event_id": 20449,
+            "base_event_id": 20410
+          }
+        ],
+        "shared_localized_story_title_count": 8,
+        "shared_story_title_samples": [
+          "再会半吊子封印师",
+          "心地善良的魔兽",
+          "两位不速之客"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": [
+          10350403
+        ]
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 20410,
+          "version_type": "original",
+          "name_zh_cn": "仙光烁于晦暗",
+          "name_key": "EVENT_NAME_20410",
+          "reported_base_event_id": 20410,
+          "is_memory_event": false,
+          "start_utc": "2020-05-27T06:00:00Z",
+          "end_utc": "2020-06-12T05:59:59Z",
+          "start_beijing": "2020-05-27 14:00:00",
+          "end_beijing": "2020-06-12 13:59:59",
+          "quest_story_count": 10,
+          "localized_story_title_count": 8
+        },
+        {
+          "event_id": 20436,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "仙光烁于晦暗",
+          "name_key": "EVENT_NAME_20410",
+          "reported_base_event_id": 20436,
+          "is_memory_event": false,
+          "start_utc": "2021-06-18T06:00:00Z",
+          "end_utc": "2021-06-29T05:59:59Z",
+          "start_beijing": "2021-06-18 14:00:00",
+          "end_beijing": "2021-06-29 13:59:59",
+          "quest_story_count": 10,
+          "localized_story_title_count": 8
+        },
+        {
+          "event_id": 20449,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "仙光烁于晦暗",
+          "name_key": "EVENT_NAME_20410",
+          "reported_base_event_id": 20410,
+          "is_memory_event": false,
+          "start_utc": "2022-05-20T06:00:00Z",
+          "end_utc": "2022-05-30T05:59:59Z",
+          "start_beijing": "2022-05-20 14:00:00",
+          "end_beijing": "2022-05-30 13:59:59",
+          "quest_story_count": 8,
+          "localized_story_title_count": 8
+        }
+      ]
+    },
+    {
+      "family_id": 22201,
+      "name_zh_cn": "迎击战～“咱”和“我”的共同战线～",
+      "event_kind_type": 10,
+      "event_kind": "Combat",
+      "original_event_id": 22201,
+      "has_limited_rerun": true,
+      "limited_rerun_event_ids": [
+        22225
+      ],
+      "has_memory_version": false,
+      "memory_event_ids": [],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 22225,
+      "latest_dated_event_id": 22225,
+      "latest_version_event_id": 22225,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_22201"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 5,
+        "shared_story_title_samples": [
+          "“咱”和“我”的第一次对话",
+          "“咱”和“我”的情报战",
+          "“咱”和“我”的往事"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": []
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 22201,
+          "version_type": "original",
+          "name_zh_cn": "迎击战～“咱”和“我”的共同战线～",
+          "name_key": "EVENT_NAME_22201",
+          "reported_base_event_id": 22201,
+          "is_memory_event": false,
+          "start_utc": "2020-06-12T06:00:00Z",
+          "end_utc": "2020-06-19T05:59:59Z",
+          "start_beijing": "2020-06-12 14:00:00",
+          "end_beijing": "2020-06-19 13:59:59",
+          "quest_story_count": 5,
+          "localized_story_title_count": 5
+        },
+        {
+          "event_id": 22225,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "迎击战～“咱”和“我”的共同战线～",
+          "name_key": "EVENT_NAME_22201",
+          "reported_base_event_id": 22225,
+          "is_memory_event": false,
+          "start_utc": "2022-03-10T06:00:00Z",
+          "end_utc": "2022-03-22T05:59:59Z",
+          "start_beijing": "2022-03-10 14:00:00",
+          "end_beijing": "2022-03-22 13:59:59",
+          "quest_story_count": 5,
+          "localized_story_title_count": 5
+        }
+      ]
+    },
+    {
+      "family_id": 20823,
+      "name_zh_cn": "舞动夏日☆盂兰盆舞",
+      "event_kind_type": 4,
+      "event_kind": "Build",
+      "original_event_id": 20823,
+      "has_limited_rerun": true,
+      "limited_rerun_event_ids": [
+        20836
+      ],
+      "has_memory_version": true,
+      "memory_event_ids": [
+        20842
+      ],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 20836,
+      "latest_dated_event_id": 20836,
+      "latest_version_event_id": null,
+      "latest_version_status": "unknown_due_to_missing_date",
+      "undated_event_ids": [
+        20842
+      ],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_20823"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 7,
+        "shared_story_title_samples": [
+          "夏日祭典和胆小鬼和大小姐",
+          "不合的少年少女",
+          "顽劣毛茸茸大骚动！"
+        ],
+        "event_fort_ids": [
+          102501
+        ],
+        "event_chara_ids": []
+      },
+      "notes": [
+        "原始客户端和仓库均缺少回忆版开放日期；最新限时编号可确定，不能仅凭较大编号断言回忆版开放日期。"
+      ],
+      "versions": [
+        {
+          "event_id": 20823,
+          "version_type": "original",
+          "name_zh_cn": "舞动夏日☆盂兰盆舞",
+          "name_key": "EVENT_NAME_20823",
+          "reported_base_event_id": 20823,
+          "is_memory_event": false,
+          "start_utc": "2020-06-26T06:00:00Z",
+          "end_utc": "2020-07-13T05:59:59Z",
+          "start_beijing": "2020-06-26 14:00:00",
+          "end_beijing": "2020-07-13 13:59:59",
+          "quest_story_count": 7,
+          "localized_story_title_count": 7
+        },
+        {
+          "event_id": 20836,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "舞动夏日☆盂兰盆舞",
+          "name_key": "EVENT_NAME_20823",
+          "reported_base_event_id": 20836,
+          "is_memory_event": false,
+          "start_utc": "2021-07-15T06:00:00Z",
+          "end_utc": "2021-07-29T05:59:59Z",
+          "start_beijing": "2021-07-15 14:00:00",
+          "end_beijing": "2021-07-29 13:59:59",
+          "quest_story_count": 7,
+          "localized_story_title_count": 7
+        },
+        {
+          "event_id": 20842,
+          "version_type": "memory",
+          "name_zh_cn": "舞动夏日☆盂兰盆舞",
+          "name_key": "EVENT_NAME_20823",
+          "reported_base_event_id": 20842,
+          "is_memory_event": true,
+          "start_utc": null,
+          "end_utc": null,
+          "start_beijing": null,
+          "end_beijing": null,
+          "quest_story_count": 7,
+          "localized_story_title_count": 7
+        }
+      ]
+    },
+    {
+      "family_id": 22202,
+      "name_zh_cn": "防卫战～盛夏假日守护者！～",
+      "event_kind_type": 10,
+      "event_kind": "Combat",
+      "original_event_id": 22202,
+      "has_limited_rerun": false,
+      "limited_rerun_event_ids": [],
+      "has_memory_version": true,
+      "memory_event_ids": [
+        22219
+      ],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 22202,
+      "latest_dated_event_id": 22219,
+      "latest_version_event_id": 22219,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_22202"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 5,
+        "shared_story_title_samples": [
+          "度假总是一波三折",
+          "注定无法互相理解的海边",
+          "盛夏绝招只为你"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": []
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 22202,
+          "version_type": "original",
+          "name_zh_cn": "防卫战～盛夏假日守护者！～",
+          "name_key": "EVENT_NAME_22202",
+          "reported_base_event_id": 22202,
+          "is_memory_event": false,
+          "start_utc": "2020-07-13T06:00:00Z",
+          "end_utc": "2020-07-20T05:59:59Z",
+          "start_beijing": "2020-07-13 14:00:00",
+          "end_beijing": "2020-07-20 13:59:59",
+          "quest_story_count": 5,
+          "localized_story_title_count": 5
+        },
+        {
+          "event_id": 22219,
+          "version_type": "memory",
+          "name_zh_cn": "防卫战～盛夏假日守护者！～",
+          "name_key": "EVENT_NAME_22202",
+          "reported_base_event_id": 22219,
+          "is_memory_event": true,
+          "start_utc": "2021-12-24T06:00:00Z",
+          "end_utc": null,
+          "start_beijing": "2021-12-24 14:00:00",
+          "end_beijing": null,
+          "quest_story_count": 5,
+          "localized_story_title_count": 5
+        }
+      ]
+    },
+    {
+      "family_id": 20409,
+      "name_zh_cn": "绝境孤岛",
+      "event_kind_type": 1,
+      "event_kind": "Raid",
+      "original_event_id": 20409,
+      "has_limited_rerun": true,
+      "limited_rerun_event_ids": [
+        20437,
+        20454
+      ],
+      "has_memory_version": false,
+      "memory_event_ids": [],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 20454,
+      "latest_dated_event_id": 20454,
+      "latest_version_event_id": 20454,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_20409"
+        ],
+        "explicit_base_links": [
+          {
+            "event_id": 20437,
+            "base_event_id": 20409
+          },
+          {
+            "event_id": 20454,
+            "base_event_id": 20409
+          }
+        ],
+        "shared_localized_story_title_count": 8,
+        "shared_story_title_samples": [
+          "第1天 第一位遇害者",
+          "第2天 指路人的嘲笑",
+          "第3天 真凶就在其中"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": [
+          10450303
+        ]
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 20409,
+          "version_type": "original",
+          "name_zh_cn": "绝境孤岛",
+          "name_key": "EVENT_NAME_20409",
+          "reported_base_event_id": 20409,
+          "is_memory_event": false,
+          "start_utc": "2020-07-28T06:00:00Z",
+          "end_utc": "2020-08-11T05:59:59Z",
+          "start_beijing": "2020-07-28 14:00:00",
+          "end_beijing": "2020-08-11 13:59:59",
+          "quest_story_count": 10,
+          "localized_story_title_count": 8
+        },
+        {
+          "event_id": 20437,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "绝境孤岛",
+          "name_key": "EVENT_NAME_20409",
+          "reported_base_event_id": 20409,
+          "is_memory_event": false,
+          "start_utc": "2021-08-16T06:00:00Z",
+          "end_utc": "2021-08-27T05:59:59Z",
+          "start_beijing": "2021-08-16 14:00:00",
+          "end_beijing": "2021-08-27 13:59:59",
+          "quest_story_count": 10,
+          "localized_story_title_count": 8
+        },
+        {
+          "event_id": 20454,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "绝境孤岛",
+          "name_key": "EVENT_NAME_20409",
+          "reported_base_event_id": 20409,
+          "is_memory_event": false,
+          "start_utc": "2022-08-19T06:00:00Z",
+          "end_utc": "2022-08-30T05:59:59Z",
+          "start_beijing": "2022-08-19 14:00:00",
+          "end_beijing": "2022-08-30 13:59:59",
+          "quest_story_count": 8,
+          "localized_story_title_count": 8
+        }
+      ]
+    },
+    {
+      "family_id": 22203,
+      "name_zh_cn": "迎击战～夏夜水灯暮时愿～",
+      "event_kind_type": 10,
+      "event_kind": "Combat",
+      "original_event_id": 22203,
+      "has_limited_rerun": false,
+      "limited_rerun_event_ids": [],
+      "has_memory_version": true,
+      "memory_event_ids": [
+        22220
+      ],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 22203,
+      "latest_dated_event_id": 22220,
+      "latest_version_event_id": 22220,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_22203"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 6,
+        "shared_story_title_samples": [
+          "不解风情的坏事者",
+          "营救商人途中",
+          "误会一场"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": []
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 22203,
+          "version_type": "original",
+          "name_zh_cn": "迎击战～夏夜水灯暮时愿～",
+          "name_key": "EVENT_NAME_22203",
+          "reported_base_event_id": 22203,
+          "is_memory_event": false,
+          "start_utc": "2020-08-11T06:00:00Z",
+          "end_utc": "2020-08-18T05:59:59Z",
+          "start_beijing": "2020-08-11 14:00:00",
+          "end_beijing": "2020-08-18 13:59:59",
+          "quest_story_count": 6,
+          "localized_story_title_count": 6
+        },
+        {
+          "event_id": 22220,
+          "version_type": "memory",
+          "name_zh_cn": "迎击战～夏夜水灯暮时愿～",
+          "name_key": "EVENT_NAME_22203",
+          "reported_base_event_id": 22220,
+          "is_memory_event": true,
+          "start_utc": "2021-12-24T06:00:00Z",
+          "end_utc": null,
+          "start_beijing": "2021-12-24 14:00:00",
+          "end_beijing": null,
+          "quest_story_count": 6,
+          "localized_story_title_count": 6
+        }
+      ]
+    },
+    {
+      "family_id": 20825,
+      "name_zh_cn": "来自北境的女神使徒",
+      "event_kind_type": 4,
+      "event_kind": "Build",
+      "original_event_id": 20825,
+      "has_limited_rerun": true,
+      "limited_rerun_event_ids": [
+        20835
+      ],
+      "has_memory_version": true,
+      "memory_event_ids": [
+        20839
+      ],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 20835,
+      "latest_dated_event_id": 20839,
+      "latest_version_event_id": 20839,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_20825"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 8,
+        "shared_story_title_samples": [
+          "使徒与天使",
+          "使徒的内疚",
+          "期待与成果"
+        ],
+        "event_fort_ids": [
+          102601
+        ],
+        "event_chara_ids": []
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 20825,
+          "version_type": "original",
+          "name_zh_cn": "来自北境的女神使徒",
+          "name_key": "EVENT_NAME_20825",
+          "reported_base_event_id": 20825,
+          "is_memory_event": false,
+          "start_utc": "2020-08-28T06:00:00Z",
+          "end_utc": "2020-09-11T05:59:59Z",
+          "start_beijing": "2020-08-28 14:00:00",
+          "end_beijing": "2020-09-11 13:59:59",
+          "quest_story_count": 8,
+          "localized_story_title_count": 8
+        },
+        {
+          "event_id": 20835,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "来自北境的女神使徒",
+          "name_key": "EVENT_NAME_20825",
+          "reported_base_event_id": 20835,
+          "is_memory_event": false,
+          "start_utc": "2021-05-17T06:00:00Z",
+          "end_utc": "2021-05-28T05:59:59Z",
+          "start_beijing": "2021-05-17 14:00:00",
+          "end_beijing": "2021-05-28 13:59:59",
+          "quest_story_count": 8,
+          "localized_story_title_count": 8
+        },
+        {
+          "event_id": 20839,
+          "version_type": "memory",
+          "name_zh_cn": "来自北境的女神使徒",
+          "name_key": "EVENT_NAME_20825",
+          "reported_base_event_id": 20839,
+          "is_memory_event": true,
+          "start_utc": "2021-09-27T06:00:00Z",
+          "end_utc": null,
+          "start_beijing": "2021-09-27 14:00:00",
+          "end_beijing": null,
+          "quest_story_count": 8,
+          "localized_story_title_count": 8
+        }
+      ]
+    },
+    {
+      "family_id": 22204,
+      "name_zh_cn": "防卫战～天灼幻沙走秀台～",
+      "event_kind_type": 10,
+      "event_kind": "Combat",
+      "original_event_id": 22204,
+      "has_limited_rerun": true,
+      "limited_rerun_event_ids": [
+        22228
+      ],
+      "has_memory_version": false,
+      "memory_event_ids": [],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 22228,
+      "latest_dated_event_id": 22228,
+      "latest_version_event_id": 22228,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_22204"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 5,
+        "shared_story_title_samples": [
+          "应邀前往沙之国",
+          "一波三折的归乡",
+          "后悔与不合常理"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": []
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 22204,
+          "version_type": "original",
+          "name_zh_cn": "防卫战～天灼幻沙走秀台～",
+          "name_key": "EVENT_NAME_22204",
+          "reported_base_event_id": 22204,
+          "is_memory_event": false,
+          "start_utc": "2020-09-11T06:00:00Z",
+          "end_utc": "2020-09-21T05:59:59Z",
+          "start_beijing": "2020-09-11 14:00:00",
+          "end_beijing": "2020-09-21 13:59:59",
+          "quest_story_count": 5,
+          "localized_story_title_count": 5
+        },
+        {
+          "event_id": 22228,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "防卫战～天灼幻沙走秀台～",
+          "name_key": "EVENT_NAME_22204",
+          "reported_base_event_id": 22228,
+          "is_memory_event": false,
+          "start_utc": "2022-04-15T06:00:00Z",
+          "end_utc": "2022-04-22T05:59:59Z",
+          "start_beijing": "2022-04-15 14:00:00",
+          "end_beijing": "2022-04-22 13:59:59",
+          "quest_story_count": 5,
+          "localized_story_title_count": 5
+        }
+      ]
+    },
+    {
+      "family_id": 22301,
+      "name_zh_cn": "阿尔贝里亚大逃杀",
+      "event_kind_type": 11,
+      "event_kind": "BattleRoyal",
+      "original_event_id": 22301,
+      "has_limited_rerun": false,
+      "limited_rerun_event_ids": [],
+      "has_memory_version": false,
+      "memory_event_ids": [],
+      "has_later_version": false,
+      "latest_non_memory_event_id": 22301,
+      "latest_dated_event_id": 22301,
+      "latest_version_event_id": 22301,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_22301"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 0,
+        "shared_story_title_samples": [],
+        "event_fort_ids": [],
+        "event_chara_ids": []
+      },
+      "notes": [
+        "列入资料覆盖范围；私服入口仍按现有配置关闭。"
+      ],
+      "versions": [
+        {
+          "event_id": 22301,
+          "version_type": "original",
+          "name_zh_cn": "阿尔贝里亚大逃杀",
+          "name_key": "EVENT_NAME_22301",
+          "reported_base_event_id": 22301,
+          "is_memory_event": false,
+          "start_utc": "2020-09-24T15:00:00Z",
+          "end_utc": "2030-12-31T05:59:59Z",
+          "start_beijing": "2020-09-24 23:00:00",
+          "end_beijing": "2030-12-31 13:59:59",
+          "quest_story_count": 1,
+          "localized_story_title_count": 0
+        }
+      ]
+    },
+    {
+      "family_id": 20423,
+      "name_zh_cn": "失落历史～尘封的真相～",
+      "event_kind_type": 1,
+      "event_kind": "Raid",
+      "original_event_id": 20423,
+      "has_limited_rerun": false,
+      "limited_rerun_event_ids": [],
+      "has_memory_version": true,
+      "memory_event_ids": [
+        20428
+      ],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 20423,
+      "latest_dated_event_id": 20428,
+      "latest_version_event_id": 20428,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_20423"
+        ],
+        "explicit_base_links": [
+          {
+            "event_id": 20428,
+            "base_event_id": 20423
+          }
+        ],
+        "shared_localized_story_title_count": 11,
+        "shared_story_title_samples": [
+          "预感",
+          "天才炼金术士",
+          "历史与猜测"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": [
+          10250403
+        ]
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 20423,
+          "version_type": "original",
+          "name_zh_cn": "失落历史～尘封的真相～",
+          "name_key": "EVENT_NAME_20423",
+          "reported_base_event_id": 20423,
+          "is_memory_event": false,
+          "start_utc": "2020-09-30T06:00:00Z",
+          "end_utc": "2020-10-12T05:59:59Z",
+          "start_beijing": "2020-09-30 14:00:00",
+          "end_beijing": "2020-10-12 13:59:59",
+          "quest_story_count": 14,
+          "localized_story_title_count": 11
+        },
+        {
+          "event_id": 20428,
+          "version_type": "memory",
+          "name_zh_cn": "失落历史～尘封的真相～",
+          "name_key": "EVENT_NAME_20423",
+          "reported_base_event_id": 20423,
+          "is_memory_event": true,
+          "start_utc": "2020-12-23T06:00:00Z",
+          "end_utc": null,
+          "start_beijing": "2020-12-23 14:00:00",
+          "end_beijing": null,
+          "quest_story_count": 11,
+          "localized_story_title_count": 11
+        }
+      ]
+    },
+    {
+      "family_id": 22205,
+      "name_zh_cn": "迎击战～万圣节·僵尸来袭～",
+      "event_kind_type": 10,
+      "event_kind": "Combat",
+      "original_event_id": 22205,
+      "has_limited_rerun": false,
+      "limited_rerun_event_ids": [],
+      "has_memory_version": false,
+      "memory_event_ids": [],
+      "has_later_version": false,
+      "latest_non_memory_event_id": 22205,
+      "latest_dated_event_id": 22205,
+      "latest_version_event_id": 22205,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_22205"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 6,
+        "shared_story_title_samples": [
+          "行走的亡者",
+          "亡者之城",
+          "决死！僵尸作战"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": []
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 22205,
+          "version_type": "original",
+          "name_zh_cn": "迎击战～万圣节·僵尸来袭～",
+          "name_key": "EVENT_NAME_22205",
+          "reported_base_event_id": 22205,
+          "is_memory_event": false,
+          "start_utc": "2020-10-12T06:00:00Z",
+          "end_utc": "2020-10-19T05:59:59Z",
+          "start_beijing": "2020-10-12 14:00:00",
+          "end_beijing": "2020-10-19 13:59:59",
+          "quest_story_count": 6,
+          "localized_story_title_count": 6
+        }
+      ]
+    },
+    {
+      "family_id": 20828,
+      "name_zh_cn": "歌剧院的怪盗",
+      "event_kind_type": 4,
+      "event_kind": "Build",
+      "original_event_id": 20828,
+      "has_limited_rerun": true,
+      "limited_rerun_event_ids": [
+        20840
+      ],
+      "has_memory_version": true,
+      "memory_event_ids": [
+        20843
+      ],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 20840,
+      "latest_dated_event_id": 20840,
+      "latest_version_event_id": null,
+      "latest_version_status": "unknown_due_to_missing_date",
+      "undated_event_ids": [
+        20843
+      ],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_20828"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 6,
+        "shared_story_title_samples": [
+          "蓝玫瑰的预告函",
+          "月夜绽放的蓝玫瑰",
+          "海盗与公主的不协和音"
+        ],
+        "event_fort_ids": [
+          102701
+        ],
+        "event_chara_ids": []
+      },
+      "notes": [
+        "原始客户端和仓库均缺少回忆版开放日期；最新限时编号可确定，不能仅凭较大编号断言回忆版开放日期。"
+      ],
+      "versions": [
+        {
+          "event_id": 20828,
+          "version_type": "original",
+          "name_zh_cn": "歌剧院的怪盗",
+          "name_key": "EVENT_NAME_20828",
+          "reported_base_event_id": 20828,
+          "is_memory_event": false,
+          "start_utc": "2020-10-27T06:00:00Z",
+          "end_utc": "2020-11-09T05:59:59Z",
+          "start_beijing": "2020-10-27 14:00:00",
+          "end_beijing": "2020-11-09 13:59:59",
+          "quest_story_count": 6,
+          "localized_story_title_count": 6
+        },
+        {
+          "event_id": 20840,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "歌剧院的怪盗",
+          "name_key": "EVENT_NAME_20828",
+          "reported_base_event_id": 20840,
+          "is_memory_event": false,
+          "start_utc": "2021-11-16T06:00:00Z",
+          "end_utc": "2021-11-29T05:59:59Z",
+          "start_beijing": "2021-11-16 14:00:00",
+          "end_beijing": "2021-11-29 13:59:59",
+          "quest_story_count": 6,
+          "localized_story_title_count": 6
+        },
+        {
+          "event_id": 20843,
+          "version_type": "memory",
+          "name_zh_cn": "歌剧院的怪盗",
+          "name_key": "EVENT_NAME_20828",
+          "reported_base_event_id": 20843,
+          "is_memory_event": true,
+          "start_utc": null,
+          "end_utc": null,
+          "start_beijing": null,
+          "end_beijing": null,
+          "quest_story_count": 6,
+          "localized_story_title_count": 6
+        }
+      ]
+    },
+    {
+      "family_id": 22206,
+      "name_zh_cn": "防卫战～挚言纵横为何人～",
+      "event_kind_type": 10,
+      "event_kind": "Combat",
+      "original_event_id": 22206,
+      "has_limited_rerun": true,
+      "limited_rerun_event_ids": [
+        22229
+      ],
+      "has_memory_version": false,
+      "memory_event_ids": [],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 22229,
+      "latest_dated_event_id": 22229,
+      "latest_version_event_id": 22229,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_22206"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 6,
+        "shared_story_title_samples": [
+          "两封密函",
+          "信任的佐证",
+          "唤来胜利之人"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": []
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 22206,
+          "version_type": "original",
+          "name_zh_cn": "防卫战～挚言纵横为何人～",
+          "name_key": "EVENT_NAME_22206",
+          "reported_base_event_id": 22206,
+          "is_memory_event": false,
+          "start_utc": "2020-11-09T06:00:00Z",
+          "end_utc": "2020-11-16T05:59:59Z",
+          "start_beijing": "2020-11-09 14:00:00",
+          "end_beijing": "2020-11-16 13:59:59",
+          "quest_story_count": 6,
+          "localized_story_title_count": 6
+        },
+        {
+          "event_id": 22229,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "防卫战～挚言纵横为何人～",
+          "name_key": "EVENT_NAME_22206",
+          "reported_base_event_id": 22229,
+          "is_memory_event": false,
+          "start_utc": "2022-05-10T06:00:00Z",
+          "end_utc": "2022-05-20T05:59:59Z",
+          "start_beijing": "2022-05-10 14:00:00",
+          "end_beijing": "2022-05-20 13:59:59",
+          "quest_story_count": 6,
+          "localized_story_title_count": 6
+        }
+      ]
+    },
+    {
+      "family_id": 20424,
+      "name_zh_cn": "公主连结Re:Dive 新朋友与异世界美食",
+      "event_kind_type": 1,
+      "event_kind": "Raid",
+      "original_event_id": 20424,
+      "has_limited_rerun": true,
+      "limited_rerun_event_ids": [
+        20445
+      ],
+      "has_memory_version": false,
+      "memory_event_ids": [],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 20445,
+      "latest_dated_event_id": 20445,
+      "latest_version_event_id": 20445,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_20424"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 8,
+        "shared_story_title_samples": [
+          "误入异界的饿肚子少女",
+          "魔兽美食之旅",
+          "希望魔盒之龙"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": [
+          10750203
+        ]
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 20424,
+          "version_type": "original",
+          "name_zh_cn": "公主连结Re:Dive 新朋友与异世界美食",
+          "name_key": "EVENT_NAME_20424",
+          "reported_base_event_id": 20424,
+          "is_memory_event": false,
+          "start_utc": "2020-11-30T06:00:00Z",
+          "end_utc": "2020-12-14T05:59:59Z",
+          "start_beijing": "2020-11-30 14:00:00",
+          "end_beijing": "2020-12-14 13:59:59",
+          "quest_story_count": 10,
+          "localized_story_title_count": 8
+        },
+        {
+          "event_id": 20445,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "公主连结Re:Dive 新朋友与异世界美食",
+          "name_key": "EVENT_NAME_20424",
+          "reported_base_event_id": 20445,
+          "is_memory_event": false,
+          "start_utc": "2022-01-21T06:00:00Z",
+          "end_utc": "2022-01-31T05:59:59Z",
+          "start_beijing": "2022-01-21 14:00:00",
+          "end_beijing": "2022-01-31 13:59:59",
+          "quest_story_count": 10,
+          "localized_story_title_count": 8
+        }
+      ]
+    },
+    {
+      "family_id": 22207,
+      "name_zh_cn": "迎击战～快乐星龙祭大作战～",
+      "event_kind_type": 10,
+      "event_kind": "Combat",
+      "original_event_id": 22207,
+      "has_limited_rerun": true,
+      "limited_rerun_event_ids": [
+        22218
+      ],
+      "has_memory_version": false,
+      "memory_event_ids": [],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 22218,
+      "latest_dated_event_id": 22218,
+      "latest_version_event_id": 22218,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_22207"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 6,
+        "shared_story_title_samples": [
+          "圣星使者任务！",
+          "圣星使者的魔法",
+          "圣星使者从天而降"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": []
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 22207,
+          "version_type": "original",
+          "name_zh_cn": "迎击战～快乐星龙祭大作战～",
+          "name_key": "EVENT_NAME_22207",
+          "reported_base_event_id": 22207,
+          "is_memory_event": false,
+          "start_utc": "2020-12-14T06:00:00Z",
+          "end_utc": "2020-12-25T05:59:59Z",
+          "start_beijing": "2020-12-14 14:00:00",
+          "end_beijing": "2020-12-25 13:59:59",
+          "quest_story_count": 6,
+          "localized_story_title_count": 6
+        },
+        {
+          "event_id": 22218,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "迎击战～快乐星龙祭大作战～",
+          "name_key": "EVENT_NAME_22207",
+          "reported_base_event_id": 22218,
+          "is_memory_event": false,
+          "start_utc": "2021-12-09T06:00:00Z",
+          "end_utc": "2021-12-17T05:59:59Z",
+          "start_beijing": "2021-12-09 14:00:00",
+          "end_beijing": "2021-12-17 13:59:59",
+          "quest_story_count": 6,
+          "localized_story_title_count": 6
+        }
+      ]
+    },
+    {
+      "family_id": 20425,
+      "name_zh_cn": "新春阴阳战",
+      "event_kind_type": 1,
+      "event_kind": "Raid",
+      "original_event_id": 20425,
+      "has_limited_rerun": true,
+      "limited_rerun_event_ids": [
+        20442
+      ],
+      "has_memory_version": false,
+      "memory_event_ids": [],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 20442,
+      "latest_dated_event_id": 20442,
+      "latest_version_event_id": 20442,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_20425"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 7,
+        "shared_story_title_samples": [
+          "新春异变",
+          "阴阳师与伙伴们",
+          "迷幻结界"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": [
+          10850103
+        ]
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 20425,
+          "version_type": "original",
+          "name_zh_cn": "新春阴阳战",
+          "name_key": "EVENT_NAME_20425",
+          "reported_base_event_id": 20425,
+          "is_memory_event": false,
+          "start_utc": "2020-12-31T06:00:00Z",
+          "end_utc": "2021-01-13T05:59:59Z",
+          "start_beijing": "2020-12-31 14:00:00",
+          "end_beijing": "2021-01-13 13:59:59",
+          "quest_story_count": 9,
+          "localized_story_title_count": 7
+        },
+        {
+          "event_id": 20442,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "新春阴阳战",
+          "name_key": "EVENT_NAME_20425",
+          "reported_base_event_id": 20442,
+          "is_memory_event": false,
+          "start_utc": "2021-12-16T06:00:00Z",
+          "end_utc": "2021-12-25T05:59:59Z",
+          "start_beijing": "2021-12-16 14:00:00",
+          "end_beijing": "2021-12-25 13:59:59",
+          "quest_story_count": 7,
+          "localized_story_title_count": 7
+        }
+      ]
+    },
+    {
+      "family_id": 22208,
+      "name_zh_cn": "竞技场～新年赐福！竞技大比拼～",
+      "event_kind_type": 10,
+      "event_kind": "Combat",
+      "original_event_id": 22208,
+      "has_limited_rerun": true,
+      "limited_rerun_event_ids": [
+        22221
+      ],
+      "has_memory_version": false,
+      "memory_event_ids": [],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 22221,
+      "latest_dated_event_id": 22221,
+      "latest_version_event_id": 22221,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_22208"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 6,
+        "shared_story_title_samples": [
+          "到来！全新形式的款待",
+          "袭来！神秘的挑战者",
+          "挑战！走向胜利的一战"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": []
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 22208,
+          "version_type": "original",
+          "name_zh_cn": "竞技场～新年赐福！竞技大比拼～",
+          "name_key": "EVENT_NAME_22208",
+          "reported_base_event_id": 22208,
+          "is_memory_event": false,
+          "start_utc": "2021-01-13T06:00:00Z",
+          "end_utc": "2021-01-21T05:59:59Z",
+          "start_beijing": "2021-01-13 14:00:00",
+          "end_beijing": "2021-01-21 13:59:59",
+          "quest_story_count": 6,
+          "localized_story_title_count": 6
+        },
+        {
+          "event_id": 22221,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "竞技场～新年赐福！竞技大比拼～",
+          "name_key": "EVENT_NAME_22208",
+          "reported_base_event_id": 22221,
+          "is_memory_event": false,
+          "start_utc": "2022-01-13T06:00:00Z",
+          "end_utc": "2022-01-21T05:59:59Z",
+          "start_beijing": "2022-01-13 14:00:00",
+          "end_beijing": "2022-01-21 13:59:59",
+          "quest_story_count": 6,
+          "localized_story_title_count": 6
+        }
+      ]
+    },
+    {
+      "family_id": 20429,
+      "name_zh_cn": "PERSONA5 SCRAMBLE 失心之乱",
+      "event_kind_type": 1,
+      "event_kind": "Raid",
+      "original_event_id": 20429,
+      "has_limited_rerun": false,
+      "limited_rerun_event_ids": [],
+      "has_memory_version": false,
+      "memory_event_ids": [],
+      "has_later_version": false,
+      "latest_non_memory_event_id": 20429,
+      "latest_dated_event_id": 20429,
+      "latest_version_event_id": 20429,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_20429"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 10,
+        "shared_story_title_samples": [
+          "Show Time",
+          "Dubious Fanatic",
+          "Deal with…"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": [
+          10450404
+        ]
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 20429,
+          "version_type": "original",
+          "name_zh_cn": "PERSONA5 SCRAMBLE 失心之乱",
+          "name_key": "EVENT_NAME_20429",
+          "reported_base_event_id": 20429,
+          "is_memory_event": false,
+          "start_utc": "2021-01-31T06:00:00Z",
+          "end_utc": "2021-02-12T05:59:59Z",
+          "start_beijing": "2021-01-31 14:00:00",
+          "end_beijing": "2021-02-12 13:59:59",
+          "quest_story_count": 15,
+          "localized_story_title_count": 10
+        }
+      ]
+    },
+    {
+      "family_id": 22209,
+      "name_zh_cn": "迎击战～情人节☆★爱之骚动～",
+      "event_kind_type": 10,
+      "event_kind": "Combat",
+      "original_event_id": 22209,
+      "has_limited_rerun": true,
+      "limited_rerun_event_ids": [
+        22222
+      ],
+      "has_memory_version": false,
+      "memory_event_ids": [],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 22222,
+      "latest_dated_event_id": 22222,
+      "latest_version_event_id": 22222,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_22209"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 8,
+        "shared_story_title_samples": [
+          "与卢卡亲共度情人节☆",
+          "“爱”为何物？",
+          "为了卢卡亲"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": []
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 22209,
+          "version_type": "original",
+          "name_zh_cn": "迎击战～情人节☆★爱之骚动～",
+          "name_key": "EVENT_NAME_22209",
+          "reported_base_event_id": 22209,
+          "is_memory_event": false,
+          "start_utc": "2021-02-12T06:00:00Z",
+          "end_utc": "2021-02-19T05:59:59Z",
+          "start_beijing": "2021-02-12 14:00:00",
+          "end_beijing": "2021-02-19 13:59:59",
+          "quest_story_count": 8,
+          "localized_story_title_count": 8
+        },
+        {
+          "event_id": 22222,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "迎击战～情人节☆★爱之骚动～",
+          "name_key": "EVENT_NAME_22209",
+          "reported_base_event_id": 22222,
+          "is_memory_event": false,
+          "start_utc": "2022-02-14T06:00:00Z",
+          "end_utc": "2022-02-28T05:59:59Z",
+          "start_beijing": "2022-02-14 14:00:00",
+          "end_beijing": "2022-02-28 13:59:59",
+          "quest_story_count": 8,
+          "localized_story_title_count": 8
+        }
+      ]
+    },
+    {
+      "family_id": 20833,
+      "name_zh_cn": "恶魔诱惑下的虚假乐园",
+      "event_kind_type": 4,
+      "event_kind": "Build",
+      "original_event_id": 20833,
+      "has_limited_rerun": true,
+      "limited_rerun_event_ids": [
+        20838
+      ],
+      "has_memory_version": true,
+      "memory_event_ids": [
+        20844
+      ],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 20838,
+      "latest_dated_event_id": 20838,
+      "latest_version_event_id": null,
+      "latest_version_status": "unknown_due_to_missing_date",
+      "undated_event_ids": [
+        20844
+      ],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_20833"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 8,
+        "shared_story_title_samples": [
+          "山中乐园",
+          "改写记忆的女人",
+          "潜入搜查"
+        ],
+        "event_fort_ids": [
+          102801
+        ],
+        "event_chara_ids": []
+      },
+      "notes": [
+        "原始客户端和仓库均缺少回忆版开放日期；最新限时编号可确定，不能仅凭较大编号断言回忆版开放日期。"
+      ],
+      "versions": [
+        {
+          "event_id": 20833,
+          "version_type": "original",
+          "name_zh_cn": "恶魔诱惑下的虚假乐园",
+          "name_key": "EVENT_NAME_20833",
+          "reported_base_event_id": 20833,
+          "is_memory_event": false,
+          "start_utc": "2021-02-26T06:00:00Z",
+          "end_utc": "2021-03-11T05:59:59Z",
+          "start_beijing": "2021-02-26 14:00:00",
+          "end_beijing": "2021-03-11 13:59:59",
+          "quest_story_count": 8,
+          "localized_story_title_count": 8
+        },
+        {
+          "event_id": 20838,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "恶魔诱惑下的虚假乐园",
+          "name_key": "EVENT_NAME_20833",
+          "reported_base_event_id": 20838,
+          "is_memory_event": false,
+          "start_utc": "2021-09-15T06:00:00Z",
+          "end_utc": "2021-10-26T05:59:59Z",
+          "start_beijing": "2021-09-15 14:00:00",
+          "end_beijing": "2021-10-26 13:59:59",
+          "quest_story_count": 8,
+          "localized_story_title_count": 8
+        },
+        {
+          "event_id": 20844,
+          "version_type": "memory",
+          "name_zh_cn": "恶魔诱惑下的虚假乐园",
+          "name_key": "EVENT_NAME_20833",
+          "reported_base_event_id": 20844,
+          "is_memory_event": true,
+          "start_utc": null,
+          "end_utc": null,
+          "start_beijing": null,
+          "end_beijing": null,
+          "quest_story_count": 8,
+          "localized_story_title_count": 8
+        }
+      ]
+    },
+    {
+      "family_id": 22210,
+      "name_zh_cn": "防卫战～矛盾之心·人偶之战～",
+      "event_kind_type": 10,
+      "event_kind": "Combat",
+      "original_event_id": 22210,
+      "has_limited_rerun": true,
+      "limited_rerun_event_ids": [
+        22230
+      ],
+      "has_memory_version": false,
+      "memory_event_ids": [],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 22230,
+      "latest_dated_event_id": 22230,
+      "latest_version_event_id": 22230,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_22210"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 6,
+        "shared_story_title_samples": [
+          "启动",
+          "机械神兵",
+          "报废指令"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": []
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 22210,
+          "version_type": "original",
+          "name_zh_cn": "防卫战～矛盾之心·人偶之战～",
+          "name_key": "EVENT_NAME_22210",
+          "reported_base_event_id": 22210,
+          "is_memory_event": false,
+          "start_utc": "2021-03-11T06:00:00Z",
+          "end_utc": "2021-03-19T05:59:59Z",
+          "start_beijing": "2021-03-11 14:00:00",
+          "end_beijing": "2021-03-19 13:59:59",
+          "quest_story_count": 6,
+          "localized_story_title_count": 6
+        },
+        {
+          "event_id": 22230,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "防卫战～矛盾之心·人偶之战～",
+          "name_key": "EVENT_NAME_22210",
+          "reported_base_event_id": 22230,
+          "is_memory_event": false,
+          "start_utc": "2022-06-10T06:00:00Z",
+          "end_utc": "2022-06-20T05:59:59Z",
+          "start_beijing": "2022-06-10 14:00:00",
+          "end_beijing": "2022-06-20 13:59:59",
+          "quest_story_count": 6,
+          "localized_story_title_count": 6
+        }
+      ]
+    },
+    {
+      "family_id": 20431,
+      "name_zh_cn": "破晓之龙约",
+      "event_kind_type": 1,
+      "event_kind": "Raid",
+      "original_event_id": 20431,
+      "has_limited_rerun": true,
+      "limited_rerun_event_ids": [
+        20457
+      ],
+      "has_memory_version": false,
+      "memory_event_ids": [],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 20457,
+      "latest_dated_event_id": 20457,
+      "latest_version_event_id": 20457,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_20431"
+        ],
+        "explicit_base_links": [
+          {
+            "event_id": 20457,
+            "base_event_id": 20431
+          }
+        ],
+        "shared_localized_story_title_count": 8,
+        "shared_story_title_samples": [
+          "剑之觉醒",
+          "龙之血脉",
+          "广阔的世界"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": [
+          10650305
+        ]
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 20431,
+          "version_type": "original",
+          "name_zh_cn": "破晓之龙约",
+          "name_key": "EVENT_NAME_20431",
+          "reported_base_event_id": 20431,
+          "is_memory_event": false,
+          "start_utc": "2021-03-27T06:00:00Z",
+          "end_utc": "2021-04-12T05:59:59Z",
+          "start_beijing": "2021-03-27 14:00:00",
+          "end_beijing": "2021-04-12 13:59:59",
+          "quest_story_count": 10,
+          "localized_story_title_count": 8
+        },
+        {
+          "event_id": 20457,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "破晓之龙约",
+          "name_key": "EVENT_NAME_20431",
+          "reported_base_event_id": 20431,
+          "is_memory_event": false,
+          "start_utc": "2022-09-30T06:00:00Z",
+          "end_utc": "2022-10-10T05:59:59Z",
+          "start_beijing": "2022-09-30 14:00:00",
+          "end_beijing": "2022-10-10 13:59:59",
+          "quest_story_count": 8,
+          "localized_story_title_count": 8
+        }
+      ]
+    },
+    {
+      "family_id": 22211,
+      "name_zh_cn": "迎击战～艾缪尔学院☆创校～",
+      "event_kind_type": 10,
+      "event_kind": "Combat",
+      "original_event_id": 22211,
+      "has_limited_rerun": false,
+      "limited_rerun_event_ids": [],
+      "has_memory_version": true,
+      "memory_event_ids": [
+        22224
+      ],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 22211,
+      "latest_dated_event_id": 22224,
+      "latest_version_event_id": 22224,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_22211"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 6,
+        "shared_story_title_samples": [
+          "艾缪尔学院！创校！",
+          "让人心动的转学生！？",
+          "艾缪尔理事长来校！"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": []
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 22211,
+          "version_type": "original",
+          "name_zh_cn": "迎击战～艾缪尔学院☆创校～",
+          "name_key": "EVENT_NAME_22211",
+          "reported_base_event_id": 22211,
+          "is_memory_event": false,
+          "start_utc": "2021-04-12T06:00:00Z",
+          "end_utc": "2021-04-19T05:59:59Z",
+          "start_beijing": "2021-04-12 14:00:00",
+          "end_beijing": "2021-04-19 13:59:59",
+          "quest_story_count": 6,
+          "localized_story_title_count": 6
+        },
+        {
+          "event_id": 22224,
+          "version_type": "memory",
+          "name_zh_cn": "迎击战～艾缪尔学院☆创校～",
+          "name_key": "EVENT_NAME_22211",
+          "reported_base_event_id": 22224,
+          "is_memory_event": true,
+          "start_utc": "2022-01-25T06:00:00Z",
+          "end_utc": null,
+          "start_beijing": "2022-01-25 14:00:00",
+          "end_beijing": null,
+          "quest_story_count": 6,
+          "localized_story_title_count": 6
+        }
+      ]
+    },
+    {
+      "family_id": 20433,
+      "name_zh_cn": "克洛诺斯之怒",
+      "event_kind_type": 1,
+      "event_kind": "Raid",
+      "original_event_id": 20433,
+      "has_limited_rerun": true,
+      "limited_rerun_event_ids": [
+        20461
+      ],
+      "has_memory_version": false,
+      "memory_event_ids": [],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 20461,
+      "latest_dated_event_id": 20461,
+      "latest_version_event_id": 20461,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_20433"
+        ],
+        "explicit_base_links": [
+          {
+            "event_id": 20461,
+            "base_event_id": 20433
+          }
+        ],
+        "shared_localized_story_title_count": 8,
+        "shared_story_title_samples": [
+          "吸血公主与龙",
+          "孤单的吸血公主",
+          "吸血鬼的力量"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": []
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 20433,
+          "version_type": "original",
+          "name_zh_cn": "克洛诺斯之怒",
+          "name_key": "EVENT_NAME_20433",
+          "reported_base_event_id": 20433,
+          "is_memory_event": false,
+          "start_utc": "2021-04-28T06:00:00Z",
+          "end_utc": "2021-05-10T05:59:59Z",
+          "start_beijing": "2021-04-28 14:00:00",
+          "end_beijing": "2021-05-10 13:59:59",
+          "quest_story_count": 10,
+          "localized_story_title_count": 8
+        },
+        {
+          "event_id": 20461,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "克洛诺斯之怒",
+          "name_key": "EVENT_NAME_20433",
+          "reported_base_event_id": 20433,
+          "is_memory_event": false,
+          "start_utc": "2022-11-21T06:00:00Z",
+          "end_utc": "2022-11-29T05:59:59Z",
+          "start_beijing": "2022-11-21 14:00:00",
+          "end_beijing": "2022-11-29 13:59:59",
+          "quest_story_count": 8,
+          "localized_story_title_count": 8
+        }
+      ]
+    },
+    {
+      "family_id": 22212,
+      "name_zh_cn": "防卫战～代之同仇影随行～",
+      "event_kind_type": 10,
+      "event_kind": "Combat",
+      "original_event_id": 22212,
+      "has_limited_rerun": false,
+      "limited_rerun_event_ids": [],
+      "has_memory_version": true,
+      "memory_event_ids": [
+        22223
+      ],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 22212,
+      "latest_dated_event_id": 22223,
+      "latest_version_event_id": 22223,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_22212"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 6,
+        "shared_story_title_samples": [
+          "暗影般的男子",
+          "不义之徒",
+          "不可避免的决斗"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": []
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 22212,
+          "version_type": "original",
+          "name_zh_cn": "防卫战～代之同仇影随行～",
+          "name_key": "EVENT_NAME_22212",
+          "reported_base_event_id": 22212,
+          "is_memory_event": false,
+          "start_utc": "2021-05-10T06:00:00Z",
+          "end_utc": "2021-05-19T05:59:59Z",
+          "start_beijing": "2021-05-10 14:00:00",
+          "end_beijing": "2021-05-19 13:59:59",
+          "quest_story_count": 6,
+          "localized_story_title_count": 6
+        },
+        {
+          "event_id": 22223,
+          "version_type": "memory",
+          "name_zh_cn": "防卫战～代之同仇影随行～",
+          "name_key": "EVENT_NAME_22212",
+          "reported_base_event_id": 22223,
+          "is_memory_event": true,
+          "start_utc": "2022-01-25T06:00:00Z",
+          "end_utc": null,
+          "start_beijing": "2022-01-25 14:00:00",
+          "end_beijing": null,
+          "quest_story_count": 6,
+          "localized_story_title_count": 6
+        }
+      ]
+    },
+    {
+      "family_id": 22901,
+      "name_zh_cn": "森林之民与神树",
+      "event_kind_type": 12,
+      "event_kind": "Earn",
+      "original_event_id": 22901,
+      "has_limited_rerun": true,
+      "limited_rerun_event_ids": [
+        22906
+      ],
+      "has_memory_version": false,
+      "memory_event_ids": [],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 22906,
+      "latest_dated_event_id": 22906,
+      "latest_version_event_id": 22906,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_22901"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 6,
+        "shared_story_title_samples": [
+          "森隐族的圣地",
+          "先人的教诲",
+          "风雨欲来"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": []
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 22901,
+          "version_type": "original",
+          "name_zh_cn": "森林之民与神树",
+          "name_key": "EVENT_NAME_22901",
+          "reported_base_event_id": 22901,
+          "is_memory_event": false,
+          "start_utc": "2021-05-28T06:00:00Z",
+          "end_utc": "2021-06-11T05:59:59Z",
+          "start_beijing": "2021-05-28 14:00:00",
+          "end_beijing": "2021-06-11 13:59:59",
+          "quest_story_count": 6,
+          "localized_story_title_count": 6
+        },
+        {
+          "event_id": 22906,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "森林之民与神树",
+          "name_key": "EVENT_NAME_22901",
+          "reported_base_event_id": 22906,
+          "is_memory_event": false,
+          "start_utc": "2022-06-20T06:00:00Z",
+          "end_utc": "2022-06-30T05:59:59Z",
+          "start_beijing": "2022-06-20 14:00:00",
+          "end_beijing": "2022-06-30 13:59:59",
+          "quest_story_count": 6,
+          "localized_story_title_count": 6
+        }
+      ]
+    },
+    {
+      "family_id": 22213,
+      "name_zh_cn": "迎击战～祝福之羽翼～",
+      "event_kind_type": 10,
+      "event_kind": "Combat",
+      "original_event_id": 22213,
+      "has_limited_rerun": false,
+      "limited_rerun_event_ids": [],
+      "has_memory_version": true,
+      "memory_event_ids": [
+        22226
+      ],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 22213,
+      "latest_dated_event_id": 22226,
+      "latest_version_event_id": 22226,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_22213"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 7,
+        "shared_story_title_samples": [
+          "隐世之村的血脉",
+          "不为人知的传说",
+          "移民之镇的片刻安宁"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": []
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 22213,
+          "version_type": "original",
+          "name_zh_cn": "迎击战～祝福之羽翼～",
+          "name_key": "EVENT_NAME_22213",
+          "reported_base_event_id": 22213,
+          "is_memory_event": false,
+          "start_utc": "2021-06-11T06:00:00Z",
+          "end_utc": "2021-06-21T05:59:59Z",
+          "start_beijing": "2021-06-11 14:00:00",
+          "end_beijing": "2021-06-21 13:59:59",
+          "quest_story_count": 7,
+          "localized_story_title_count": 7
+        },
+        {
+          "event_id": 22226,
+          "version_type": "memory",
+          "name_zh_cn": "迎击战～祝福之羽翼～",
+          "name_key": "EVENT_NAME_22213",
+          "reported_base_event_id": 22226,
+          "is_memory_event": true,
+          "start_utc": "2022-02-28T06:00:00Z",
+          "end_utc": null,
+          "start_beijing": "2022-02-28 14:00:00",
+          "end_beijing": null,
+          "quest_story_count": 7,
+          "localized_story_title_count": 7
+        }
+      ]
+    },
+    {
+      "family_id": 20834,
+      "name_zh_cn": "来自深海的钟声",
+      "event_kind_type": 4,
+      "event_kind": "Build",
+      "original_event_id": 20834,
+      "has_limited_rerun": false,
+      "limited_rerun_event_ids": [],
+      "has_memory_version": true,
+      "memory_event_ids": [
+        20845
+      ],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 20834,
+      "latest_dated_event_id": 20834,
+      "latest_version_event_id": null,
+      "latest_version_status": "unknown_due_to_missing_date",
+      "undated_event_ids": [
+        20845
+      ],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_20834"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 5,
+        "shared_story_title_samples": [
+          "沧海遗泪",
+          "海神之巫女",
+          "越过海平面"
+        ],
+        "event_fort_ids": [
+          102901
+        ],
+        "event_chara_ids": []
+      },
+      "notes": [
+        "原始客户端和仓库均缺少回忆版开放日期；最新限时编号可确定，不能仅凭较大编号断言回忆版开放日期。"
+      ],
+      "versions": [
+        {
+          "event_id": 20834,
+          "version_type": "original",
+          "name_zh_cn": "来自深海的钟声",
+          "name_key": "EVENT_NAME_20834",
+          "reported_base_event_id": 20834,
+          "is_memory_event": false,
+          "start_utc": "2021-06-29T06:00:00Z",
+          "end_utc": "2021-07-12T05:59:59Z",
+          "start_beijing": "2021-06-29 14:00:00",
+          "end_beijing": "2021-07-12 13:59:59",
+          "quest_story_count": 5,
+          "localized_story_title_count": 5
+        },
+        {
+          "event_id": 20845,
+          "version_type": "memory",
+          "name_zh_cn": "来自深海的钟声",
+          "name_key": "EVENT_NAME_20834",
+          "reported_base_event_id": 20845,
+          "is_memory_event": true,
+          "start_utc": null,
+          "end_utc": null,
+          "start_beijing": null,
+          "end_beijing": null,
+          "quest_story_count": 5,
+          "localized_story_title_count": 5
+        }
+      ]
+    },
+    {
+      "family_id": 22214,
+      "name_zh_cn": "防卫战～日出之国宝藏传说！～",
+      "event_kind_type": 10,
+      "event_kind": "Combat",
+      "original_event_id": 22214,
+      "has_limited_rerun": true,
+      "limited_rerun_event_ids": [
+        22231
+      ],
+      "has_memory_version": false,
+      "memory_event_ids": [],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 22231,
+      "latest_dated_event_id": 22231,
+      "latest_version_event_id": 22231,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_22214"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 6,
+        "shared_story_title_samples": [
+          "传说、童谣与狐狸",
+          "就挖这儿呀咿呀喂",
+          "宝藏挖掘计划"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": []
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 22214,
+          "version_type": "original",
+          "name_zh_cn": "防卫战～日出之国宝藏传说！～",
+          "name_key": "EVENT_NAME_22214",
+          "reported_base_event_id": 22214,
+          "is_memory_event": false,
+          "start_utc": "2021-07-12T06:00:00Z",
+          "end_utc": "2021-07-19T05:59:59Z",
+          "start_beijing": "2021-07-12 14:00:00",
+          "end_beijing": "2021-07-19 13:59:59",
+          "quest_story_count": 6,
+          "localized_story_title_count": 6
+        },
+        {
+          "event_id": 22231,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "防卫战～日出之国宝藏传说！～",
+          "name_key": "EVENT_NAME_22214",
+          "reported_base_event_id": 22231,
+          "is_memory_event": false,
+          "start_utc": "2022-07-11T06:00:00Z",
+          "end_utc": "2022-07-20T05:59:59Z",
+          "start_beijing": "2022-07-11 14:00:00",
+          "end_beijing": "2022-07-20 13:59:59",
+          "quest_story_count": 6,
+          "localized_story_title_count": 6
+        }
+      ]
+    },
+    {
+      "family_id": 20435,
+      "name_zh_cn": "荒岛求生",
+      "event_kind_type": 1,
+      "event_kind": "Raid",
+      "original_event_id": 20435,
+      "has_limited_rerun": true,
+      "limited_rerun_event_ids": [
+        20452
+      ],
+      "has_memory_version": false,
+      "memory_event_ids": [],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 20452,
+      "latest_dated_event_id": 20452,
+      "latest_version_event_id": 20452,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_20435"
+        ],
+        "explicit_base_links": [
+          {
+            "event_id": 20452,
+            "base_event_id": 20435
+          }
+        ],
+        "shared_localized_story_title_count": 7,
+        "shared_story_title_samples": [
+          "欢迎来到荒岛",
+          "前途未卜的野外生存",
+          "海边寻物"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": [
+          10350506
+        ]
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 20435,
+          "version_type": "original",
+          "name_zh_cn": "荒岛求生",
+          "name_key": "EVENT_NAME_20435",
+          "reported_base_event_id": 20435,
+          "is_memory_event": false,
+          "start_utc": "2021-07-29T06:00:00Z",
+          "end_utc": "2021-08-12T05:59:59Z",
+          "start_beijing": "2021-07-29 14:00:00",
+          "end_beijing": "2021-08-12 13:59:59",
+          "quest_story_count": 9,
+          "localized_story_title_count": 7
+        },
+        {
+          "event_id": 20452,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "荒岛求生",
+          "name_key": "EVENT_NAME_20435",
+          "reported_base_event_id": 20435,
+          "is_memory_event": false,
+          "start_utc": "2022-07-20T06:00:00Z",
+          "end_utc": "2022-08-01T05:59:59Z",
+          "start_beijing": "2022-07-20 14:00:00",
+          "end_beijing": "2022-08-01 13:59:59",
+          "quest_story_count": 7,
+          "localized_story_title_count": 7
+        }
+      ]
+    },
+    {
+      "family_id": 22215,
+      "name_zh_cn": "迎击战～晚夏使者愁纷纷～",
+      "event_kind_type": 10,
+      "event_kind": "Combat",
+      "original_event_id": 22215,
+      "has_limited_rerun": true,
+      "limited_rerun_event_ids": [
+        22232
+      ],
+      "has_memory_version": false,
+      "memory_event_ids": [],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 22232,
+      "latest_dated_event_id": 22232,
+      "latest_version_event_id": 22232,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_22215"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 6,
+        "shared_story_title_samples": [
+          "来自黄泉之下",
+          "我也能成为好孩子吗",
+          "绝望之门由此开启"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": []
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 22215,
+          "version_type": "original",
+          "name_zh_cn": "迎击战～晚夏使者愁纷纷～",
+          "name_key": "EVENT_NAME_22215",
+          "reported_base_event_id": 22215,
+          "is_memory_event": false,
+          "start_utc": "2021-08-12T06:00:00Z",
+          "end_utc": "2021-08-20T05:59:59Z",
+          "start_beijing": "2021-08-12 14:00:00",
+          "end_beijing": "2021-08-20 13:59:59",
+          "quest_story_count": 6,
+          "localized_story_title_count": 6
+        },
+        {
+          "event_id": 22232,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "迎击战～晚夏使者愁纷纷～",
+          "name_key": "EVENT_NAME_22215",
+          "reported_base_event_id": 22232,
+          "is_memory_event": false,
+          "start_utc": "2022-08-10T06:00:00Z",
+          "end_utc": "2022-08-19T05:59:59Z",
+          "start_beijing": "2022-08-10 14:00:00",
+          "end_beijing": "2022-08-19 13:59:59",
+          "quest_story_count": 6,
+          "localized_story_title_count": 6
+        }
+      ]
+    },
+    {
+      "family_id": 22902,
+      "name_zh_cn": "阿尔贝里亚骑士道",
+      "event_kind_type": 12,
+      "event_kind": "Earn",
+      "original_event_id": 22902,
+      "has_limited_rerun": true,
+      "limited_rerun_event_ids": [
+        22907
+      ],
+      "has_memory_version": false,
+      "memory_event_ids": [],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 22907,
+      "latest_dated_event_id": 22907,
+      "latest_version_event_id": 22907,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_22902"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 6,
+        "shared_story_title_samples": [
+          "圣都的重逢",
+          "圣都内的逃亡",
+          "昔日的骑士道"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": []
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 22902,
+          "version_type": "original",
+          "name_zh_cn": "阿尔贝里亚骑士道",
+          "name_key": "EVENT_NAME_22902",
+          "reported_base_event_id": 22902,
+          "is_memory_event": false,
+          "start_utc": "2021-08-27T06:00:00Z",
+          "end_utc": "2021-09-10T05:59:59Z",
+          "start_beijing": "2021-08-27 14:00:00",
+          "end_beijing": "2021-09-10 13:59:59",
+          "quest_story_count": 6,
+          "localized_story_title_count": 6
+        },
+        {
+          "event_id": 22907,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "阿尔贝里亚骑士道",
+          "name_key": "EVENT_NAME_22902",
+          "reported_base_event_id": 22907,
+          "is_memory_event": false,
+          "start_utc": "2022-10-31T06:00:00Z",
+          "end_utc": "2022-11-10T05:59:59Z",
+          "start_beijing": "2022-10-31 14:00:00",
+          "end_beijing": "2022-11-10 13:59:59",
+          "quest_story_count": 6,
+          "localized_story_title_count": 6
+        }
+      ]
+    },
+    {
+      "family_id": 22216,
+      "name_zh_cn": "防卫战～幽囚之困·龙眸轨迹～",
+      "event_kind_type": 10,
+      "event_kind": "Combat",
+      "original_event_id": 22216,
+      "has_limited_rerun": true,
+      "limited_rerun_event_ids": [
+        22233
+      ],
+      "has_memory_version": false,
+      "memory_event_ids": [],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 22233,
+      "latest_dated_event_id": 22233,
+      "latest_version_event_id": 22233,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_22216"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 7,
+        "shared_story_title_samples": [
+          "赐予我救赎之力",
+          "被斩断的龙锁",
+          "受缚于禁忌之枷锁"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": []
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 22216,
+          "version_type": "original",
+          "name_zh_cn": "防卫战～幽囚之困·龙眸轨迹～",
+          "name_key": "EVENT_NAME_22216",
+          "reported_base_event_id": 22216,
+          "is_memory_event": false,
+          "start_utc": "2021-09-10T06:00:00Z",
+          "end_utc": "2021-09-21T05:59:59Z",
+          "start_beijing": "2021-09-10 14:00:00",
+          "end_beijing": "2021-09-21 13:59:59",
+          "quest_story_count": 7,
+          "localized_story_title_count": 7
+        },
+        {
+          "event_id": 22233,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "防卫战～幽囚之困·龙眸轨迹～",
+          "name_key": "EVENT_NAME_22216",
+          "reported_base_event_id": 22233,
+          "is_memory_event": false,
+          "start_utc": "2022-09-09T06:00:00Z",
+          "end_utc": "2022-09-20T05:59:59Z",
+          "start_beijing": "2022-09-09 14:00:00",
+          "end_beijing": "2022-09-20 13:59:59",
+          "quest_story_count": 7,
+          "localized_story_title_count": 7
+        }
+      ]
+    },
+    {
+      "family_id": 20438,
+      "name_zh_cn": "圣天之陨～前篇～",
+      "event_kind_type": 1,
+      "event_kind": "Raid",
+      "original_event_id": 20438,
+      "has_limited_rerun": false,
+      "limited_rerun_event_ids": [],
+      "has_memory_version": true,
+      "memory_event_ids": [
+        20443
+      ],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 20438,
+      "latest_dated_event_id": 20443,
+      "latest_version_event_id": 20443,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_20438"
+        ],
+        "explicit_base_links": [
+          {
+            "event_id": 20443,
+            "base_event_id": 20438
+          }
+        ],
+        "shared_localized_story_title_count": 9,
+        "shared_story_title_samples": [
+          "恶魔复活的前兆",
+          "牵丝引线",
+          "恶魔的线索"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": [
+          10250305
+        ]
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 20438,
+          "version_type": "original",
+          "name_zh_cn": "圣天之陨～前篇～",
+          "name_key": "EVENT_NAME_20438",
+          "reported_base_event_id": 20438,
+          "is_memory_event": false,
+          "start_utc": "2021-09-30T06:00:00Z",
+          "end_utc": "2021-10-26T05:59:59Z",
+          "start_beijing": "2021-09-30 14:00:00",
+          "end_beijing": "2021-10-26 13:59:59",
+          "quest_story_count": 11,
+          "localized_story_title_count": 9
+        },
+        {
+          "event_id": 20443,
+          "version_type": "memory",
+          "name_zh_cn": "圣天之陨～前篇～",
+          "name_key": "EVENT_NAME_20438",
+          "reported_base_event_id": 20438,
+          "is_memory_event": true,
+          "start_utc": "2021-12-24T06:00:00Z",
+          "end_utc": null,
+          "start_beijing": "2021-12-24 14:00:00",
+          "end_beijing": null,
+          "quest_story_count": 9,
+          "localized_story_title_count": 9
+        }
+      ]
+    },
+    {
+      "family_id": 20439,
+      "name_zh_cn": "圣天之陨～后篇～",
+      "event_kind_type": 1,
+      "event_kind": "Raid",
+      "original_event_id": 20439,
+      "has_limited_rerun": false,
+      "limited_rerun_event_ids": [],
+      "has_memory_version": true,
+      "memory_event_ids": [
+        20444
+      ],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 20439,
+      "latest_dated_event_id": 20444,
+      "latest_version_event_id": 20444,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_20439"
+        ],
+        "explicit_base_links": [
+          {
+            "event_id": 20444,
+            "base_event_id": 20439
+          }
+        ],
+        "shared_localized_story_title_count": 9,
+        "shared_story_title_samples": [
+          "遭到毁灭的圣都",
+          "撒旦带来的灾厄",
+          "叛徒的证词"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": []
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 20439,
+          "version_type": "original",
+          "name_zh_cn": "圣天之陨～后篇～",
+          "name_key": "EVENT_NAME_20439",
+          "reported_base_event_id": 20439,
+          "is_memory_event": false,
+          "start_utc": "2021-10-13T06:00:00Z",
+          "end_utc": "2021-10-26T05:59:59Z",
+          "start_beijing": "2021-10-13 14:00:00",
+          "end_beijing": "2021-10-26 13:59:59",
+          "quest_story_count": 13,
+          "localized_story_title_count": 9
+        },
+        {
+          "event_id": 20444,
+          "version_type": "memory",
+          "name_zh_cn": "圣天之陨～后篇～",
+          "name_key": "EVENT_NAME_20439",
+          "reported_base_event_id": 20439,
+          "is_memory_event": true,
+          "start_utc": "2021-12-24T06:00:00Z",
+          "end_utc": null,
+          "start_beijing": "2021-12-24 14:00:00",
+          "end_beijing": null,
+          "quest_story_count": 9,
+          "localized_story_title_count": 9
+        }
+      ]
+    },
+    {
+      "family_id": 20837,
+      "name_zh_cn": "舞台上的怪物人偶",
+      "event_kind_type": 4,
+      "event_kind": "Build",
+      "original_event_id": 20837,
+      "has_limited_rerun": false,
+      "limited_rerun_event_ids": [],
+      "has_memory_version": true,
+      "memory_event_ids": [
+        20846
+      ],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 20837,
+      "latest_dated_event_id": 20837,
+      "latest_version_event_id": null,
+      "latest_version_status": "unknown_due_to_missing_date",
+      "undated_event_ids": [
+        20846
+      ],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_20837"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 5,
+        "shared_story_title_samples": [
+          "演员的登场",
+          "缺席的主演",
+          "排演三人行"
+        ],
+        "event_fort_ids": [
+          103001
+        ],
+        "event_chara_ids": []
+      },
+      "notes": [
+        "原始客户端和仓库均缺少回忆版开放日期；最新限时编号可确定，不能仅凭较大编号断言回忆版开放日期。"
+      ],
+      "versions": [
+        {
+          "event_id": 20837,
+          "version_type": "original",
+          "name_zh_cn": "舞台上的怪物人偶",
+          "name_key": "EVENT_NAME_20837",
+          "reported_base_event_id": 20837,
+          "is_memory_event": false,
+          "start_utc": "2021-10-28T06:00:00Z",
+          "end_utc": "2021-11-11T05:59:59Z",
+          "start_beijing": "2021-10-28 14:00:00",
+          "end_beijing": "2021-11-11 13:59:59",
+          "quest_story_count": 5,
+          "localized_story_title_count": 5
+        },
+        {
+          "event_id": 20846,
+          "version_type": "memory",
+          "name_zh_cn": "舞台上的怪物人偶",
+          "name_key": "EVENT_NAME_20837",
+          "reported_base_event_id": 20846,
+          "is_memory_event": true,
+          "start_utc": null,
+          "end_utc": null,
+          "start_beijing": null,
+          "end_beijing": null,
+          "quest_story_count": 5,
+          "localized_story_title_count": 5
+        }
+      ]
+    },
+    {
+      "family_id": 22217,
+      "name_zh_cn": "迎击战～优雅律师朱庇特～",
+      "event_kind_type": 10,
+      "event_kind": "Combat",
+      "original_event_id": 22217,
+      "has_limited_rerun": false,
+      "limited_rerun_event_ids": [],
+      "has_memory_version": true,
+      "memory_event_ids": [
+        22227
+      ],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 22217,
+      "latest_dated_event_id": 22227,
+      "latest_version_event_id": 22227,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_22217"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 6,
+        "shared_story_title_samples": [
+          "律师朱庇特登场！？",
+          "杀人嫌疑与“圣龛”之谜",
+          "庭审风波"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": []
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 22217,
+          "version_type": "original",
+          "name_zh_cn": "迎击战～优雅律师朱庇特～",
+          "name_key": "EVENT_NAME_22217",
+          "reported_base_event_id": 22217,
+          "is_memory_event": false,
+          "start_utc": "2021-11-11T06:00:00Z",
+          "end_utc": "2021-11-19T05:59:59Z",
+          "start_beijing": "2021-11-11 14:00:00",
+          "end_beijing": "2021-11-19 13:59:59",
+          "quest_story_count": 6,
+          "localized_story_title_count": 6
+        },
+        {
+          "event_id": 22227,
+          "version_type": "memory",
+          "name_zh_cn": "迎击战～优雅律师朱庇特～",
+          "name_key": "EVENT_NAME_22217",
+          "reported_base_event_id": 22227,
+          "is_memory_event": true,
+          "start_utc": "2022-02-28T06:00:00Z",
+          "end_utc": null,
+          "start_beijing": "2022-02-28 14:00:00",
+          "end_beijing": null,
+          "quest_story_count": 6,
+          "localized_story_title_count": 6
+        }
+      ]
+    },
+    {
+      "family_id": 22903,
+      "name_zh_cn": "爱如流星",
+      "event_kind_type": 12,
+      "event_kind": "Earn",
+      "original_event_id": 22903,
+      "has_limited_rerun": false,
+      "limited_rerun_event_ids": [],
+      "has_memory_version": false,
+      "memory_event_ids": [],
+      "has_later_version": false,
+      "latest_non_memory_event_id": 22903,
+      "latest_dated_event_id": 22903,
+      "latest_version_event_id": 22903,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_22903"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 6,
+        "shared_story_title_samples": [
+          "女神的恶作剧",
+          "家人的条件",
+          "守护家人的方法"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": []
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 22903,
+          "version_type": "original",
+          "name_zh_cn": "爱如流星",
+          "name_key": "EVENT_NAME_22903",
+          "reported_base_event_id": 22903,
+          "is_memory_event": false,
+          "start_utc": "2021-11-29T06:00:00Z",
+          "end_utc": "2021-12-09T05:59:59Z",
+          "start_beijing": "2021-11-29 14:00:00",
+          "end_beijing": "2021-12-09 13:59:59",
+          "quest_story_count": 6,
+          "localized_story_title_count": 6
+        }
+      ]
+    },
+    {
+      "family_id": 20441,
+      "name_zh_cn": "初阳！日出决战",
+      "event_kind_type": 1,
+      "event_kind": "Raid",
+      "original_event_id": 20441,
+      "has_limited_rerun": true,
+      "limited_rerun_event_ids": [
+        20460
+      ],
+      "has_memory_version": false,
+      "memory_event_ids": [],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 20460,
+      "latest_dated_event_id": 20460,
+      "latest_version_event_id": 20460,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_20441"
+        ],
+        "explicit_base_links": [
+          {
+            "event_id": 20460,
+            "base_event_id": 20441
+          }
+        ],
+        "shared_localized_story_title_count": 9,
+        "shared_story_title_samples": [
+          "千奇百怪岁暮登门来",
+          "武将信玄",
+          "前往日出之国！"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": [
+          10550305
+        ]
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 20441,
+          "version_type": "original",
+          "name_zh_cn": "初阳！日出决战",
+          "name_key": "EVENT_NAME_20441",
+          "reported_base_event_id": 20441,
+          "is_memory_event": false,
+          "start_utc": "2021-12-31T06:00:00Z",
+          "end_utc": "2022-01-13T05:59:59Z",
+          "start_beijing": "2021-12-31 14:00:00",
+          "end_beijing": "2022-01-13 13:59:59",
+          "quest_story_count": 11,
+          "localized_story_title_count": 9
+        },
+        {
+          "event_id": 20460,
+          "version_type": "limited_rerun",
+          "name_zh_cn": "初阳！日出决战",
+          "name_key": "EVENT_NAME_20441",
+          "reported_base_event_id": 20441,
+          "is_memory_event": false,
+          "start_utc": "2022-11-10T06:00:00Z",
+          "end_utc": "2022-11-21T05:59:59Z",
+          "start_beijing": "2022-11-10 14:00:00",
+          "end_beijing": "2022-11-21 13:59:59",
+          "quest_story_count": 9,
+          "localized_story_title_count": 9
+        }
+      ]
+    },
+    {
+      "family_id": 22904,
+      "name_zh_cn": "龙血之主",
+      "event_kind_type": 12,
+      "event_kind": "Earn",
+      "original_event_id": 22904,
+      "has_limited_rerun": false,
+      "limited_rerun_event_ids": [],
+      "has_memory_version": false,
+      "memory_event_ids": [],
+      "has_later_version": false,
+      "latest_non_memory_event_id": 22904,
+      "latest_dated_event_id": 22904,
+      "latest_version_event_id": 22904,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_22904"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 6,
+        "shared_story_title_samples": [
+          "王族集结",
+          "龙之血",
+          "传说再现"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": []
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 22904,
+          "version_type": "original",
+          "name_zh_cn": "龙血之主",
+          "name_key": "EVENT_NAME_22904",
+          "reported_base_event_id": 22904,
+          "is_memory_event": false,
+          "start_utc": "2022-01-31T06:00:00Z",
+          "end_utc": "2022-02-14T05:59:59Z",
+          "start_beijing": "2022-01-31 14:00:00",
+          "end_beijing": "2022-02-14 13:59:59",
+          "quest_story_count": 6,
+          "localized_story_title_count": 6
+        }
+      ]
+    },
+    {
+      "family_id": 22905,
+      "name_zh_cn": "艾缪尔宅邸潜入计划",
+      "event_kind_type": 12,
+      "event_kind": "Earn",
+      "original_event_id": 22905,
+      "has_limited_rerun": false,
+      "limited_rerun_event_ids": [],
+      "has_memory_version": false,
+      "memory_event_ids": [],
+      "has_later_version": false,
+      "latest_non_memory_event_id": 22905,
+      "latest_dated_event_id": 22905,
+      "latest_version_event_id": 22905,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_22905"
+        ],
+        "explicit_base_links": [],
+        "shared_localized_story_title_count": 6,
+        "shared_story_title_samples": [
+          "艾缪尔发疯了！？",
+          "佣人选拔赛开幕！？",
+          "一波三折，佣人选拔决赛！"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": []
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 22905,
+          "version_type": "original",
+          "name_zh_cn": "艾缪尔宅邸潜入计划",
+          "name_key": "EVENT_NAME_22905",
+          "reported_base_event_id": 22905,
+          "is_memory_event": false,
+          "start_utc": "2022-02-28T06:00:00Z",
+          "end_utc": "2022-03-10T05:59:59Z",
+          "start_beijing": "2022-02-28 14:00:00",
+          "end_beijing": "2022-03-10 13:59:59",
+          "quest_story_count": 6,
+          "localized_story_title_count": 6
+        }
+      ]
+    },
+    {
+      "family_id": 20440,
+      "name_zh_cn": "神龙降临",
+      "event_kind_type": 1,
+      "event_kind": "Raid",
+      "original_event_id": 20440,
+      "has_limited_rerun": false,
+      "limited_rerun_event_ids": [],
+      "has_memory_version": true,
+      "memory_event_ids": [
+        20462
+      ],
+      "has_later_version": true,
+      "latest_non_memory_event_id": 20440,
+      "latest_dated_event_id": 20462,
+      "latest_version_event_id": 20462,
+      "latest_version_status": "confirmed_from_start_dates",
+      "undated_event_ids": [],
+      "relationship_basis": "localized_name_and_story_titles",
+      "evidence": {
+        "same_localized_name": true,
+        "name_keys": [
+          "EVENT_NAME_20440"
+        ],
+        "explicit_base_links": [
+          {
+            "event_id": 20462,
+            "base_event_id": 20440
+          }
+        ],
+        "shared_localized_story_title_count": 8,
+        "shared_story_title_samples": [
+          "宣告终焉的咆哮",
+          "苍之巫女与冰狱之王",
+          "赤红的天空"
+        ],
+        "event_fort_ids": [],
+        "event_chara_ids": [
+          10750205
+        ]
+      },
+      "notes": [],
+      "versions": [
+        {
+          "event_id": 20440,
+          "version_type": "original",
+          "name_zh_cn": "神龙降临",
+          "name_key": "EVENT_NAME_20440",
+          "reported_base_event_id": 20440,
+          "is_memory_event": false,
+          "start_utc": "2022-03-30T06:00:00Z",
+          "end_utc": "2022-04-15T05:59:59Z",
+          "start_beijing": "2022-03-30 14:00:00",
+          "end_beijing": "2022-04-15 13:59:59",
+          "quest_story_count": 10,
+          "localized_story_title_count": 8
+        },
+        {
+          "event_id": 20462,
+          "version_type": "memory",
+          "name_zh_cn": "神龙降临",
+          "name_key": "EVENT_NAME_20440",
+          "reported_base_event_id": 20440,
+          "is_memory_event": true,
+          "start_utc": "2022-05-25T06:00:00Z",
+          "end_utc": null,
+          "start_beijing": "2022-05-25 14:00:00",
+          "end_beijing": null,
+          "quest_story_count": 8,
+          "localized_story_title_count": 8
+        }
+      ]
+    }
+  ]
+}
