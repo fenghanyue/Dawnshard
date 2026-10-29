@@ -48,4 +48,28 @@ if ! docker run --rm --network "$network" \
     docker logs --tail 25 "$fake_api"
     exit 1
 fi
+python3 - "$container" <<'PY'
+import subprocess
+import sys
+
+result = subprocess.run(["docker", "logs", sys.argv[1]], capture_output=True, text=True, check=True)
+lines = [line for line in (result.stdout + result.stderr).splitlines() if "Co-op trace" in line]
+assert lines, "True wind diagnostics were not exercised"
+assert all("quest=210010101" in line for line in lines), "Diagnostics escaped the selected quest"
+for evidence in (
+    "decision=room-update-during-battle",
+    "code=0x02 decision=relay",
+    "code=0x15 decision=cancel",
+    "code=0x15 decision=server-broadcast-submitted",
+    "detail limit reached",
+    "reason=5s-after-start",
+):
+    assert any(evidence in line for line in lines), "Missing diagnostic evidence: " + evidence
+for private in ("diagnostic-private-value", "diagnostic-private-payload", "diagnostic-private-key"):
+    assert all(private not in line for line in lines), "Diagnostics exposed private content"
+details = [line for line in lines if "Co-op trace event:" in line
+           or "Co-op trace properties:" in line or "Co-op trace stage:" in line]
+assert len(details) <= 160, "Diagnostic details exceeded the per-room limit"
+print("真风诊断：事件转发、原有拒绝策略、开战后采样及日志内容隔离检查通过")
+PY
 echo "联机镜像：普通用户、只读文件系统、真实 UDP 房间/加载/战斗消息/结算接口检查通过（游戏 API 为测试替身）"

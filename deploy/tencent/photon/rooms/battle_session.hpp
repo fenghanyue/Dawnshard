@@ -5,6 +5,8 @@
 #include <functional>
 #include <luxon/server/game.hpp>
 #include <map>
+#include <string_view>
+#include <tuple>
 
 namespace dawnshard {
 class BattleSession : public std::enable_shared_from_this<BattleSession> {
@@ -16,6 +18,9 @@ class BattleSession : public std::enable_shared_from_this<BattleSession> {
     void on_stage(int actor, int stage);
     void on_leave(int actor);
     bool on_event(server::GamePeer &actor, server::Event &event);
+    void trace_properties(int actor, int target, const ser::Hashtable &properties,
+                          std::string_view decision);
+    void trace_event(const server::Event &event, std::string_view decision);
 
   private:
     struct Member {
@@ -34,6 +39,9 @@ class BattleSession : public std::enable_shared_from_this<BattleSession> {
     Json prepared_;
     std::optional<std::future<BattleReply>> preparation_;
     std::chrono::steady_clock::time_point load_deadline_;
+    // Metadata only, bounded per room. These counters never participate in gameplay decisions.
+    size_t trace_lines_ = 0, trace_events_ = 0, trace_relayed_ = 0, trace_cancelled_ = 0;
+    std::map<std::tuple<int, uint8_t, std::string_view>, size_t> trace_event_counts_;
 
     void begin();
     void advance();
@@ -47,5 +55,9 @@ class BattleSession : public std::enable_shared_from_this<BattleSession> {
     int minimum_stage() const;
     void emit(uint8_t code, ser::ByteArray bytes, int actor = 0);
     void game_properties(ser::Hashtable properties);
+    int trace_quest() const;
+    bool trace_allowed();
+    void trace_checkpoint(std::string_view reason);
+    void schedule_trace_checkpoint(int sample = 0);
 };
 } // namespace dawnshard
