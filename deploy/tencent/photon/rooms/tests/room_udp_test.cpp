@@ -146,7 +146,8 @@ class Scenario {
         until([&] { return client.peer.state() == luxon::enet::EnetConnectionState::Disconnected; },
               "Leave did not disconnect the client");
     }
-    Client &join(const std::string &name, int viewer, bool create, bool accepted = true) {
+    Client &join(const std::string &name, int viewer, bool create, bool accepted = true,
+                 int quest_id = 301010103) {
         auto &master = connect(master_port_);
         request(master, 230, {{224, std::string("room-test")}, {220, std::string("1")}});
         auto invitation = request(master, create ? 227 : 226, {{255, name}},
@@ -165,7 +166,7 @@ class Scenario {
             ser::Hashtable{{std::string("PlayerId"), std::to_string(viewer)},
                            {std::string("UsePartySlot"), std::vector<int32_t>{1}}});
         auto properties = std::make_shared<ser::Hashtable>(
-            ser::Hashtable{{std::string("C0"), int32_t(301010103)},
+            ser::Hashtable{{std::string("C0"), int32_t(quest_id)},
                            {std::string("MatchingCompatibleId"), int32_t(36)},
                            {std::string("MatchingType"), int32_t(1)}});
         auto joined = request(
@@ -442,6 +443,33 @@ int main() {
                 "AllDead response mismatch");
         scenario.leave(battle_guest);
         scenario.leave(battle_host);
+
+        // The diagnostic quest follows the same protocol and keeps the existing property policy.
+        auto &trace_host = scenario.join("luxon-trace-smoke", 801, true, true, 210010101);
+        auto &trace_guest = scenario.join("luxon-trace-smoke", 802, false, true, 210010101);
+        scenario.wait_room(2, 801);
+        scenario.load(trace_host, trace_guest);
+        auto private_properties = std::make_shared<ser::Hashtable>(
+            ser::Hashtable{{std::string("TracePrivateField"), std::string("diagnostic-private-value")},
+                           {std::string("diagnostic-private-key\n"), int32_t(123)}});
+        scenario.request(trace_host, 252, {{251, private_properties}}, false);
+        const std::string private_payload = "diagnostic-private-payload";
+        for (bool reliable : {true, false}) {
+            auto count = scenario.events(trace_guest, 0x02, false);
+            scenario.raise(trace_host, 0x02,
+                           ser::ByteArray(private_payload.begin(), private_payload.end()), reliable);
+            scenario.until([&] { return scenario.events(trace_guest, 0x02, false) > count; },
+                           "Diagnostic quest action was not relayed");
+        }
+        auto trace_start_count = scenario.events(trace_host, 0x15, false);
+        scenario.raise(trace_guest, 0x15, {0x80});
+        for (int i = 0; i < 180; ++i)
+            scenario.request(trace_host, 252, {{251, private_properties}}, false);
+        scenario.pause(5200); // Also observe the independent post-start checkpoint.
+        require(scenario.events(trace_host, 0x15, false) == trace_start_count,
+                "Diagnostics changed server-only event rejection");
+        scenario.leave(trace_guest);
+        scenario.leave(trace_host);
 
         auto &error_host = scenario.join("luxon-http-failure", 991, true);
         auto &error_guest = scenario.join("luxon-http-failure", 999, false);

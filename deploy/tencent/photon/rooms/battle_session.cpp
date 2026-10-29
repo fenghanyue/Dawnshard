@@ -10,6 +10,110 @@ BattleSession::BattleSession(server::Game *game, std::shared_ptr<server::logger>
     : game_(game->weak_from_this()), log_(std::move(log)), hide_(std::move(hide)),
       reopen_(std::move(reopen)) {}
 
+int BattleSession::trace_quest() const {
+    if (auto game = game_.lock()) {
+        try {
+            auto quest = integer(property(game->custom_props, "C0"));
+            if (quest >= 210010101 && quest <= 210010104)
+                return static_cast<int>(quest);
+        } catch (const std::exception &) {
+        }
+    }
+    return 0;
+}
+
+bool BattleSession::trace_allowed() {
+    if (!trace_quest() || trace_lines_ >= 160)
+        return false;
+    ++trace_lines_;
+    if (trace_lines_ == 160)
+        log_->info("Co-op trace detail limit reached: quest={}; checkpoints remain enabled", trace_quest());
+    return true;
+}
+
+void BattleSession::trace_properties(int actor, int target, const ser::Hashtable &properties,
+                                     std::string_view decision) {
+    if (!trace_allowed())
+        return;
+    std::string keys;
+    size_t count = 0;
+    for (const auto &[key, value] : properties) {
+        if (count++ == 12)
+            break;
+        if (!keys.empty())
+            keys += ',';
+        if (const auto *name = key.get_ptr<std::string>(); name && !name->empty() && name->size() <= 48 &&
+            std::ranges::all_of(*name, [](unsigned char c) {
+                return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
+                       (c >= '0' && c <= '9') || c == '_';
+            }))
+            keys += *name;
+        else
+            keys += "<other>";
+    }
+    log_->info("Co-op trace properties: quest={} actor={} target={} decision={} keys=[{}] count={}",
+               trace_quest(), actor, target, decision, keys, properties.size());
+}
+
+void BattleSession::trace_event(const server::Event &event, std::string_view decision) {
+    if (!trace_quest())
+        return;
+    ++trace_events_;
+    trace_relayed_ += decision == "relay";
+    trace_cancelled_ += decision == "cancel";
+    auto &count = trace_event_counts_[{event.sender_actor_id, event.code, decision}];
+    // Show the first two occurrences of each event/outcome, not every movement packet.
+    if (++count > 2 || !trace_allowed())
+        return;
+    size_t recipients = 0;
+    if (auto game = game_.lock()) {
+        for (const auto &peer : game->peers) {
+            bool selected = peer.actor_id != event.sender_actor_id;
+            if (const auto *group = std::get_if<uint8_t>(&event.receivers))
+                selected = *group == luxon::ReceiverGroup::MasterClient
+                               ? peer.actor_id == game->master_actor
+                               : *group != luxon::ReceiverGroup::Others || selected;
+            else if (const auto *actors = std::get_if<std::unordered_set<int32_t>>(&event.receivers))
+                selected = actors->contains(peer.actor_id);
+            recipients += selected && peer.interest_groups.test(event.interest_group) &&
+                          !peer.peer.expired();
+        }
+    }
+    const auto *bytes = event.data.get_ptr<ser::ByteArray>();
+    log_->info("Co-op trace event: quest={} actor={} code=0x{:02x} decision={} channel={} mode={} "
+               "group={} eligible={} bytes={}",
+               trace_quest(), event.sender_actor_id, event.code, decision, event.channel,
+               static_cast<int>(event.delivery_mode), event.interest_group, recipients,
+               bytes ? bytes->size() : 0);
+}
+
+void BattleSession::trace_checkpoint(std::string_view reason) {
+    if (!trace_quest())
+        return;
+    std::string states;
+    for (const auto &[actor, member] : members_) {
+        states += std::to_string(actor) + ':' + std::to_string(member.stage) + ':' +
+                  std::to_string(member.ready) + ':' + std::to_string(member.finished) + ' ';
+    }
+    log_->info("Co-op trace checkpoint: quest={} reason={} running={} events={} relay={} cancel={} "
+               "members(actor:stage:ready:finished)=[{}]",
+               trace_quest(), reason, running_, trace_events_, trace_relayed_, trace_cancelled_, states);
+}
+
+void BattleSession::schedule_trace_checkpoint(int sample) {
+    auto game = game_.lock();
+    if (!game || !trace_quest() || sample >= 2)
+        return;
+    game->get_server_manager().add_scheduled_task(
+        sample == 0 ? 5000 : 10000, [weak = weak_from_this(), round = load_deadline_, sample] {
+            if (auto session = weak.lock(); session && session->load_deadline_ == round &&
+                session->active_ && session->running_ && !session->broken_) {
+                session->trace_checkpoint(sample == 0 ? "5s-after-start" : "15s-after-start");
+                session->schedule_trace_checkpoint(sample + 1);
+            }
+        });
+}
+
 bool BattleSession::validate_stage(int actor, int stage) const {
     if (broken_ || stage < 0 || stage > 4)
         return false;
@@ -29,6 +133,8 @@ void BattleSession::on_stage(int actor, int stage) {
     if (broken_ || !active_ || !members_.contains(actor))
         return;
     members_.at(actor).stage = stage;
+    if (trace_allowed())
+        log_->info("Co-op trace stage: quest={} actor={} stage={}", trace_quest(), actor, stage);
     advance();
 }
 
@@ -194,6 +300,8 @@ bool BattleSession::on_event(server::GamePeer &actor, server::Event &event) {
                 running_ = true;
                 emit(0x15, Json::to_msgpack(Json::object()));
                 log_->info("Co-op battle started: all players loaded");
+                trace_checkpoint("start-broadcast-submitted");
+                schedule_trace_checkpoint();
             }
             return true;
         case 0x3f:
@@ -297,6 +405,7 @@ void BattleSession::maybe_reset() {
 }
 
 void BattleSession::on_leave(int actor) {
+    trace_checkpoint("actor-leaving");
     if (!active_ || broken_)
         return;
     if (actor == 1) {
@@ -333,6 +442,7 @@ void BattleSession::emit(uint8_t code, ser::ByteArray bytes, int actor) {
             event.receivers = uint8_t(luxon::ReceiverGroup::All);
         event.data = std::move(bytes);
         game->broadcast_event(event);
+        trace_event(event, "server-broadcast-submitted");
     }
 }
 

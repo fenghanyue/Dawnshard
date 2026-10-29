@@ -127,15 +127,24 @@ class DawnshardRoomPlugin : public PluginBase {
     }
 
     Result BeforeSetProperties(ser::OperationRequestMessage &, BeforeSetPropertiesCallInfo &info) override {
-        if (!info.setter || !info.update)
+        auto reject = [&](std::string_view reason) {
+            if (battle_ && info.update)
+                battle_->trace_properties(info.setter ? info.setter->actor_id : 0, info.target_actor_id,
+                                          *info.update, reason);
             return Result::Fail;
+        };
+        if (!info.setter || !info.update)
+            return reject("missing-setter-or-update");
         try {
             const auto &update = *info.update;
             if (info.target_actor_id == 0) {
-                if ((battle_ && battle_->active()) || info.setter->actor_id != 1 ||
-                    update.contains(std::string("RoomId")) ||
+                if (battle_ && battle_->active())
+                    return reject("room-update-during-battle");
+                if (info.setter->actor_id != 1)
+                    return reject("room-update-by-guest");
+                if (update.contains(std::string("RoomId")) ||
                     !dawnshard::property(update, "GoToIngameInfo").is_null())
-                    return Result::Fail;
+                    return reject("server-owned-room-property");
                 auto merged = game_->custom_props;
                 for (const auto &[key, value] : update)
                     merged[key] = value;
@@ -145,32 +154,36 @@ class DawnshardRoomPlugin : public PluginBase {
                 if (!dawnshard::property(update, "MatchingType").is_null()) {
                     auto type = dawnshard::integer(dawnshard::property(update, "MatchingType"));
                     if (type != 1 && type != 2 && type != 4 && type != 5 && type != 6)
-                        return Result::Fail;
+                        return reject("invalid-matching-type");
                 }
             } else {
                 if (info.target_actor_id != info.setter->actor_id)
-                    return Result::Fail;
+                    return reject("another-actor-property");
                 for (const auto key : {"PlayerId", "ViewerId"})
                     if (update.contains(std::string(key)))
-                        return Result::Fail;
+                        return reject("server-owned-actor-property");
                 const auto &start = dawnshard::property(update, "GoToIngameState");
                 if (!start.is_null() &&
                     (dawnshard::integer(start) < 0 || dawnshard::integer(start) > 4 || !battle_ ||
                      !battle_->validate_stage(info.target_actor_id, int(dawnshard::integer(start))))) {
-                    return Result::Fail;
+                    return reject("invalid-loading-stage");
                 }
                 if (!dawnshard::property(update, "UsePartySlot").is_null()) {
                     if (battle_ && battle_->active())
-                        return Result::Fail;
+                        return reject("party-change-during-battle");
                     auto merged = info.setter->actor_props;
                     for (const auto &[key, value] : update)
                         merged[key] = value;
                     dawnshard::player(info.target_actor_id, merged);
                 }
             }
-            return closed_ ? Result::Fail : Result::Continue;
+            if (closed_)
+                return reject("room-closed");
+            if (battle_)
+                battle_->trace_properties(info.setter->actor_id, info.target_actor_id, update, "allow");
+            return Result::Continue;
         } catch (const std::exception &) {
-            return Result::Fail;
+            return reject("invalid-property-shape");
         }
     }
 
@@ -197,6 +210,11 @@ class DawnshardRoomPlugin : public PluginBase {
     }
 
     Result OnRaiseEvent(ser::OperationRequestMessage &, OnRaiseEventCallInfo &info) override {
+        auto result = [&](Result outcome) {
+            if (battle_)
+                battle_->trace_event(info.event, outcome == Result::Continue ? "relay" : "cancel");
+            return outcome;
+        };
         // Server-only events cannot be forged by a client.
         switch (info.event.code) {
         case 0x14:
@@ -205,17 +223,17 @@ class DawnshardRoomPlugin : public PluginBase {
         case 0x3e:
         case 0x40:
         case 0x44:
-            return Result::Cancel;
+            return result(Result::Cancel);
         case 0x03:
         case 0x18:
         case 0x3f:
         case 0x43:
         case 0x48:
-            return !closed_ && battle_ && info.raiser && battle_->on_event(*info.raiser, info.event)
-                       ? Result::Continue
-                       : Result::Cancel;
+            return result(!closed_ && battle_ && info.raiser && battle_->on_event(*info.raiser, info.event)
+                              ? Result::Continue
+                              : Result::Cancel);
         default:
-            return closed_ ? Result::Cancel : Result::Continue;
+            return result(closed_ ? Result::Cancel : Result::Continue);
         }
     }
 
