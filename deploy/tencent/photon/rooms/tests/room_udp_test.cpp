@@ -277,15 +277,29 @@ class Scenario {
         raise(guest, 0x03, Json::to_msgpack(Json::array({1})));
         until([&] { return events(host, 0x15) == 1 && events(guest, 0x15) == 1; },
               "Battle did not start after both Ready events");
-        raise(guest, 0x03, Json::to_msgpack(Json::array({1})));
-        pause(50);
-        require(events(host, 0x15) == 1, "Duplicate Ready restarted battle");
+        int preparations = request_count("/preparations");
+        auto host_party_count = events(host, 0x3e), guest_party_count = events(guest, 0x3e);
+        auto host_character_count = events(host, 0x14), guest_character_count = events(guest, 0x14);
+        // Simulate both clients missing the first application-level start confirmation.
+        for (Client *client : {&host, &guest})
+            std::erase_if(client->events, [](const auto &event) { return event.event_code == 0x15; });
+        raise(guest, 0x03, {});
+        until([&] { return events(host, 0x15) == 1 && events(guest, 0x15) == 1; },
+              "Repeated Ready was not acknowledged after the first confirmation was missed");
+        raise(host, 0x03, {});
+        until([&] { return events(host, 0x15) == 2 && events(guest, 0x15) == 2; },
+              "Host Ready retry was not acknowledged");
+        require(events(host, 0x3e) == host_party_count && events(guest, 0x3e) == guest_party_count &&
+                    events(host, 0x14) == host_character_count &&
+                    events(guest, 0x14) == guest_character_count,
+                "Ready retry repeated party or character initialization");
+        require(request_count("/preparations") == preparations,
+                "Ready retry issued another role preparation request");
     }
-    int record_count(int viewer) {
+    int request_count(const std::string &path) {
         CURL *curl = curl_easy_init();
         std::string body;
-        std::string url =
-            std::string(std::getenv("LUXON_TEST_API_URL")) + "/records/" + std::to_string(viewer);
+        std::string url = std::string(std::getenv("LUXON_TEST_API_URL")) + path;
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
         curl_easy_setopt(curl, CURLOPT_PROXY, "");
         curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS, 2000L);
@@ -300,6 +314,7 @@ class Scenario {
         require(code == CURLE_OK, "Test game API unavailable");
         return std::stoi(body);
     }
+    int record_count(int viewer) { return request_count("/records/" + std::to_string(viewer)); }
 };
 
 int main() {

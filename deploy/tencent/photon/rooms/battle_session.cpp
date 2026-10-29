@@ -295,13 +295,19 @@ bool BattleSession::on_event(server::GamePeer &actor, server::Event &event) {
             if (!characters_sent_ || member.finished)
                 return false;
             member.ready = true;
-            if (!running_ &&
-                std::ranges::all_of(members_, [](const auto &entry) { return entry.second.ready; })) {
+            if (std::ranges::all_of(members_, [](const auto &entry) { return entry.second.ready; })) {
+                bool first_start = !running_;
                 running_ = true;
+                // Match GameLogicPlugin.OnActorReady: a client can retry Ready while waiting
+                // for the start confirmation. Repeat the reply, not battle initialization.
                 emit(0x15, Json::to_msgpack(Json::object()));
-                log_->info("Co-op battle started: all players loaded");
-                trace_checkpoint("start-broadcast-submitted");
-                schedule_trace_checkpoint();
+                if (first_start) {
+                    log_->info("Co-op battle started: all players loaded");
+                    trace_checkpoint("start-broadcast-submitted");
+                    schedule_trace_checkpoint();
+                } else if (trace_allowed())
+                    log_->info("Co-op trace start confirmation repeated: quest={} actor={}", trace_quest(),
+                               actor.actor_id);
             }
             return true;
         case 0x3f:
