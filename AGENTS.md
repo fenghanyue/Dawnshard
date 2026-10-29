@@ -1,6 +1,7 @@
 # Agent Instructions for Dawnshard
 
 > **私服（fenghanyue/Dawnshard）**：接手前先读 [deploy/tencent/NOTES.md](deploy/tencent/NOTES.md)（现状、做过的事、踩过的坑、和用户怎么配合）。下面是原作者写的通用说明。
+> **默认时长（用户于 2026-10-29 指定）**：今后新活动及同期卡池默认均持续 **999 天**，同日起止；用户另有指定时优先遵从。不因原版时长不同缩短，也不自动改写已经排好的历史活动。
 > 开新活动、排期或判断活动能否联机时，再读 [开活动与联机复用指南](deploy/tencent/EVENTS.md)，按其中的检查步骤和验收记录复用现有流程。
 > **活动时间易错点（#39）**：开放/关闭按当前时间判断，入口、任务初始化、登录时的活动选择统一复用 `EventRunInformation.IsActive`；
 > `GetLastDailyReset()` 只用于每日任务周期。每次排活动都执行[活动期间外的检查清单](deploy/tencent/EVENTS.md#活动期间外的检查清单)，覆盖非 14 点起止、首次入场和旧活动关闭；配置、哈希及健康通过不代表实际入场通过。

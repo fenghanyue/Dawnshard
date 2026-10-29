@@ -219,7 +219,11 @@ def plan_changes(tables: dict[str, dict], runs: list[EventRun], box_summons: set
         if row["_Id"] in CLOSED_EVENTS:
             add("EventData", row, {"_EndDate": row["_StartDate"], "_ViewCloseDate": row["_StartDate"]})
         elif row["_Id"] in schedules:
-            add("EventData", row, schedules[row["_Id"]].event_dates(row))
+            dates = schedules[row["_Id"]].event_dates(row)
+            if row["_Id"] == 20459:
+                # This rerun's original guest-join reference still points at the 2019 prologue.
+                dates["_GuestJoinStoryId"] = 2045901
+            add("EventData", row, dates)
     for row in rows(tables["QuestEventGroup"]):
         if row["_Id"] in CLOSED_EVENTS:
             add("QuestEventGroup", row, {"_IsHideBanner": 1})

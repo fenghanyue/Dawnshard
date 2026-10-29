@@ -4,7 +4,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import check_config
@@ -23,13 +23,13 @@ class PrepareHalloweenTest(unittest.TestCase):
         self.banner_path.write_text(json.dumps(self.banner_base))
         self.start = prepare_halloween.timestamp("2031-10-17T14:00:00+08:00")
 
-    def test_preserves_first_event_and_input_and_uses_original_duration(self):
+    def test_preserves_first_event_and_input_and_uses_999_days(self):
         before = copy.deepcopy(self.base)
         result = prepare_halloween.prepare(self.base, self.start)
         self.assertEqual(self.base, before)
         self.assertEqual(result["EventOptions"]["EventList"][0], before["EventOptions"]["EventList"][0])
         self.assertEqual(result["Other"], before["Other"])
-        self.assertEqual(result["EventOptions"]["EventList"][1], {"Id": 20801, "Start": "2031-10-17T06:00:00Z", "End": "2031-10-26T05:59:59Z"})
+        self.assertEqual(result["EventOptions"]["EventList"][1], {"Id": 20801, "Start": "2031-10-17T06:00:00Z", "End": (self.start + timedelta(days=999, seconds=-1)).isoformat().replace("+00:00", "Z")})
 
     def test_custom_duration(self):
         result = prepare_halloween.prepare(self.base, self.start, datetime(2032, 1, 1, tzinfo=UTC))
@@ -60,13 +60,13 @@ class PrepareHalloweenTest(unittest.TestCase):
         banner = result["SummonBannerOptions"]["Banners"][-1]
         self.assertEqual(banner["Id"], 1020003)
         self.assertEqual(banner["Start"], event["Start"])
-        self.assertEqual(banner["End"], "2031-10-31T05:59:59Z")
+        self.assertEqual(banner["End"], event["End"])
         self.assertTrue(result["SummonBannerOptions"]["FilterPoolByReleaseDate"])
 
     def test_custom_event_and_banner_ends(self):
         event = prepare_halloween.prepare(self.base, self.start, datetime(2032, 1, 1, tzinfo=UTC))["EventOptions"]["EventList"][-1]
         result = prepare_halloween.prepare_banners({}, event)
-        self.assertEqual(result["SummonBannerOptions"]["Banners"][-1]["End"], "2032-01-06T00:00:00Z")
+        self.assertEqual(result["SummonBannerOptions"]["Banners"][-1]["End"], "2032-01-01T00:00:00Z")
         result = prepare_halloween.prepare_banners({}, event, datetime(2032, 2, 1, tzinfo=UTC))
         self.assertEqual(result["SummonBannerOptions"]["Banners"][-1]["End"], "2032-02-01T00:00:00Z")
 

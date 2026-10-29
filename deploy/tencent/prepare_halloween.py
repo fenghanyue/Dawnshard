@@ -1,14 +1,16 @@
 """生成第二期活动和同期卡池的待上线配置；不修改线上配置、不连接服务器、不部署。
 
-使用时必须明确传入带时区的开始时间。默认活动 9 天、卡池 14 天，同日开始。
---end 改活动结束时间，卡池默认再延后 5 天；可用 --banner-end 单独指定卡池结束时间。
+使用时必须明确传入带时区的开始时间。默认活动及卡池均 999 天，同日起止。
+--end 同时改变默认卡池结束时间；可用 --banner-end 单独指定卡池结束时间。
 生成两份独立文件，决定上线后再审阅并替换正式配置。
 """
 
 import argparse
 import json
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from pathlib import Path
+
+from event_schedule import default_end
 
 HERE = Path(__file__).resolve().parent
 PRODUCTION = HERE / "appsettings.Production.json"
@@ -29,7 +31,7 @@ def prepare(config: dict, start: datetime, end: datetime | None = None) -> dict:
     if start.tzinfo is None or end is not None and end.tzinfo is None:
         raise ValueError("开始和结束时间必须包含时区")
     start = start.astimezone(UTC)
-    end = end.astimezone(UTC) if end is not None else start + timedelta(days=9, seconds=-1)
+    end = end.astimezone(UTC) if end is not None else default_end(start)
     if end <= start:
         raise ValueError("结束时间必须晚于开始时间")
     result = json.loads(json.dumps(config))
@@ -46,7 +48,7 @@ def prepare(config: dict, start: datetime, end: datetime | None = None) -> dict:
 
 def prepare_banners(config: dict, event: dict, end: datetime | None = None) -> dict:
     start = timestamp(event["Start"])
-    end = end if end is not None else timestamp(event["End"]) + timedelta(days=5)
+    end = end if end is not None else timestamp(event["End"])
     if end.tzinfo is None or end <= start:
         raise ValueError("卡池结束时间必须包含时区且晚于开始时间")
     result = json.loads(json.dumps(config))
