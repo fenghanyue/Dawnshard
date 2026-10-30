@@ -68,7 +68,7 @@ class GuestDeploymentTest(unittest.TestCase):
         (private / "api.json").write_text('{"before":true}\n')
         stage = Path(temporary.name) / "stage"
         (stage / "guest-auth").mkdir(parents=True)
-        (stage / "guest-auth/Caddyfile").write_text("configuration-placeholder")
+        (stage / "guest-auth/Caddyfile").write_text(SOURCE.with_name("Caddyfile").read_text())
         compose = stage / "docker-compose.yml"
         compose.write_text("compose-placeholder")
         if existing:
@@ -111,6 +111,45 @@ class GuestDeploymentTest(unittest.TestCase):
         settings = json.loads((root / "guest-auth/private/api.json").read_text())
         self.assertFalse(settings["Dragalipatch"]["UseUnifiedLogin"])
         self.assertEqual(settings["GuestAuth"]["TrustedProxyAddresses"], ["172.20.0.2"])
+
+    def test_public_ip_uses_shortlived_http_challenge_without_changing_identity(self):
+        root, compose = self.fixture(existing=True)
+        private = root / "guest-auth/private"
+        (private / "edge.env").write_text("GUEST_AUTH_HOST=8.8.8.8\n")
+        credentials = (private / "runtime.json").read_bytes()
+        self.invoke(Runtime(existing=True), root, compose)
+        caddy = (root / "guest-auth/Caddyfile").read_text()
+        self.assertIn("profile shortlived", caddy)
+        self.assertIn("disable_tlsalpn_challenge", caddy)
+        self.assertIn("default_sni {$GUEST_AUTH_HOST}", caddy)
+        self.assertIn("renewal_window_ratio 0.5", caddy)
+        self.assertNotIn("tls internal", caddy)
+        self.assertEqual((private / "runtime.json").read_bytes(), credentials)
+        self.assertEqual((root / "guest-auth/data/signing-key.pem").read_text(), "private-sentinel-key")
+
+    def test_dns_host_keeps_normal_acme_profile(self):
+        root, compose = self.fixture(host=True)
+        self.invoke(Runtime(), root, compose)
+        caddy = (root / "guest-auth/Caddyfile").read_text()
+        self.assertNotIn("profile shortlived", caddy)
+        self.assertNotIn("disable_tlsalpn_challenge", caddy)
+        self.assertIn("https://acme-v02.api.letsencrypt.org/directory", caddy)
+
+    def test_invalid_or_nonpublic_ip_is_rejected_before_starting_edge(self):
+        for host in ["127.0.0.1", "10.0.0.1", "192.0.2.1", "8.8.8.999", "example.org\ntls internal"]:
+            with self.subTest(host=host):
+                root, compose = self.fixture()
+                # Values are validated as host strings, rather than interpolated into Caddy syntax.
+                with self.assertRaises(RuntimeError):
+                    prepare.render_caddyfile(SOURCE.with_name("Caddyfile").read_text(), host)
+
+    def test_ip_certificate_failure_keeps_existing_game_configuration(self):
+        root, compose = self.fixture(existing=True)
+        private = root / "guest-auth/private"
+        (private / "edge.env").write_text("GUEST_AUTH_HOST=8.8.8.8\n")
+        before = (private / "api.json").read_bytes()
+        self.invoke(Runtime(existing=True), root, compose, healthy=False)
+        self.assertEqual((private / "api.json").read_bytes(), before)
 
     def test_failed_certificate_preserves_previous_patch_and_game_configuration(self):
         root, compose = self.fixture(host=True)

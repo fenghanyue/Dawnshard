@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 from pathlib import Path
+import re
 import subprocess
 import tempfile
 import time
@@ -11,6 +12,33 @@ import urllib.parse
 import uuid
 
 import msgpack
+from prepare import render_caddyfile
+
+
+def verify_caddy_configuration(image, root):
+    """Check both production modes with the Caddy binary in the actual release image."""
+    for host, is_ip in [("auth.example.invalid", False), ("8.8.8.8", True)]:
+        path = root / "Caddyfile.check"
+        path.write_text(render_caddyfile(Path(__file__).with_name("Caddyfile").read_text(), host))
+        path.chmod(0o644)
+        result = subprocess.run([
+            "docker", "run", "--rm", "--network", "none", "-e", "GUEST_AUTH_HOST=" + host,
+            "-v", str(path) + ":/etc/caddy/Caddyfile:ro", "--entrypoint", "/usr/bin/caddy", image,
+            "adapt", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile",
+        ], capture_output=True, check=True, timeout=30)
+        config = json.loads(result.stdout)
+        policies = config["apps"]["tls"]["automation"]["policies"]
+        policy = next(p for p in policies if host in p["subjects"])
+        issuer = policy["issuers"][0]
+        assert issuer["module"] == "acme"
+        assert issuer["ca"] == "https://acme-v02.api.letsencrypt.org/directory"
+        assert (issuer.get("profile") == "shortlived") is is_ip
+        assert policy["renewal_window_ratio"] == 0.5
+        server = config["apps"]["http"]["servers"]["srv0"]
+        assert server["tls_connection_policies"][0]["default_sni"] == host
+        if is_ip:
+            assert issuer["challenges"]["tls-alpn"]["disabled"] is True
+    print("Verified: DNS and public-IP production Caddy profiles, automatic renewal, and no-SNI certificate selection.")
 
 
 def main():
@@ -22,6 +50,7 @@ def main():
     args.work_dir.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="guest-runtime-", dir=args.work_dir) as temporary:
         root = Path(temporary)
+        verify_caddy_configuration(args.image, root)
         uid = os.getuid() or 1654
         gid = os.getgid() or 1654
         for directory in ["auth-data", "edge-data"]:
@@ -34,7 +63,7 @@ def main():
         (root / "init.sql").write_text("CREATE ROLE dawnshard_guest_auth LOGIN PASSWORD 'synthetic-auth-password';\nCREATE DATABASE dawnshard_guest_auth OWNER dawnshard_guest_auth;\n")
         caddy = Path(__file__).with_name("Caddyfile").read_text()
         caddy = caddy.replace("    admin off", "    admin off\n    skip_install_trust")
-        caddy = caddy.replace("    tls {\n        issuer acme {\n            dir https://acme-v02.api.letsencrypt.org/directory\n        }\n    }", "    tls internal")
+        caddy = re.sub(r"^    tls \{.*?^    \}", "    tls internal", caddy, flags=re.MULTILINE | re.DOTALL)
         (root / "Caddyfile").write_text(caddy)
         for path in root.iterdir():
             if path.is_file():

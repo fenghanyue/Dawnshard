@@ -42,6 +42,24 @@ def write_private(path, data):
     os.chown(path, APP_UID, APP_UID)
 
 
+def render_caddyfile(template, host):
+    """Public IP certificates require the ACME shortlived profile, unlike DNS names."""
+    options = ""
+    if host:
+        if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9.-]{0,252}", host):
+            raise RuntimeError("Invalid guest authentication HTTPS host.")
+        try:
+            address = ipaddress.ip_address(host)
+        except ValueError:
+            if re.fullmatch(r"[0-9.]+", host):
+                raise RuntimeError("Invalid guest authentication IP address.") from None
+        else:
+            if address.version != 4 or not address.is_global:
+                raise RuntimeError("Guest authentication requires a public IPv4 address.")
+            options = "profile shortlived\n            disable_tlsalpn_challenge"
+    return template.replace("# GUEST_AUTH_IP_ACME_OPTIONS", options)
+
+
 def rollback(root, compose_file, image):
     private = root / "guest-auth/private"
     state_file = private / "last-rollout.json"
@@ -148,8 +166,12 @@ def prepare(root, compose_file, image):
     if not database_exists:
         sql(f"CREATE DATABASE {DB} OWNER {ROLE};")
 
+    host_values = dict(line.split("=", 1) for line in edge_env.read_text().splitlines()
+                       if line and not line.startswith("#") and "=" in line)
+    host = host_values.get("GUEST_AUTH_HOST", "")
     source = compose_file.parent / "guest-auth" / "Caddyfile"
-    shutil.copyfile(source, directory / "Caddyfile")
+    # Preserve the inode of the read-only bind mount used by a running edge container.
+    (directory / "Caddyfile").write_text(render_caddyfile(source.read_text(), host))
     run(compose + ["--profile", "guest-auth", "up", "-d", "--no-deps", "--wait", "--wait-timeout", "75", "guestauth"], root=root, timeout=90)
 
     if not database_exists:
@@ -162,13 +184,8 @@ def prepare(root, compose_file, image):
                 'exec pg_dump -U "$POSTGRES_USER" -d dawnshard_guest_auth -Fc'], root=root, stdout=output)
         (initial / "guest-auth.dump").chmod(0o600)
 
-    host_values = dict(line.split("=", 1) for line in edge_env.read_text().splitlines()
-                       if line and not line.startswith("#") and "=" in line)
-    host = host_values.get("GUEST_AUTH_HOST", "")
     trusted = []
     if host:
-        if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9.-]{0,252}", host):
-            raise RuntimeError("Invalid guest authentication HTTPS host.")
         run(compose + ["--profile", "guest-auth", "up", "-d", "--no-deps", "guest-auth-edge"], root=root)
         container = run(compose + ["ps", "-q", "guest-auth-edge"], root=root).decode().strip()
         address = run(["docker", "inspect", "--format", '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}', container], root=root).decode().strip()
