@@ -1,0 +1,18 @@
+{
+    admin off
+    http_port 8080
+    https_port 8443
+    auto_https disable_redirects
+    servers {
+        protocols h1 h2
+    }
+}
+
+https://{$GUEST_AUTH_HOST} {
+    tls {
+        issuer acme {
+            dir https://acme-v02.api.letsencrypt.org/directory
+        }
+    }
+    reverse_proxy dragaliaapi:8080
+}

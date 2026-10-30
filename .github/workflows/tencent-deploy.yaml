@@ -9,6 +9,7 @@ on:
       - main
     paths:
       - DragaliaAPI/**
+      - GuestAuth/**
       - Shared/**
       - PhotonStateManager/**
       - PhotonPlugin/DragaliaAPI.Photon.Plugin/Plugins/GameLogic/**

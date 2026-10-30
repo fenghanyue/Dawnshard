@@ -1,0 +1,32 @@
+name: Guest authentication tests
+
+on:
+  pull_request:
+    paths:
+      - GuestAuth/**
+      - GuestAuth.Tests/**
+      - Directory.Packages.props
+      - .github/workflows/test-guest-auth.yaml
+  push:
+    branches: [main]
+    paths:
+      - GuestAuth/**
+      - GuestAuth.Tests/**
+      - Directory.Packages.props
+      - .github/workflows/test-guest-auth.yaml
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.100
+      - name: Verify real PostgreSQL enrollment and SDK protocol
+        env:
+          HUSKY: 0
+        run: dotnet test --project GuestAuth.Tests/GuestAuth.Tests.csproj -c Release --output Detailed

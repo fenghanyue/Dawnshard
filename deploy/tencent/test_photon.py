@@ -266,7 +266,7 @@ class PhotonDeploymentTest(unittest.TestCase):
             "ghcr.io/example/photon:test",
             "sha256:" + "b" * 64,
         )
-        self.assertLess(len(tat_run.b64(script.encode())), tat_run.MAX_CONTENT_BYTES)
+        self.assertLess(len(tat_run.encode_script(script)), tat_run.MAX_CONTENT_BYTES)
         with tarfile.open(
             fileobj=io.BytesIO(tat_run.build_bundle()), mode="r:gz"
         ) as bundle:

@@ -1,3 +1,4 @@
+using DragaliaAPI.Features.GuestAuth;
 using DragaliaAPI.Features.Shared.Options;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -10,8 +11,19 @@ public static class WebApplicationExtensions
     {
         app.MapGet(
             "/dragalipatch/config",
-            ([FromServices] IOptionsMonitor<DragalipatchOptions> patchOptions) =>
+            (
+                [FromServices] IOptionsMonitor<DragalipatchOptions> patchOptions,
+                [FromServices] IOptions<GuestAuthOptions> guest,
+                HttpRequest request
+            ) =>
                 new DragalipatchResponse(patchOptions.CurrentValue)
+                {
+                    UseUnifiedLogin =
+                        patchOptions.CurrentValue.UseUnifiedLogin
+                        || !guest.Value.Enabled
+                        || !guest.Value.ClientEnabled
+                        || !request.IsHttps,
+                }
         );
 
         return app;

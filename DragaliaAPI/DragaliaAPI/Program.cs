@@ -1,7 +1,9 @@
 using System.Diagnostics;
+using System.Net;
 using DragaliaAPI;
 using DragaliaAPI.Database;
 using DragaliaAPI.Features.Dragalipatch;
+using DragaliaAPI.Features.GuestAuth;
 using DragaliaAPI.Features.Shared.Options;
 using DragaliaAPI.Infrastructure;
 using DragaliaAPI.Infrastructure.Authentication;
@@ -14,6 +16,7 @@ using DragaliaAPI.Shared.MasterAsset;
 using Hangfire;
 using LinqToDB.Data;
 using LinqToDB.EntityFrameworkCore;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Options;
 using Microsoft.FeatureManagement;
 using Serilog;
@@ -28,6 +31,28 @@ builder
     .AddResourcesJsonFile("eventSummon.json");
 
 string kpfPath = Path.Combine(Directory.GetCurrentDirectory(), "config");
+
+builder.Configuration.AddJsonFile("guestauth-api.runtime.json", optional: true);
+
+builder
+    .Services.AddOptions<ForwardedHeadersOptions>()
+    .Configure<IOptions<GuestAuthOptions>>(
+        (forwarded, guest) =>
+        {
+            forwarded.ForwardedHeaders =
+                ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+            forwarded.ForwardLimit = 1;
+            forwarded.RequireHeaderSymmetry = true;
+            forwarded.KnownProxies.Clear();
+            forwarded.KnownIPNetworks.Clear();
+            forwarded.KnownProxies.Add(IPAddress.Loopback);
+            forwarded.KnownProxies.Add(IPAddress.IPv6Loopback);
+            foreach (string address in guest.Value.TrustedProxyAddresses)
+            {
+                forwarded.KnownProxies.Add(IPAddress.Parse(address));
+            }
+        }
+    );
 
 builder.Configuration.AddKeyPerFile(directoryPath: kpfPath, optional: true, reloadOnChange: true);
 
@@ -86,6 +111,7 @@ builder
     .ConfigureSharedServices();
 
 WebApplication app = builder.Build();
+app.UseForwardedHeaders();
 
 Log.UsingKpfPath(app.Logger, kpfPath);
 
@@ -181,6 +207,7 @@ app.UseStaticFiles();
 
 app.MapDefaultEndpoints();
 app.MapDragalipatchConfigEndpoint();
+app.MapGuestAuthGateway();
 
 LinqToDBForEFTools.Initialize();
 DataConnection.TurnTraceSwitchOn();

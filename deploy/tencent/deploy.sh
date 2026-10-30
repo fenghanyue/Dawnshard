@@ -56,6 +56,8 @@ restore_files() {
 rollback() {
     echo "!! $1，回滚到上一个版本" >&2
     restore_files
+    python3 "$new_dir/guest-auth/prepare.py" --app-dir "$APP_DIR" --compose "$new_dir/docker-compose.yml" --image "$IMAGE" --rollback \
+        || echo "!! 游客认证回退未完成，请通过 TAT 查看" >&2
     docker compose up -d --no-deps --force-recreate dragaliaapi
     exit 1
 }
@@ -245,6 +247,7 @@ fi
 
 echo "== 5/7 更新 compose 和配置"
 sed -i "s#__DRAGALIA_API_IMAGE__#${IMAGE}#" "$new_dir/docker-compose.yml"
+python3 "$new_dir/guest-auth/prepare.py" --app-dir "$APP_DIR" --compose "$new_dir/docker-compose.yml" --image "$IMAGE"
 mapfile -t files < <(find "$new_dir" -maxdepth 1 -type f -printf '%f\n' | sort)
 for f in "${files[@]}"; do
     case "$f" in
