@@ -39,6 +39,9 @@ jobs:
           python3 -m pip install --quiet msgpack==1.1.2
           python3 deploy/tencent/guest-auth/smoke.py dawnshard-guest:checks
 
+      - name: Verify HTTPS guest credentials and HTTP game login
+        run: python3 tools/tencent/check_guest_auth_transports.py dawnshard-guest:checks
+
       - name: Build fixed Luxon release
         run: docker build -t dawnshard-luxon:trial deploy/tencent/photon
 
