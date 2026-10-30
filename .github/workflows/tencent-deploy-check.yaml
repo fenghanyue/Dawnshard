@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - deploy/tencent/**
+      - GuestAuth/**
+      - DragaliaAPI/DragaliaAPI/Dockerfile
       - tools/tencent/**
       - PhotonStateManager/**
       - PhotonPlugin/DragaliaAPI.Photon.Plugin/Plugins/GameLogic/**
@@ -28,6 +30,14 @@ jobs:
           python3 deploy/tencent/tat_run.py --image ghcr.io/example/dragalia-api:test --print-script > /dev/null
 
       - uses: docker/setup-buildx-action@v4
+
+      - name: Build game and guest authentication production image
+        run: docker build -f DragaliaAPI/DragaliaAPI/Dockerfile -t dawnshard-guest:checks .
+
+      - name: Verify TLS gateway, persistent guest identity and game login
+        run: |
+          python3 -m pip install --quiet msgpack==1.1.2
+          python3 deploy/tencent/guest-auth/smoke.py dawnshard-guest:checks
 
       - name: Build fixed Luxon release
         run: docker build -t dawnshard-luxon:trial deploy/tencent/photon

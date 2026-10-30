@@ -22,6 +22,10 @@ public static class AuthConstants
 
         public const string GameJwt = "GameJwt";
 
+        public const string LegacyGameJwt = "LegacyGameJwt";
+
+        public const string GuestJwt = "GuestJwt";
+
         public const string Session = "SessionAuthentication";
 
         public const string Developer = "DeveloperAuthentication";

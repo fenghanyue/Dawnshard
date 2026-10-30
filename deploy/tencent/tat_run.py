@@ -16,6 +16,7 @@
 
 import argparse
 import base64
+import gzip
 import importlib.util
 import io
 import os
@@ -47,6 +48,8 @@ EXTRA_FILES = [
     "photon/docker-compose.rooms.yml",
     "photon/prepare.py",
     "photon/manage.sh",
+    "guest-auth/prepare.py",
+    "guest-auth/Caddyfile",
 ]
 
 # TAT 的状态里，这些表示还没执行完
@@ -58,6 +61,22 @@ MAX_CONTENT_BYTES = 60 * 1024
 
 def b64(data: bytes) -> str:
     return base64.b64encode(data).decode()
+
+
+def encode_script(script: str) -> str:
+    """Keep TAT's existing size limit while transporting the larger deployment bundle."""
+    payload = b64(gzip.compress(script.encode(), mtime=0))
+    bootstrap = (
+        "#!/bin/bash\npython3 - <<'DAWNSHARD_DEPLOY'\n"
+        "import base64,gzip,os,subprocess,sys\n"
+        f"script=gzip.decompress(base64.b64decode('{payload}'))\n"
+        "fd=os.memfd_create('dawnshard-deploy',0)\n"
+        "with os.fdopen(fd,'wb',closefd=False) as file: file.write(script)\n"
+        "os.lseek(fd,0,0)\n"
+        "sys.exit(subprocess.run(['/bin/bash','/proc/self/fd/'+str(fd)],pass_fds=(fd,),stdin=subprocess.DEVNULL).returncode)\n"
+        "DAWNSHARD_DEPLOY\n"
+    )
+    return b64(bootstrap.encode())
 
 
 def build_bundle() -> bytes:
@@ -114,7 +133,7 @@ def run(args: argparse.Namespace, script: str) -> int:
     profile = ClientProfile(httpProfile=HttpProfile(endpoint="tat.tencentcloudapi.com"))
     client = CommonClient("tat", "2020-10-28", cred, args.region, profile=profile)
 
-    content = b64(script.encode())
+    content = encode_script(script)
     if len(content) > MAX_CONTENT_BYTES:
         print(f"脚本太长（{len(content)} 字节），超过 TAT 的上限", file=sys.stderr)
         return 1
@@ -243,7 +262,7 @@ def main() -> int:
         args.disable_photon,
         args.photon_rooms,
     )
-    if len(b64(script.encode())) > MAX_CONTENT_BYTES:
+    if len(encode_script(script)) > MAX_CONTENT_BYTES:
         print("脚本太长，超过 TAT 的 60KB 限制", file=sys.stderr)
         return 1
     if args.print_script:

@@ -13,4 +13,6 @@ public class DragalipatchOptions
     public string? CdnUrl { get; set; }
 
     public string? ConeshellKey { get; set; }
+
+    public bool UseUnifiedLogin { get; set; } = true;
 }

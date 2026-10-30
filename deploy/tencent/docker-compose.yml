@@ -20,6 +20,7 @@ services:
       # 私服配置，替换镜像里自带的同名文件：活动安排等 / 卡池
       - ./appsettings.Production.json:/app/appsettings.Production.json:ro
       - ./bannerConfig.json:/app/Resources/bannerConfig.json:ro
+      - ./guest-auth/private/api.json:/app/guestauth-api.runtime.json:ro
     ports:
       - "8080:8080"
     depends_on:
@@ -27,6 +28,50 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
+    restart: unless-stopped
+
+  guestauth:
+    profiles: [guest-auth]
+    image: __DRAGALIA_API_IMAGE__
+    entrypoint: [dotnet, /guestauth/GuestAuth.dll]
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      GuestAuthRuntimeFile: /run/guestauth/runtime.json
+    volumes:
+      - ./guest-auth/private/runtime.json:/run/guestauth/runtime.json:ro
+      - ./guest-auth/data:/data
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 256m
+    healthcheck:
+      test: [CMD, dotnet, /guestauth/GuestAuth.dll, --health-check]
+      interval: 5s
+      timeout: 5s
+      start_period: 10s
+      retries: 12
+    restart: unless-stopped
+
+  guest-auth-edge:
+    profiles: [guest-auth]
+    image: __DRAGALIA_API_IMAGE__
+    entrypoint: [/usr/bin/caddy, run, --config, /etc/caddy/Caddyfile, --adapter, caddyfile]
+    env_file: [./guest-auth/private/edge.env]
+    environment:
+      XDG_CONFIG_HOME: /config
+      XDG_DATA_HOME: /data
+      NO_PROXY: dragaliaapi,guestauth,localhost,127.0.0.1,::1
+      no_proxy: dragaliaapi,guestauth,localhost,127.0.0.1,::1
+    volumes:
+      - ./guest-auth/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./guest-auth/caddy:/data
+    ports: ["80:8080", "443:8443"]
+    read_only: true
+    tmpfs: [/tmp, /config]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 128m
     restart: unless-stopped
 
   postgres:

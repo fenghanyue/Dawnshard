@@ -9,6 +9,7 @@ using DragaliaAPI.Features.Dragons;
 using DragaliaAPI.Features.Emblem;
 using DragaliaAPI.Features.Event;
 using DragaliaAPI.Features.Fort;
+using DragaliaAPI.Features.GuestAuth;
 using DragaliaAPI.Features.Item;
 using DragaliaAPI.Features.Login.Auth;
 using DragaliaAPI.Features.Login.Savefile;
@@ -133,6 +134,15 @@ public static class ServiceConfiguration
 
         services.AddAllOfType<ISavefileUpdate>();
 
+        services
+            .AddHttpClient(
+                GuestAuthGateway.ClientName,
+                client => client.Timeout = TimeSpan.FromSeconds(30)
+            )
+            .ConfigurePrimaryHttpMessageHandler(() =>
+                new HttpClientHandler { AllowAutoRedirect = false, UseProxy = false }
+            );
+
         services.AddHttpClient<IBaasApi, BaasApi>(
             (sp, client) =>
             {
@@ -171,6 +181,7 @@ public static class ServiceConfiguration
     {
         services
             .Configure<BaasOptions>(config.GetRequiredSection("Baas"))
+            .Configure<GuestAuthOptions>(config.GetSection("GuestAuth"))
             .Configure<DragalipatchOptions>(config.GetRequiredSection("Dragalipatch"))
             .Configure<RedisCachingOptions>(config.GetRequiredSection(nameof(RedisCachingOptions)))
             .Configure<PhotonOptions>(config.GetRequiredSection(nameof(PhotonOptions)))
@@ -206,6 +217,7 @@ public static class ServiceConfiguration
         services
             .AddHealthChecks()
             .AddDbContextCheck<ApiContext>()
+            .AddCheck<GuestAuthHealthCheck>("GuestAuth")
             .AddCheck<RedisHealthCheck>("Redis", failureStatus: HealthStatus.Unhealthy);
 
         return services;
@@ -223,21 +235,26 @@ public static class ServiceConfiguration
                     null
                 );
             })
-            .AddJwtBearer(
+            .AddPolicyScheme(
                 SchemeNames.GameJwt,
-                options =>
-                {
-                    options.Events = new()
-                    {
-                        OnMessageReceived = GameJwtAuthenticationCallbacks.OnMessageReceived,
-                        OnTokenValidated = GameJwtAuthenticationCallbacks.OnTokenValidated,
-                        OnChallenge = GameJwtAuthenticationCallbacks.OnChallenge,
-                    };
-                    // Other options configured in ConfigureJwtBearerOptions.cs after the ServiceProvider is built.
-                }
-            );
+                null,
+                options => options.ForwardDefaultSelector = GuestAuthGateway.SelectScheme
+            )
+            .AddJwtBearer(SchemeNames.LegacyGameJwt, ConfigureGameJwtEvents)
+            .AddJwtBearer(SchemeNames.GuestJwt, ConfigureGameJwtEvents);
 
         return services;
+
+        static void ConfigureGameJwtEvents(JwtBearerOptions options)
+        {
+            options.Events = new()
+            {
+                OnMessageReceived = GameJwtAuthenticationCallbacks.OnMessageReceived,
+                OnTokenValidated = GameJwtAuthenticationCallbacks.OnTokenValidated,
+                OnChallenge = GameJwtAuthenticationCallbacks.OnChallenge,
+            };
+            // Other options configured in ConfigureJwtBearerOptions.cs after the ServiceProvider is built.
+        }
     }
 
     public static IServiceCollection ConfigureHangfire(this IServiceCollection serviceCollection)

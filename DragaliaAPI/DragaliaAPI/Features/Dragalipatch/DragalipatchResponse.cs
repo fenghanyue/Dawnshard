@@ -8,14 +8,12 @@ namespace DragaliaAPI.Features.Dragalipatch;
 /// </summary>
 public class DragalipatchResponse : DragalipatchOptions
 {
-    public bool UseUnifiedLogin { get; set; }
-
     public DragalipatchResponse(DragalipatchOptions baseOptions)
     {
         this.Mode = baseOptions.Mode;
         this.ConeshellKey = baseOptions.ConeshellKey;
         this.CdnUrl = baseOptions.CdnUrl;
-        this.UseUnifiedLogin = true;
+        this.UseUnifiedLogin = baseOptions.UseUnifiedLogin;
     }
 
     public DragalipatchResponse() { }
