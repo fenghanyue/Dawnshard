@@ -61,6 +61,67 @@ public sealed class GuestLoginTests(GuestFixture fixture)
     }
 
     [Theory]
+    [InlineData('!', false)]
+    [InlineData('$', false)]
+    [InlineData('+', false)]
+    [InlineData('-', false)]
+    [InlineData('!', true)]
+    [InlineData('$', true)]
+    [InlineData('+', true)]
+    [InlineData('-', true)]
+    public async Task Migration_AcceptsOriginalIdentifierAlphabet(char character, bool device)
+    {
+        // The original service generates device and subject IDs with RandomExtensions.NextString.
+        string originalSubject = fixture.Upstream.Subject;
+        string id = DeviceId();
+        if (device)
+        {
+            id = character + id[1..];
+        }
+        else
+        {
+            fixture.Upstream.Subject = character + originalSubject[1..];
+        }
+
+        try
+        {
+            fixture.Upstream.Mode = "valid";
+            string expectedSubject = fixture.Upstream.Subject;
+            int before = fixture.Upstream.LoginCalls;
+            using HttpResponseMessage first = await this.LoginAsync(Existing(id, expectedSubject));
+            first.EnsureSuccessStatusCode();
+            using JsonDocument body = (
+                await first.Content.ReadFromJsonAsync<JsonDocument>(
+                    TestContext.Current.CancellationToken
+                )
+            )!;
+            Assert.Equal(
+                expectedSubject,
+                body.RootElement.GetProperty("user").GetProperty("id").GetString()
+            );
+            Assert.Equal(
+                expectedSubject,
+                new JsonWebToken(body.RootElement.GetProperty("idToken").GetString()!).Subject
+            );
+            Assert.Equal(
+                JsonValueKind.Null,
+                body.RootElement.GetProperty("createdDeviceAccount").ValueKind
+            );
+
+            fixture.Upstream.Mode = "unavailable";
+            using HttpResponseMessage second = await this.LoginAsync(Existing(id, expectedSubject));
+            Assert.Equal(HttpStatusCode.OK, second.StatusCode);
+            Assert.Equal(before + 1, fixture.Upstream.LoginCalls);
+            Assert.Equal(1, await fixture.CountAsync(id));
+        }
+        finally
+        {
+            fixture.Upstream.Subject = originalSubject;
+            fixture.Upstream.Mode = "valid";
+        }
+    }
+
+    [Theory]
     [InlineData("unavailable")]
     [InlineData("forged")]
     [InlineData("expired")]

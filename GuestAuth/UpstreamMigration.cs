@@ -115,5 +115,8 @@ public sealed class UpstreamMigration
     }
 
     public static bool IsIdentifier(string? value) =>
-        value is { Length: 16 } && value.All(char.IsAsciiLetterOrDigit);
+        value is { Length: 16 }
+        && value.All(character =>
+            char.IsAsciiLetterOrDigit(character) || character is '!' or '$' or '+' or '-'
+        );
 }
