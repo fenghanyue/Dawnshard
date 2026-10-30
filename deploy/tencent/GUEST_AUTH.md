@@ -24,6 +24,9 @@
 - 认证容器不发布端口。PostgreSQL 中使用专用数据库、专用账号，不能读取游戏的玩家表。
 - HTTPS 入口使用固定版本 Caddy 2.11.7。镜像构建移除二进制的低端口权限属性，容器监听 8080/8443，由 Docker 映射至公网 80/443。
 - HTTPS 凭证由 Let's Encrypt 自动申请、续期；具体域名、地址只保存在服务器私有配置中，不写公开仓库或 CI 日志。
+- 公网 IPv4 入口使用 Let's Encrypt `shortlived` 证书配置，通过原 TCP 80 完成 HTTP-01 验证；保留 80/443 与 `caddy/` 持久目录供后续续签。DNS 入口仍使用原 ACME 配置，不自动改成 IP。
+- IP URL 的客户端可能不发送 SNI。`default_sni` 指向配置的公网主机，避免入口容器按其私有地址寻找证书；仍校验公开 CA 和 IP SAN，不使用自签或关闭验证。
+- Caddy 持续管理证书并执行自动续签，续期比例设为剩余寿命的 0.5；CA 提供的 ARI 续期窗口优先。IP 证书有效期约 160 小时，不能改成仅手工申请。
 - 游戏 API 仅信任实际入口容器的转发地址，拒绝其他来源伪造 HTTPS 状态。长期设备凭据不接受经公网 HTTP 入口提交。
 - HTTPS 的 `/dragalipatch/config` 才会公布本地认证模式。旧 HTTP 地址保留公共认证模式，旧安装包继续可用。
 - 内网认证、公钥请求直接访问 Docker 服务；公共认证的首次验证仍使用正常的外部网络与证书校验。
@@ -32,7 +35,7 @@
 
 | 路径 | 内容 |
 |---|---|
-| `private/edge.env` | 已确认的 HTTPS 主机名，由运维准备，禁止进 Git |
+| `private/edge.env` | 已确认的 HTTPS 域名或公网 IPv4（`GUEST_AUTH_HOST`），由运维准备，禁止进 Git |
 | `private/runtime.json` | 专用数据库连接配置 |
 | `private/api.json` | 认证启用状态、实际入口容器地址、补丁模式；可提供现有 IP:8081 资源地址 |
 | `private/last-rollout.json` | 本次切换前的镜像及入口配置，用于部署失败回退 |
@@ -64,6 +67,8 @@ python3 deploy/tencent/guest-auth/smoke.py guest-auth:checks
 SDK 单独检查使用真实 PostgreSQL、合成的原认证响应，覆盖签名、有效期、用途、旧编号、错误密码、并发、重启及迁移期间禁止新号。
 镜像检查另启动隔离 PostgreSQL、Redis、认证、游戏与真实 TLS 入口；测试 CA 仅用于本地检查，生产使用受信任公开证书。验证真实 MessagePack 登录、同一玩家编号、无重复存档、认证重启和数据库隔离。
 这些结果不能代替手机验证，也不代表已迁移真实游客。
+
+`smoke.py` 先使用发布镜像中的 Caddy 实际适配 DNS/IP 两种生产配置，检查公开 ACME、短期证书、自动续签和无 SNI 的默认证书选择，再运行隔离的真实 TLS/游戏协议检查。短期 IP 证书的当前依据为 [Let's Encrypt 公告](https://letsencrypt.org/2026/01/15/6day-and-ip-general-availability) 和 [Caddy TLS 配置](https://caddyserver.com/docs/caddyfile/directives/tls)。生产签发、公网无 SNI 请求和手机网络仍须分别验证。
 
 ## 手机切换
 
