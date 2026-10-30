@@ -1,0 +1,102 @@
+name: Verify Tencent public HTTPS
+
+# Read-only verification from an external network; never deploys or submits player credentials.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [.github/workflows/tencent-https-check.yaml]
+  workflow_run:
+    workflows: [Deploy to Tencent Cloud]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Tencent Cloud SDK
+        run: |
+          python3 -m venv /tmp/tencent-https
+          /tmp/tencent-https/bin/pip install --quiet tencentcloud-sdk-python-common==3.1.188 tencentcloud-sdk-python-tat==3.1.106
+
+      - name: Verify trusted HTTPS and preserved authentication mode
+        env:
+          TENCENTCLOUD_SECRET_ID: ${{ secrets.TENCENTCLOUD_SECRET_ID }}
+          TENCENTCLOUD_SECRET_KEY: ${{ secrets.TENCENTCLOUD_SECRET_KEY }}
+        shell: bash
+        run: |
+          /tmp/tencent-https/bin/python - <<'PY'
+          import ipaddress
+          import json
+          import re
+          import ssl
+          import subprocess
+          import sys
+          import urllib.error
+          import urllib.request
+
+          # TAT is the only server access. Capture its output so the private host never reaches logs.
+          script = """python3 - <<'REMOTE'
+          from pathlib import Path
+          values=dict(line.split('=',1) for line in Path('/opt/dawnshard/guest-auth/private/edge.env').read_text().splitlines() if line.startswith('GUEST_AUTH_HOST='))
+          print('AUTH_HTTPS_HOST='+values['GUEST_AUTH_HOST'])
+          REMOTE
+          """
+          try:
+              result = subprocess.run([
+                  sys.executable, 'tools/tencent/tat.py', '--command', script,
+                  '--timeout', '30', '--wait-seconds', '45',
+              ], capture_output=True, text=True, timeout=65)
+              if result.returncode != 0:
+                  raise RuntimeError('Private host lookup failed')
+              matches = re.findall(r'^AUTH_HTTPS_HOST=([^\r\n]+)$', result.stdout, re.MULTILINE)
+              if len(matches) != 1:
+                  raise RuntimeError('Private host lookup returned an unexpected format')
+              host = matches[0]
+              address = ipaddress.ip_address(host)
+              if address.version != 4 or not address.is_global:
+                  raise RuntimeError('Expected a public IPv4 HTTPS entry')
+              print('::add-mask::' + host, flush=True)
+              origin = 'https://' + host
+
+              def request(path, data=None, *, origin=origin, context=None):
+                  payload = None if data is None else json.dumps(data).encode()
+                  value = urllib.request.Request(origin + path, data=payload, headers={'Content-Type':'application/json'})
+                  try:
+                      with urllib.request.urlopen(value, context=context, timeout=20) as response:
+                          return response.status, json.load(response)
+                  except urllib.error.HTTPError as response:
+                      return response.code, json.load(response)
+
+              # Literal-IP urllib connections omit SNI and still verify the CA chain and exact IP SAN.
+              for version in [ssl.TLSVersion.TLSv1_2, ssl.TLSVersion.TLSv1_3]:
+                  context = ssl.create_default_context()
+                  context.minimum_version = context.maximum_version = version
+                  status, health = request('/health', context=context)
+                  assert status == 200 and health['status'] == 'Healthy'
+              status, patch = request('/dragalipatch/config')
+              assert status == 200 and patch['useUnifiedLogin'] is False
+              assert patch['cdnUrl'] == 'http://' + host + ':8081/'
+              status, legacy = request('/dragalipatch/config', origin='http://' + host + ':8080')
+              assert status == 200 and legacy['useUnifiedLogin'] is True
+              status, discovery = request('/.well-known/openid-configuration')
+              assert status == 200 and discovery['issuer'] == 'DawnshardGuest'
+              assert discovery['jwks_uri'] == origin + '/.well-known/jwks.json'
+              status, keys = request('/.well-known/jwks.json')
+              assert status == 200 and len(keys['keys']) == 1 and 'd' not in keys['keys'][0]
+              status, rejection = request('/core/v1/gateway/sdk/login', {})
+              assert status == 409 and rejection['error'] == 'A preserved guest identity is required.'
+              print('External verification passed: trusted IP SAN, no SNI, TLS 1.2/1.3, healthy game/auth, local HTTPS mode, original CDN, legacy mode, public keys and refusal to create a replacement guest.')
+          except Exception as error:
+              # Exception messages and tracebacks can contain private addresses or response bodies.
+              print('External HTTPS verification failed (' + type(error).__name__ + '); inspect privately via TAT.', file=sys.stderr)
+              sys.exit(1)
+          PY

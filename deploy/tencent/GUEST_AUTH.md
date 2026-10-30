@@ -70,6 +70,8 @@ SDK 单独检查使用真实 PostgreSQL、合成的原认证响应，覆盖签�
 
 `smoke.py` 先使用发布镜像中的 Caddy 实际适配 DNS/IP 两种生产配置，检查公开 ACME、短期证书、自动续签和无 SNI 的默认证书选择，再运行隔离的真实 TLS/游戏协议检查。短期 IP 证书的当前依据为 [Let's Encrypt 公告](https://letsencrypt.org/2026/01/15/6day-and-ip-general-availability) 和 [Caddy TLS 配置](https://caddyserver.com/docs/caddyfile/directives/tls)。生产签发、公网无 SNI 请求和手机网络仍须分别验证。
 
+GitHub Actions 的 **Verify Tencent public HTTPS** 在部署成功后从外部运行只读检查，也支持手动触发；仅在启用公网 IPv4 入口时使用。通过固定 TAT 工具读取私有主机并屏蔽日志中的地址，用系统信任库验证无 SNI 的 IP SAN、TLS 1.2/1.3、认证和游戏健康、补丁模式、原 CDN、公钥发现以及拒绝创建替代游客。不提交真实凭据，也不部署或重启服务；失败不输出地址、响应正文或异常回溯。云环境出站 HTTPS 代理可能不支持 IP SAN，不能将它返回的默认证书误认为生产证书。
+
 ## 手机切换
 
 1. 先保存旧补丁 APK；它不包含游客凭据或已下载资源，不等于手机数据备份。
