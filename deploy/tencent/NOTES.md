@@ -15,7 +15,7 @@
 - 之前存在三段问题：迁移编号校验漏字符导致 502；未备案域名的公网认证握手被提前重置（具体拦截设备未确认）；D2 原生游戏 HTTPS 握手被客户端拒绝。D3 恢复旧游戏入口，没有关闭证书验证或跳过身份验证。
 - 服务端游戏/认证/入口及联机仍为 :sha-8c0d779；D3 制作和交付没有重新部署生产或手工改存档。IP 短期证书自动续签已配置，当前到期为北京时间 11 月 6 日 09:31 左右；实际后续续签尚未到窗口。
 - 完整过程、证据、实现位置、产物校验值、私有备份与回退见 [认证与连接修复记录](AUTH_CONNECTION_20261030.md)；长期操作见 [游客认证说明](GUEST_AUTH.md)。历史交接原文已移到修复记录中保留。
-- 双入口隔离回归已从私有临时脚本整理为 tools/tencent/check_guest_auth_transports.py，接入 PR 的正式镜像检查。本地新脚本首次运行受测试数据库磁盘不足阻碍，CI 结果见 [PR #72](https://github.com/fenghanyue/Dawnshard/pull/72)，不把该次失败记作通过。
+- 双入口隔离回归已从私有临时脚本整理为 tools/tencent/check_guest_auth_transports.py，接入 PR 的正式镜像检查。本地新脚本首次受测试数据库磁盘不足阻碍；随后 [PR #72](https://github.com/fenghanyue/Dawnshard/pull/72) 的[正式镜像 CI 全部通过](https://github.com/fenghanyue/Dawnshard/actions/runs/41054128929)，包含双入口、原 HTTPS 登录和联机检查；未把本地失败记成通过。
 - D3 APK 和含专属地址/SDK 的源码包保留在当前云任务的私有产物中，不上传公开 repo。手机可以直接点原游戏图标，诊断工具不需常驻或每次生成。原官方补丁工具的单个 Server Address 不能直接重建当前双入口方式。
 - 仍待确认：手机人物/库存画面、下载缓存沿用、手动退出重进、朋友设备迁移；[#62](https://github.com/fenghanyue/Dawnshard/issues/62) 保持开放。不卸载、不清数据、不重新注册；要求全量资源重下时先停止核对。
 

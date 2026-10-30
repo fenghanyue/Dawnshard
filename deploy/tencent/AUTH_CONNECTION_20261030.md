@@ -84,7 +84,7 @@ D3 的 assets/npf.json 与 D2 逐字节相同，未开启 useHttp；游戏 Manif
 
 私有 D3 实际完成 Android 编译、D8/aapt2、APK V2 与同签名/权限/提供器/资源对齐检查；同一手机核心以 96 MB JVM 堆处理约 98 MB 合成原生库，原包/D1/D2/旧入口四种输入生成、游戏 V1/V2 验签和文件保留检查通过。异常版本、地址、架构、签名、重复 ZIP、覆盖原包及关闭认证加密设置的输入均拒绝。合成 APK 不是真游戏，未作为手机交付。
 
-新公开脚本的首次本地运行遇到隔离 PostgreSQL 的 No space left on device，游戏进程未启动，随后入口 502；这是本地测试环境失败，没有记为通过。脚本增加了测试游戏退出时的快速失败，正式镜像结果以 [本次 PR #72](https://github.com/fenghanyue/Dawnshard/pull/72) 的 CI 为准。历史私有脚本通过不替代新脚本的本次验证。
+新公开脚本的首次本地运行遇到隔离 PostgreSQL 的 No space left on device，游戏进程未启动，随后入口 502；这是本地测试环境失败，没有记为通过。脚本增加了测试游戏退出时的快速失败。随后 [PR #72](https://github.com/fenghanyue/Dawnshard/pull/72) 的[正式镜像 CI](https://github.com/fenghanyue/Dawnshard/actions/runs/41054128929) 全部通过，实际包含新增双入口校验、原 HTTPS 登录和联机协议检查；验证代码对应 1a2d483，之后仅补文档。历史私有脚本通过没有替代这次 CI，CI 也没有替代原生手机和缓存验收。
 
 ## 手机工具与后续维护
 
