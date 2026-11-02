@@ -1,271 +1,78 @@
-# Agent Instructions for Dawnshard
-
-> **私服（fenghanyue/Dawnshard）**：接手前先读 [deploy/tencent/NOTES.md](deploy/tencent/NOTES.md)（现状、做过的事、踩过的坑、和用户怎么配合）。下面是原作者写的通用说明。
-> **默认时长（用户于 2026-10-29 指定）**：今后新活动及同期卡池默认均持续 **999 天**，同日起止；用户另有指定时优先遵从。不因原版时长不同缩短，也不自动改写已经排好的历史活动。
-> **活动选择与清单（2026-10-31）**：先查 [完整活动清单](deploy/tencent/EVENT_HISTORY.md)。一个活动主题一行，首发、复刻和回忆版合并，期数按首发顺序使用自然数。有官方回忆版的沿用回忆入口；没有的默认最后普通复刻，没有复刻则使用首发，卡池从首次活动期间的原池核对选定。`20458` 已撤回、`22301` 维持关闭，不因整理清单重新开放；准备完成、已部署及手机验证分别记录。
-> 开新活动、排期或判断活动能否联机时，再读 [开活动与联机复用指南](deploy/tencent/EVENTS.md)，按其中的检查步骤和验收记录复用现有流程。
-> **活动时间易错点（#39）**：开放/关闭按当前时间判断，入口、任务初始化、登录时的活动选择统一复用 `EventRunInformation.IsActive`；
-> `GetLastDailyReset()` 只用于每日任务周期。每次排活动都执行[活动期间外的检查清单](deploy/tencent/EVENTS.md#活动期间外的检查清单)，覆盖非 14 点起止、首次入场和旧活动关闭；配置、哈希及健康通过不代表实际入场通过。
->
-> **服务器连接只用腾讯云 TAT**：[tools/tencent/tat.py](tools/tencent/tat.py) 是查日志、看文件、执行命令的固定入口，
-> 用法见 [连接服务器](deploy/tencent/README.md#连接服务器查日志看文件)。不要用 SSH/scp，不要找密钥或改 SSH 配置。
-> API 密钥只读环境变量；先做只读检查，删除、重启、改数据库或网络配置前先向用户说明并取得同意。
-> 部署走 GitHub Actions 的 **Deploy to Tencent Cloud**。
-
-Dawnshard is a game server emulator for [Dragalia Lost](https://en.wikipedia.org/wiki/Dragalia_Lost). This document gives a coding agent the context needed to work efficiently in this repository.
-
-## Repository Structure
-
-```
-Dawnshard/
-├── DragaliaAPI/              # Main ASP.NET Core 10 game server (primary focus)
-│   ├── DragaliaAPI/          # Application entrypoint, controllers, services
-│   ├── DragaliaAPI.Database/ # EF Core DbContext, entities, migrations, repositories
-│   ├── DragaliaAPI.Shared/   # Shared types, MessagePack models, source generators
-│   ├── DragaliaAPI.Test/     # Unit tests
-│   ├── DragaliaAPI.Integration.Test/ # Integration tests (uses real DB + Redis)
-│   └── DragaliaAPI.Database.Test/   # Database/ORM tests
-├── PhotonStateManager/       # Microservice for Photon co-op room state (ASP.NET Core)
-├── PhotonPlugin/             # Photon Server plugin (C# DLL, not an ASP.NET app)
-├── MaintenanceWorker/        # Cloudflare Worker written in Rust/WASM
-├── Website/                  # SvelteKit 2 + Svelte 5 + Tailwind CSS frontend
-├── Aspire/                   # .NET Aspire AppHost for local development orchestration
-├── Shared/                   # Types shared between DragaliaAPI and PhotonPlugin
-├── .editorconfig             # Enforced C# code style rules
-├── Directory.Packages.props  # Centralized NuGet package versions (do not add versions in .csproj)
-└── global.json               # Pins .NET SDK version to 10.0.100
-```
-
-## Technology Stack
-
-- **Runtime:** .NET 10 / C# (backend), Node.js + pnpm (frontend)
-- **Web framework:** ASP.NET Core 10
-- **Database:** PostgreSQL 17 via Entity Framework Core 10 + Npgsql
-- **Cache/Session:** Redis 7 (redis-stack image)
-- **Serialization:** MessagePack (game protocol), JSON (REST/admin)
-- **Background jobs:** Hangfire
-- **Logging:** Serilog (structured, with Seq sink)
-- **Frontend:** SvelteKit 2 (`@sveltejs/kit` 2.x), Svelte 5, Tailwind CSS, shadcn-svelte, TypeScript
-- **Local orchestration:** .NET Aspire (starts DB, cache, API, and frontend together)
-- **Containerization:** Docker (multi-stage, chiseled ASP.NET base images)
-- **Testing:** xUnit v3, FluentAssertions, Playwright (E2E)
-
-## Building the Project
-
-### Prerequisites
-
-- .NET SDK 10.0.100 (pinned in `global.json`)
-- Docker Desktop (required for integration tests and Aspire local dev)
-- Node.js + pnpm (for `Website/`)
-- .NET Aspire workload: `dotnet workload install aspire`
-
-### DragaliaAPI
-
-```bash
-# Restore and build
-dotnet build DragaliaAPI.slnx
-```
-
-### Website
-
-```bash
-cd Website
-pnpm install
-pnpm build
-pnpm dev   # development server
-```
-
-### Docker image
-
-```bash
-docker build -f DragaliaAPI/DragaliaAPI/Dockerfile -t dragalia-api .
-```
-
-## Running Tests
-
-### C# tests
-
-```bash
-# All tests
-dotnet test --solution DragaliaAPI.Linux.slnf -c Release
-
-# Single project
-dotnet test --project DragaliaAPI/DragaliaAPI.Test/DragaliaAPI.Test.csproj -c Release
-
-# Integration tests (requires Docker for Testcontainers)
-dotnet test --project DragaliaAPI/DragaliaAPI.Integration.Test/DragaliaAPI.Integration.Test.csproj -c Release
+## 1. 调查要追到实际实现
 
-# Run specific integration test class (accepts * as wildcard)
-dotnet test --project DragaliaAPI/DragaliaAPI.Integration.Test/DragaliaAPI.Integration.Test.csproj -c Release --filter-class DragaliaAPI.Integration.Test.Features.Event.EventSummonTest
-
-# Run specific integration test method (accepts * as wildcard)
-dotnet test --project DragaliaAPI/DragaliaAPI.Integration.Test/DragaliaAPI.Integration.Test.csproj -c Release --filter-method DragaliaAPI.Integration.Test.Features.Event.EventSummonTest.GetData_ReturnsBoxSummonData
-```
+先查当前项目代码和已有记录，沿相关调用关系核对问题。需要时继续检查依赖、插件、原生层或系统实现。
 
-Test framework is **xUnit v3** using the Microsoft Testing Platform runner. Assertions use **FluentAssertions**. **Moq is no longer used** — new tests should be written as integration tests rather than unit tests.
+需要外部依据时，优先使用官方文档或原始实现，说明与当前版本的关系。
 
-### Website tests
+给出关键文件、函数和来源，不用通用知识代替本项目的结论；查不到时如实说明。
 
-```bash
-cd Website
-pnpm test        # Playwright E2E tests
-pnpm lint        # ESLint + Prettier check
-```
+### 主动完成必要调查与核验
 
-## Linting and Formatting
+- 围绕用户目标，主动完成支撑结论所必需、当前权限和工具允许的核验。能自行继续的工作，应继续完成，不以“需要另行核对”“后续可以再查”等表述代替实际工作，也不等待用户逐项催促。
+- 推荐方案、资料、产品或案例前，核实与用户需求直接相关的关键条件。标题、摘要、宣传介绍不能替代对实际内容和适用性的核验。关键条件尚未核实的候选，不作为已验证的推荐。
+- 发现疑点后，继续检查原始来源、具体内容或实际行为。核验深度应足以支撑判断，避免无关扩张、重复调查或无限追查。
+- 查出不适用、排除候选、未找到可靠证据，均可作为有效结果。明确区分“尚未检查”“检查后证据不足”和“已有证据排除”，说明依据与结论边界。
+- 遇到真实阻碍时，合理尝试可行的替代方法，完成不受影响的部分，再说明已尝试的方法、结果、剩余阻碍及其影响。只请求用户补充无法自行取得的必要信息或授权。
+- 本条不扩大授权范围，继续遵守先讨论后修改及其他确认要求。
 
-### C# — CSharpier
+## 2. 进度更新要提供新信息
 
-The project uses [CSharpier](https://csharpier.com/) (not `dotnet format`) as the canonical C# formatter. CI will fail if formatting is off.
+调查或实施耗时较长时，用中文说明关键进展：新发现、依据、尚未确定的疑点，以及下一步核对什么、为什么。
 
-```bash
-# Check formatting
-dotnet tool restore
-dotnet csharpier check .
+避免反复只说“正在分析”“我会检查”，也避免逐文件流水账、内部操作口令和零碎的英文播报。
 
-# Auto-fix formatting
-dotnet csharpier format .
-```
+## 3. 把问题发生的过程讲清楚
 
-> Always run `dotnet csharpier .` before committing C# changes.
+用容易理解的语言连接现象、代码行为和结果，让用户理解为什么会出问题。
 
-### Website — ESLint + Prettier
+区分已确认事实、代码推断和待验证假设，不把可疑点直接说成确定根因。
 
-```bash
-cd Website
-pnpm lint        # check
-pnpm format      # auto-fix
-```
+问题由之前的改动引入时，直接说明哪项改动造成了什么后果、之前漏了什么验证、本次如何补足，重点放在事实和修正上。
 
-## C# Code Conventions
+## 4. 方案要具体到可以评估
 
-These rules are enforced by `.editorconfig` and will produce compiler warnings/errors if violated:
+讲清目标、推荐方案、修改位置、具体做法、选择理由、资料来源、影响和代价、验证方法，以及哪些效果需要用户在实际设备或使用场景中确认。
 
-- **No `var`** for built-in types; use explicit types everywhere.
-- **File-scoped namespaces** (`namespace Foo.Bar;` not `namespace Foo.Bar { ... }`).
-- **Braces required** on all control flow statements.
-- **Readonly fields** where possible.
-- **Pattern matching** preferred over `is`/`as` casts.
-- **Null-coalescing / null-propagation** required (`?.`, `??`).
-- **No unused parameters** — all parameters must be used.
-- **`this.` qualifier** is mandatory for field access (silent preference; follow existing code).
-- **PascalCase** for types, methods, properties, and constants.
-- **Interfaces** prefixed with `I` (e.g., `IUnitRepository`).
-- **Private fields** in camelCase (no underscore prefix).
-- Accessibility modifiers required on all non-interface members.
+存在重要替代方案时，说明取舍。
 
-## Architecture Overview
+需求有歧义时，先完成不依赖答案的只读调查，再提出具体、容易回答的问题；必要时列出少量明确选项。已有项目资料能回答的背景不重复询问。
 
-### DragaliaAPI layered structure
+## 5. 先讨论后修改，确认自然简短
 
-```
-Features/             → Business logic, controllers, one subfolder per game feature
-Database/Repositories → Data access layer (existing repositories only)
-Database/Entities     → EF Core entity classes
-Shared/Models         → MessagePack-annotated request/response DTOs
-```
+新需求先只读调研并提出方案，然后结束本轮回复，等待用户明确确认。不能只宣布方案就继续修改。确认前不修改文件、更新配置，或执行会产生写入的安装、构建、提交、推送和发布。
 
-### Key patterns
+确认后，范围内的常规步骤直接完成，不反复请示；关键方案、范围或影响变化时重新讨论。删除功能、改变交互或采用明显不同的兜底方案，也属于需要重新讨论的变化。
 
-1. **Database access** — Use `ApiContext` directly in features/services wherever possible. Do **not** add new repository classes; existing repositories are kept for legacy compatibility only.
-2. **MessagePack DTOs** — Request/response models in `DragaliaAPI.Shared/` carry `[MessagePackObject]` and `[Key(n)]` attributes. These are used by the game client binary protocol.
-3. **Source generators** — `DragaliaAPI.Shared.SourceGenerator` emits code to load static master (game data) assets at compile time.
-4. **Feature-based controller discovery** — Controllers live inside their feature subfolder under `Features/`. `CustomControllerFeatureProvider` discovers them dynamically; follow existing controller naming/routing conventions.
-5. **Dependency injection** — Everything is constructor-injected; prefer `IServiceCollection` extension methods in `ServiceExtensions` classes when registering groups of related services.
+在正文讲清方案、操作和影响后，结尾只保留一次确认问题，例如：“确认按这个方案推进吗？”
 
-### Authentication
+对已经约定的确认流程，不再引用用户要求、AGENTS.md 或协作规则解释为什么等待确认，不追加“按规则要求，所以本轮没有修改，需要你同意”等流程自述。
 
-- Players authenticate via `DragaliaBaas` (external identity provider) and receive a JWT.
-- The JWT is validated in `BaasAuthenticationHandler` and mapped to a local player record.
-- Internal endpoints use `[Authorize]`; admin endpoints use a separate policy.
+确有必须交代的新限制时，在前面的方案和影响说明中一次讲清。
 
-### Daily reset
+## 6. 验证要有针对性，结论与证据相称
 
-The daily reset boundary is **6:00 AM UTC**, implemented in `ResetTimeProviderExtensions.GetLastDailyReset()`.
+根据改动的影响选择必要验证，不给简单改动强加无关的测试或构建。
 
-## Database / Migrations
+缺陷修复应说明如何检查原问题；适合时，验证同一项检查在旧版失败、修复版通过，证明它能捕捉这类问题。
 
-```bash
-# Add a new migration (from DragaliaAPI/ directory)
-cd DragaliaAPI
-dotnet ef migrations add <MigrationName> --project DragaliaAPI.Database --startup-project DragaliaAPI
+说明测试覆盖的行为和未覆盖的范围，测试数量只作补充。
 
-# Apply migrations
-dotnet ef database update --project DragaliaAPI.Database --startup-project DragaliaAPI
-```
+区分语法检查、桩或模拟环境检查、真实构建、自动化测试和实际设备验证。只报告实际执行过的检查及结果，不把代码推断、局部通过或模拟结果写成实际效果已确认。
 
-- Migrations live in `DragaliaAPI/DragaliaAPI.Database/Migrations/`.
-- Migrations are applied automatically on startup.
-- Follow the existing naming convention: `<Description>` (PascalCase, descriptive).
-- NuGet package versions are centrally managed in `Directory.Packages.props` — do not specify `Version=` in individual `.csproj` files; add only `<PackageReference Include="..." />`.
+## 7. 跟进真实交付状态
 
-## Adding a New Feature (Typical Workflow)
+已授权的构建或 CI 应继续跟进实际结果，不把“已提交、已启动打包”当作整项工作完成。
 
-1. Add/update MessagePack DTOs in `DragaliaAPI.Shared/Models/` if needed (a full set already exists for known endpoints).
-2. Create or update EF entities in `DragaliaAPI.Database/Entities/`.
-3. Implement the business logic in `DragaliaAPI/Features/<FeatureName>/`. Controllers live in the same feature subfolder.
-4. Use `ApiContext` directly for data access; do **not** add new repository classes.
-5. Write integration tests in `DragaliaAPI.Integration.Test/` to verify the feature end-to-end.
-6. Run new tests with `--filter-method` to confirm they pass before committing.
-7. Run `dotnet csharpier format .` to format.
+承诺自动稍后回查或通知时，必须确实建立了相应机制；无法继续跟进时，明确当前状态、阻碍和下一步由谁完成。
 
-## CI Workflows
+构建或验证失败时，说明失败情况和下一步方案，不擅自扩大修改范围。
 
-| Workflow | Triggered by | What it does |
-|---|---|---|
-| `lint.yaml` | PR / push to main | Runs CSharpier format check |
-| `test-api.yaml` | PR / push to main | Unit + database tests |
-| `integration-test.yaml` | PR / push to main | Integration tests with real DB/Redis |
-| `playwright-test.yaml` | PR / push to main | Website E2E tests |
-| `website.yaml` | PR / push to main | Website lint + build |
-| `build.yaml` | Reusable | Docker image build |
-| `deploy.yaml` | Manual | Production deployment |
+## 8. 完工汇报说清实际工作
 
-CI failures on PRs are most commonly caused by:
-- CSharpier formatting (`dotnet csharpier .` fixes this)
-- Compiler warnings treated as errors (check `.editorconfig` rules)
-- Failing tests (run the relevant test project locally first)
+先说明准确交付状态，再说明问题原因、实际改动及理由、资料来源、验证结果和遗留事项。
 
-## PhotonStateManager
+明确区分代码已修改、已推送、构建通过、已部署和实机验证通过等状态。
 
-A small ASP.NET Core service that stores Photon room state in Redis. It exposes a simple REST API documented in `PhotonStateManager/README.md`. Tests are in `PhotonStateManager/PhotonStateManager.Test/`.
+不要只说“已完成”“修好了”或描述最终效果，也不要把拟议方案写成已经实施。
 
-## Website
-
-- Built with **SvelteKit 2** and **Svelte 5** (runes syntax).
-- Component library: **shadcn-svelte**.
-- Styling: **Tailwind CSS**.
-- API calls use the game server's REST endpoints.
-- Authentication is handled via OAuth with DragaliaBaas.
-- Playwright is used for E2E tests; snapshots are updated via the `website-snapshots.yaml` workflow.
-
-## Useful Commands Reference
-
-```bash
-# Build everything
-dotnet build DragaliaAPI.slnx
-
-# Build everything on Linux platforms (skipping Windows-only PhotonPlugin projects) — use this when running on Linux
-dotnet build DragaliaAPI.Linux.slnf
-
-# Format C# code
-dotnet tool restore && dotnet csharpier format .
-
-# Run unit tests
-dotnet test --project DragaliaAPI/DragaliaAPI.Test/DragaliaAPI.Test.csproj
-
-# Run integration tests
-dotnet test --project DragaliaAPI/DragaliaAPI.Integration.Test/DragaliaAPI.Integration.Test.csproj
-
-# Run specific integration test class (accepts * as wildcard)
-dotnet test --project DragaliaAPI/DragaliaAPI.Integration.Test/DragaliaAPI.Integration.Test.csproj -c Release --filter-class DragaliaAPI.Integration.Test.ExampleNamespace.ExampleClass
-
-# Run specific integration test method (accepts * as wildcard)
-dotnet test --project DragaliaAPI/DragaliaAPI.Integration.Test/DragaliaAPI.Integration.Test.csproj -c Release --filter-method DragaliaAPI.Integration.Test.ExampleNamespace.ExampleClass.ExampleMethod
-
-# Add EF migration
-cd DragaliaAPI && dotnet ef migrations add <Name> --project DragaliaAPI.Database --startup-project DragaliaAPI
-
-# Website lint
-cd Website && pnpm lint
-```
+用中文，少术语。简单任务简短说明；复杂问题充分解释原因、依据、取舍和验证边界，不为了简短省略关键信息，也不堆叠重复的流程说明。
