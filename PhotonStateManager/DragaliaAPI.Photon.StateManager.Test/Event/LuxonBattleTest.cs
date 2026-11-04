@@ -105,9 +105,89 @@ public sealed class LuxonBattleTest : IDisposable
             );
             character.HeroParams.Should().HaveCount(prepared.MemberCounts[character.PlayerId]);
             character.HeroParams[0].CharacterId.Should().Be(10100102);
-            character.HeroParams[0].RelativeHp.Should().Be(1.25f);
+            character.HeroParams[0].Hp.Should().Be(1001);
+            character.HeroParams[0].PlusDef.Should().Be(11);
+            foreach (HeroParam companion in character.HeroParams.Skip(1))
+            {
+                companion.Hp.Should().Be(99999);
+                companion.PlusDef.Should().Be(99999);
+            }
+
+            foreach (HeroParam hero in character.HeroParams)
+            {
+                hero.Attack.Should().Be(2000 + hero.Position);
+                hero.Defence.Should().Be(0);
+                hero.RelativeHp.Should().Be(1.25f);
+                hero.RelativeDef.Should().Be(0.25f);
+            }
+
             character.HeroParamExs.Should().HaveCount(4);
             character.HeroParamExs[0].LimitOverCount.Should().Be(5);
+        }
+    }
+
+    [Fact]
+    public async Task Prepare_SoloPlayPreservesAllHeroStats()
+    {
+        HttpResponseMessage response = await this.client.PostAsJsonAsync(
+            "/Luxon/Prepare",
+            new LuxonPrepareRequest { Actors = Actors(1), IsSolo = true },
+            this.cancellationToken
+        );
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        LuxonPreparedBattle prepared = (
+            await response.Content.ReadFromJsonAsync<LuxonPreparedBattle>(this.cancellationToken)
+        )!;
+        prepared.MemberCounts.Values.Should().Equal(4);
+        CharacterData character = MessagePackSerializer.Deserialize<CharacterData>(
+            prepared.Characters.Single(),
+            MessagePackSerializerOptions.Standard.WithCompression(MessagePackCompression.Lz4Block),
+            this.cancellationToken
+        );
+        foreach (HeroParam hero in character.HeroParams)
+        {
+            hero.Hp.Should().Be(1000 + hero.Position);
+            hero.PlusDef.Should().Be(10 + hero.Position);
+            hero.Attack.Should().Be(2000 + hero.Position);
+        }
+    }
+
+    [Fact]
+    public async Task Prepare_BoostsEveryPartyAndPreservesFirstAvailableHero()
+    {
+        this.stub.FirstPosition = 2;
+        this.stub.HeroCount = 3;
+        List<ActorInfo> actors = Actors(2);
+        foreach (ActorInfo actor in actors)
+        {
+            actor.PartySlots = [1, 2];
+        }
+
+        HttpResponseMessage response = await this.client.PostAsJsonAsync(
+            "/Luxon/Prepare",
+            new LuxonPrepareRequest { Actors = actors },
+            this.cancellationToken
+        );
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        LuxonPreparedBattle prepared = (
+            await response.Content.ReadFromJsonAsync<LuxonPreparedBattle>(this.cancellationToken)
+        )!;
+        prepared.Characters.Should().HaveCount(4);
+        foreach (byte[] bytes in prepared.Characters)
+        {
+            CharacterData character = MessagePackSerializer.Deserialize<CharacterData>(
+                bytes,
+                MessagePackSerializerOptions.Standard.WithCompression(
+                    MessagePackCompression.Lz4Block
+                ),
+                this.cancellationToken
+            );
+            character.HeroParams.Select(x => x.Position).Should().Equal(2, 3);
+            character.HeroParams[0].Hp.Should().Be(1002);
+            character.HeroParams[0].PlusDef.Should().Be(12);
+            character.HeroParams[1].Hp.Should().Be(99999);
+            character.HeroParams[1].PlusDef.Should().Be(99999);
+            character.HeroParamExs.Should().HaveCount(3);
         }
     }
 
@@ -245,6 +325,8 @@ public sealed class LuxonBattleTest : IDisposable
         public int Calls { get; private set; }
         public bool BadIdentity { get; set; }
         public bool Fail { get; set; }
+        public int FirstPosition { get; set; } = 1;
+        public int HeroCount { get; set; } = 4;
         public byte[]? Record { get; private set; }
         public string? Viewer { get; private set; }
         public string? Authorization { get; private set; }
@@ -281,13 +363,17 @@ public sealed class LuxonBattleTest : IDisposable
                             HeroParamLists = actor
                                 .PartySlots.Select(_ =>
                                     Enumerable
-                                        .Range(1, 4)
+                                        .Range(this.FirstPosition, this.HeroCount)
                                         .Select(position => new HeroParam
                                         {
                                             Position = position,
                                             ExAbilityLv = 5,
                                             CharacterId = 10100101 + position,
+                                            Hp = 1000 + position,
+                                            PlusDef = 10 + position,
+                                            Attack = 2000 + position,
                                             RelativeHp = 1.25f,
+                                            RelativeDef = 0.25f,
                                         })
                                         .ToList()
                                 )

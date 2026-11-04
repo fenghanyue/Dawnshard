@@ -16,6 +16,9 @@ namespace DragaliaAPI.Photon.StateManager.Controllers;
 public sealed class LuxonBattleController(LuxonApiClient api, ILogger<LuxonBattleController> logger)
     : ControllerBase
 {
+    private const int CompanionHp = 99999;
+    private const int CompanionAdditionalDefence = 99999;
+
     private static readonly MessagePackSerializerOptions WireOptions =
         MessagePackSerializerOptions.Standard.WithCompression(MessagePackCompression.Lz4Block);
 
@@ -100,12 +103,23 @@ public sealed class LuxonBattleController(LuxonApiClient api, ILogger<LuxonBattl
             {
                 foreach (List<HeroParam> party in hero.HeroParamLists)
                 {
+                    HeroParam[] allocatedParty = party.Take(counts[hero.ActorNr]).ToArray();
+                    if (!request.IsSolo)
+                    {
+                        // Each player's first allocated hero is human-controlled; the rest are AI.
+                        foreach (HeroParam companion in allocatedParty.Skip(1))
+                        {
+                            companion.Hp = CompanionHp;
+                            companion.PlusDef = CompanionAdditionalDefence;
+                        }
+                    }
+
                     result.Characters.Add(
                         MessagePackSerializer.Serialize(
                             new CharacterData
                             {
                                 PlayerId = hero.ActorNr,
-                                HeroParams = party.Take(counts[hero.ActorNr]).ToArray(),
+                                HeroParams = allocatedParty,
                                 HeroParamExs = party
                                     .Select(x => new HeroParamExData
                                     {

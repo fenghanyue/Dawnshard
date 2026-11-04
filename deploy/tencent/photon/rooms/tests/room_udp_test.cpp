@@ -269,6 +269,12 @@ class Scenario {
                     "Two-player character/AI allocation did not match the original wire format");
             require(data[2][0].size() == 161 && data[2][0][0] == 80 && data[2][0][93] == 1.25,
                     "Hero parameter wire fields were not preserved");
+            require(data[2][0][2] == 1000 && data[2][0][92] == 0,
+                    "Human-controlled hero received companion stats");
+            require(data[2][1][2] == 99999 && data[2][1][92] == 99999,
+                    "AI companion did not receive fixed HP and additional defence");
+            require(data[2][1][3] == 2000 && data[2][1][4] == 0,
+                    "AI companion attack or base defence changed");
         }
         raise(host, 0x03, Json::to_msgpack(Json::array({1})));
         pause(60);
