@@ -23,8 +23,8 @@ public class CoopCompanionServiceTest
     public async Task ApplyHp_UsesPreparedCompanionsAcrossPartiesAndProtectsLeaders()
     {
         IngameData data = Data();
-        ApiGame game = Game();
-        game.CompanionPlan.Units =
+        CoopCompanionPlan plan = Plan();
+        plan.Units =
         [
             Companion(2),
             Companion(6),
@@ -36,7 +36,7 @@ public class CoopCompanionServiceTest
                 Hp = 99999,
             },
         ];
-        state.Setup(x => x.GetGameByViewerId(123)).ReturnsAsync(game);
+        state.Setup(x => x.GetCompanionPlan(123, data.QuestId)).ReturnsAsync(plan);
 
         await service.ApplyHp(data);
 
@@ -50,9 +50,9 @@ public class CoopCompanionServiceTest
     }
 
     [Theory]
-    [InlineData("missing-room")]
+    [InlineData("invalid-hp")]
     [InlineData("missing-plan")]
-    [InlineData("other-room")]
+    [InlineData("empty-room")]
     [InlineData("other-quest")]
     [InlineData("other-player")]
     [InlineData("no-companions")]
@@ -60,26 +60,26 @@ public class CoopCompanionServiceTest
     public async Task ApplyHp_PreservesStatsOutsideMatchingPreparedBattle(string scenario)
     {
         IngameData data = Data();
-        ApiGame? game = Game();
+        CoopCompanionPlan? plan = Plan();
         switch (scenario)
         {
-            case "missing-room":
-                game = null;
+            case "invalid-hp":
+                plan.Units[0].Hp = 0;
                 break;
             case "missing-plan":
-                game.CompanionPlan = null!;
+                plan = null;
                 break;
-            case "other-room":
-                game.CompanionPlan.RoomName = "another-room";
+            case "empty-room":
+                plan.RoomName = "";
                 break;
             case "other-quest":
-                game.CompanionPlan.QuestId++;
+                plan.QuestId++;
                 break;
             case "other-player":
-                game.Players[0].ViewerId = 456;
+                plan.ViewerId = 456;
                 break;
             case "no-companions":
-                game.CompanionPlan.Units.Clear();
+                plan.Units.Clear();
                 break;
             case "solo":
                 data.PlayType = QuestPlayType.Default;
@@ -88,7 +88,7 @@ public class CoopCompanionServiceTest
 
         if (scenario != "solo")
         {
-            state.Setup(x => x.GetGameByViewerId(123)).ReturnsAsync(game);
+            state.Setup(x => x.GetCompanionPlan(123, data.QuestId)).ReturnsAsync(plan);
         }
 
         await service.ApplyHp(data);
@@ -105,18 +105,13 @@ public class CoopCompanionServiceTest
             Hp = 99999,
         };
 
-    private static ApiGame Game() =>
+    private static CoopCompanionPlan Plan() =>
         new()
         {
-            Name = "prepared-room",
+            RoomName = "prepared-room",
             QuestId = 301010103,
-            Players = [new() { ActorNr = 1, ViewerId = 123 }],
-            CompanionPlan = new()
-            {
-                RoomName = "prepared-room",
-                QuestId = 301010103,
-                Units = [Companion(2)],
-            },
+            ViewerId = 123,
+            Units = [Companion(2)],
         };
 
     private static IngameData Data() =>

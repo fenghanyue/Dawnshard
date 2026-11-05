@@ -109,7 +109,12 @@ public sealed class LuxonBattleController(
             };
             foreach (HeroParamData hero in heroes)
             {
-                CoopCompanionPlan plan = new() { RoomName = request.RoomName, QuestId = questId };
+                CoopCompanionPlan plan = new()
+                {
+                    RoomName = request.RoomName,
+                    QuestId = questId,
+                    ViewerId = hero.ViewerId,
+                };
                 for (int partyIndex = 0; partyIndex < hero.HeroParamLists.Count; partyIndex++)
                 {
                     List<HeroParam> party = hero.HeroParamLists[partyIndex];

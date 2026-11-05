@@ -28,6 +28,8 @@ struct Client {
     bool initialized = false;
     int actor_id = 0;
     int viewer_id = 0;
+    int quest_id = 0;
+    std::string room_name;
 
     Client(const std::string &host, uint16_t port) : peer(luxon::enet::EnetPeerConfig{}) {
         peer.on_payload_command = [this](const luxon::enet::EnetCommand &command) {
@@ -163,6 +165,8 @@ class Scenario {
             pump();
         auto &game = connect(game_port_);
         game.viewer_id = viewer;
+        game.quest_id = quest_id;
+        game.room_name = name;
         request(game, 230, {{221, token}});
         auto actor = std::make_shared<ser::Hashtable>(
             ser::Hashtable{{std::string("PlayerId"), std::to_string(viewer)},
@@ -279,17 +283,17 @@ class Scenario {
                     "AI companion attack or base defence changed");
         }
         for (const auto *client : {&host, &guest}) {
-            Json room;
+            Json plan;
             until(
                 [&] {
                     long status;
-                    room = get("/Get/ByViewerId/" + std::to_string(client->viewer_id), status);
-                    return status == 200 && room.contains("companionPlan") &&
-                           room["companionPlan"].is_object();
+                    plan = get("/Get/CompanionPlan/" + std::to_string(client->viewer_id) + "/" +
+                                   std::to_string(client->quest_id), status);
+                    return status == 200 && plan.is_object();
                 },
                 "Local game API companion plan was not published");
-            const auto &plan = room["companionPlan"];
-            require(plan["roomName"] == room["name"] && plan["questId"] == room["questId"],
+            require(plan["roomName"] == client->room_name && plan["questId"] == client->quest_id &&
+                        plan["viewerId"] == client->viewer_id,
                     "Local companion plan belongs to another battle");
             require(plan["units"].size() == 1 && plan["units"][0]["position"] == 2 &&
                         plan["units"][0]["characterId"] == 10100103 &&

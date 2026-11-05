@@ -9,4 +9,5 @@ public interface IPhotonStateApi
     Task<ApiGame?> GetGameById(int id);
     Task<ApiGame?> GetGameByViewerId(long viewerId);
     Task<bool> GetIsHost(long viewerId);
+    Task<CoopCompanionPlan?> GetCompanionPlan(long viewerId, int questId);
 }

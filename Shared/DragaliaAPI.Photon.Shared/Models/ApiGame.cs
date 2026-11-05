@@ -6,9 +6,6 @@
 /// </summary>
 public class ApiGame : GameBase
 {
-    /// <summary>Prepared stats for the player queried by the game API; never a player save.</summary>
-    public CoopCompanionPlan CompanionPlan { get; set; }
-
     private const string Japan = "jp";
     private const string EnglishUs = "en_us";
 

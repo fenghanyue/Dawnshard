@@ -19,14 +19,12 @@ public sealed partial class CoopCompanionService(
         }
 
         long viewerId = playerIdentityService.ViewerId;
-        ApiGame? game = await photonStateApi.GetGameByViewerId(viewerId);
-        CoopCompanionPlan? plan = game?.CompanionPlan;
+        CoopCompanionPlan? plan = await photonStateApi.GetCompanionPlan(viewerId, data.QuestId);
         if (
             plan is null
-            || plan.RoomName != game!.Name
+            || string.IsNullOrWhiteSpace(plan.RoomName)
             || plan.QuestId != data.QuestId
-            || game.QuestId != data.QuestId
-            || !game.Players.Any(x => x.ViewerId == viewerId)
+            || plan.ViewerId != viewerId
         )
         {
             return;

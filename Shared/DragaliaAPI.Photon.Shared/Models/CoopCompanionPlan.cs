@@ -7,6 +7,8 @@ public sealed class CoopCompanionPlan
 
     public int QuestId { get; set; }
 
+    public long ViewerId { get; set; }
+
     public List<CoopCompanionUnit> Units { get; set; } = new();
 }
 

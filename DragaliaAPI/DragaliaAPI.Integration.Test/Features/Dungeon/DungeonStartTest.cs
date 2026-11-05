@@ -46,35 +46,22 @@ public class DungeonStartTest : TestFixture
         List<PartyUnitList> originalUnits = original.IngameData.PartyInfo.PartyUnitList.ToList();
         PartyUnitList companion = originalUnits[1];
         string roomName = Guid.NewGuid().ToString();
-        this.MockPhotonStateApi.Setup(x => x.GetGameByViewerId(this.ViewerId))
+        this.MockPhotonStateApi.Setup(x => x.GetCompanionPlan(this.ViewerId, questId))
             .ReturnsAsync(
-                new ApiGame
+                new CoopCompanionPlan
                 {
-                    Name = roomName,
+                    RoomName = roomName,
                     QuestId = questId,
-                    Players =
+                    ViewerId = this.ViewerId,
+                    Units =
                     [
                         new()
                         {
-                            ActorNr = 1,
-                            ViewerId = this.ViewerId,
-                            PartyNoList = [1],
+                            Position = companion.Position,
+                            CharacterId = (int)companion.CharaData.CharaId,
+                            Hp = 99999,
                         },
                     ],
-                    CompanionPlan = new()
-                    {
-                        RoomName = roomName,
-                        QuestId = questId,
-                        Units =
-                        [
-                            new()
-                            {
-                                Position = companion.Position,
-                                CharacterId = (int)companion.CharaData.CharaId,
-                                Hp = 99999,
-                            },
-                        ],
-                    },
                 }
             );
         object request = assignUnit

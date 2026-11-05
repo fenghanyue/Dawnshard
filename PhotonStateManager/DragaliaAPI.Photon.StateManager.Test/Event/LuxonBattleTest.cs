@@ -121,7 +121,8 @@ public sealed class LuxonBattleTest : IDisposable
             character.HeroParams[0].PlusDef.Should().Be(11);
             CoopCompanionPlan plan = this
                 .factory.Services.GetRequiredService<CoopCompanionPlanStore>()
-                .Get(100 + character.PlayerId, request.RoomName, request.Actors[0].QuestId)!;
+                .Get(100 + character.PlayerId, request.Actors[0].QuestId)!;
+            plan.RoomName.Should().Be(request.RoomName);
             plan.Units.Select(x => (x.Position, x.CharacterId, x.Hp))
                 .Should()
                 .Equal(character.HeroParams.Skip(1).Select(x => (x.Position, x.CharacterId, x.Hp)));
@@ -145,7 +146,7 @@ public sealed class LuxonBattleTest : IDisposable
     }
 
     [Fact]
-    public async Task Prepare_ExposesMatchingPlanInPlayerRoomAndReplacesItForSolo()
+    public async Task Prepare_ExportsPlanAfterRoomIsHiddenAndReplacesItForSolo()
     {
         string roomName = Guid.NewGuid().ToString();
         this.createdRoomName = roomName;
@@ -181,14 +182,26 @@ public sealed class LuxonBattleTest : IDisposable
             this.cancellationToken
         );
         prepare.StatusCode.Should().Be(HttpStatusCode.OK);
-        ApiGame game = (
-            await this.client.GetFromJsonAsync<ApiGame>(
-                "/Get/ByViewerId/101",
+        HttpResponseMessage closed = await this.client.PostAsJsonAsync(
+            "/Event/GameClose",
+            new { GameName = roomName },
+            this.cancellationToken
+        );
+        closed.StatusCode.Should().Be(HttpStatusCode.OK);
+        using HttpResponseMessage hidden = await this.client.GetAsync(
+            "/Get/ByViewerId/101",
+            this.cancellationToken
+        );
+        hidden.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        CoopCompanionPlan plan = (
+            await this.client.GetFromJsonAsync<CoopCompanionPlan>(
+                $"/Get/CompanionPlan/101/{actors[0].QuestId}",
                 this.cancellationToken
             )
         )!;
-        game.CompanionPlan.RoomName.Should().Be(roomName);
-        game.CompanionPlan.Units.Should()
+        plan.RoomName.Should().Be(roomName);
+        plan.ViewerId.Should().Be(101);
+        plan.Units.Should()
             .ContainSingle()
             .Which.Should()
             .BeEquivalentTo(
@@ -200,7 +213,7 @@ public sealed class LuxonBattleTest : IDisposable
                 }
             );
         this.factory.Services.GetRequiredService<CoopCompanionPlanStore>()
-            .Get(101, "different-room", actors[0].QuestId)
+            .Get(101, actors[0].QuestId + 1)
             .Should()
             .BeNull();
 
@@ -215,13 +228,13 @@ public sealed class LuxonBattleTest : IDisposable
             this.cancellationToken
         );
         solo.StatusCode.Should().Be(HttpStatusCode.OK);
-        ApiGame soloGame = (
-            await this.client.GetFromJsonAsync<ApiGame>(
-                "/Get/ByViewerId/101",
+        CoopCompanionPlan soloPlan = (
+            await this.client.GetFromJsonAsync<CoopCompanionPlan>(
+                $"/Get/CompanionPlan/101/{actors[0].QuestId}",
                 this.cancellationToken
             )
         )!;
-        soloGame.CompanionPlan.Units.Should().BeEmpty();
+        soloPlan.Units.Should().BeEmpty();
     }
 
     [Fact]

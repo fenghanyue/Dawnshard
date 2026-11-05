@@ -134,9 +134,15 @@ public partial class GetController : ControllerBase
         }
 
         Log.FoundPlayerInGame(this.logger, game);
-        ApiGame result = game.ToApiGame();
-        result.CompanionPlan = this.companionPlans.Get(viewerId, game.Name, game.QuestId);
-        return result;
+        return game.ToApiGame();
+    }
+
+    /// <summary>Prepared companion stats remain available after the lobby room is hidden.</summary>
+    [HttpGet("CompanionPlan/{viewerId}/{questId}")]
+    public ActionResult<CoopCompanionPlan> CompanionPlan(long viewerId, int questId)
+    {
+        CoopCompanionPlan? plan = this.companionPlans.Get(viewerId, questId);
+        return plan is null ? this.NotFound() : this.Ok(plan);
     }
 
     private Task<RedisGame?> GetPlayerGame(long viewerId) =>
