@@ -1,6 +1,7 @@
 ﻿using DragaliaAPI.Database.Entities;
 using DragaliaAPI.Features.Tutorial;
 using DragaliaAPI.Infrastructure.Results;
+using DragaliaAPI.Photon.Shared.Models;
 using DragaliaAPI.Shared.MasterAsset;
 using DragaliaAPI.Shared.MasterAsset.Models;
 using Microsoft.EntityFrameworkCore;
@@ -27,6 +28,94 @@ public class DungeonStartTest : TestFixture
         : base(factory, outputHelper)
     {
         this.ImportSave().Wait();
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task StartMulti_PreparedCompanionHpReachesLocalStartAndRetry(bool assignUnit)
+    {
+        const int questId = 100010103;
+        DungeonStartStartResponse original = (
+            await Client.PostMsgpack<DungeonStartStartResponse>(
+                "/dungeon_start/start",
+                new DungeonStartStartRequest { QuestId = questId, PartyNoList = [1] },
+                cancellationToken: TestContext.Current.CancellationToken
+            )
+        ).Data;
+        List<PartyUnitList> originalUnits = original.IngameData.PartyInfo.PartyUnitList.ToList();
+        PartyUnitList companion = originalUnits[1];
+        string roomName = Guid.NewGuid().ToString();
+        this.MockPhotonStateApi.Setup(x => x.GetGameByViewerId(this.ViewerId))
+            .ReturnsAsync(
+                new ApiGame
+                {
+                    Name = roomName,
+                    QuestId = questId,
+                    Players =
+                    [
+                        new()
+                        {
+                            ActorNr = 1,
+                            ViewerId = this.ViewerId,
+                            PartyNoList = [1],
+                        },
+                    ],
+                    CompanionPlan = new()
+                    {
+                        RoomName = roomName,
+                        QuestId = questId,
+                        Units =
+                        [
+                            new()
+                            {
+                                Position = companion.Position,
+                                CharacterId = (int)companion.CharaData.CharaId,
+                                Hp = 99999,
+                            },
+                        ],
+                    },
+                }
+            );
+        object request = assignUnit
+            ? new DungeonStartStartMultiAssignUnitRequest
+            {
+                QuestId = questId,
+                RequestPartySettingList = originalUnits
+                    .Select(x => new PartySettingList
+                    {
+                        UnitNo = x.Position,
+                        CharaId = x.CharaData.CharaId,
+                    })
+                    .ToList(),
+            }
+            : new DungeonStartStartMultiRequest { QuestId = questId, PartyNoList = [1] };
+        DungeonStartStartResponse response = (
+            await Client.PostMsgpack<DungeonStartStartResponse>(
+                assignUnit
+                    ? "/dungeon_start/start_multi_assign_unit"
+                    : "/dungeon_start/start_multi",
+                request,
+                cancellationToken: TestContext.Current.CancellationToken
+            )
+        ).Data;
+
+        foreach (PartyUnitList unit in response.IngameData.PartyInfo.PartyUnitList)
+        {
+            PartyUnitList expected = originalUnits.Single(x => x.Position == unit.Position);
+            unit.CharaData.Hp.Should()
+                .Be(unit.Position == companion.Position ? 99999 : expected.CharaData.Hp);
+            unit.CharaData.Attack.Should().Be(expected.CharaData.Attack);
+        }
+
+        (
+            await this.ApiContext.PlayerCharaData.SingleAsync(
+                x => x.CharaId == companion.CharaData.CharaId,
+                TestContext.Current.CancellationToken
+            )
+        )
+            .Hp.Should()
+            .Be(companion.CharaData.Hp);
     }
 
     [Theory]

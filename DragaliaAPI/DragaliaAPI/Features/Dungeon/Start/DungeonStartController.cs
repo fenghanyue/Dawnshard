@@ -17,6 +17,7 @@ public partial class DungeonStartController(
     IDungeonService dungeonService,
     IOddsInfoService oddsInfoService,
     IMatchingService matchingService,
+    CoopCompanionService companionService,
     ITimeAttackService timeAttackService,
     IUpdateDataService updateDataService,
     ILogger<DungeonStartController> logger
@@ -84,6 +85,7 @@ public partial class DungeonStartController(
 
         ingameData.PlayType = QuestPlayType.Multi;
         ingameData.IsHost = await matchingService.GetIsHost();
+        await companionService.ApplyHp(ingameData);
 
         await dungeonService.ModifySession(
             ingameData.DungeonKey,
@@ -169,6 +171,7 @@ public partial class DungeonStartController(
 
         ingameData.PlayType = QuestPlayType.Multi;
         ingameData.IsHost = await matchingService.GetIsHost();
+        await companionService.ApplyHp(ingameData);
 
         await dungeonService.ModifySession(
             ingameData.DungeonKey,

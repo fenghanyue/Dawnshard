@@ -59,6 +59,7 @@ public static class ServiceConfiguration
             .AddScoped<IWeaponService, WeaponService>()
             .AddScoped<IMatchingService, MatchingService>()
             .AddScoped<IHeroParamService, HeroParamService>()
+            .AddScoped<CoopCompanionService>()
             .AddScoped<ILoadService, LoadService>()
             .AddScoped<IStampService, StampService>()
             .AddScoped<IStampRepository, StampRepository>()

@@ -34,6 +34,8 @@ internal static class ServiceConfiguration
             return ConnectionMultiplexer.Connect(connectionString);
         });
         builder.Services.AddSingleton<IRedisConnectionProvider, RedisConnectionProvider>();
+        builder.Services.AddMemoryCache();
+        builder.Services.AddSingleton<CoopCompanionPlanStore>();
         builder.Services.AddOptions<LuxonApiOptions>().BindConfiguration(nameof(LuxonApiOptions));
         builder
             .Services.AddHttpClient<LuxonApiClient>(client =>

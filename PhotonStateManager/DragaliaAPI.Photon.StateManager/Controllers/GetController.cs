@@ -19,6 +19,7 @@ public partial class GetController : ControllerBase
 {
     private readonly IRedisConnectionProvider connectionProvider;
     private readonly ILogger<GetController> logger;
+    private readonly CoopCompanionPlanStore companionPlans;
 
     private IRedisCollection<RedisGame> Games =>
         this.connectionProvider.RedisCollection<RedisGame>();
@@ -26,10 +27,15 @@ public partial class GetController : ControllerBase
     private IRedisCollection<RedisGame> VisibleGames =>
         this.Games.Where(x => x.Visible == true && x.RoomId > 0);
 
-    public GetController(IRedisConnectionProvider connectionProvider, ILogger<GetController> logger)
+    public GetController(
+        IRedisConnectionProvider connectionProvider,
+        ILogger<GetController> logger,
+        CoopCompanionPlanStore companionPlans
+    )
     {
         this.connectionProvider = connectionProvider;
         this.logger = logger;
+        this.companionPlans = companionPlans;
     }
 
     /// <summary>
@@ -128,7 +134,9 @@ public partial class GetController : ControllerBase
         }
 
         Log.FoundPlayerInGame(this.logger, game);
-        return game.ToApiGame();
+        ApiGame result = game.ToApiGame();
+        result.CompanionPlan = this.companionPlans.Get(viewerId, game.Name, game.QuestId);
+        return result;
     }
 
     private Task<RedisGame?> GetPlayerGame(long viewerId) =>

@@ -194,7 +194,8 @@ void BattleSession::advance() {
         bool solo = false;
         if (auto value = property(game->custom_props, "IsSoloPlayWithPhoton").get_ptr<bool>())
             solo = *value;
-        preparation_ = BattleHttp::instance().post("Prepare", {{"actors", actors()}, {"isSolo", solo}});
+        preparation_ = BattleHttp::instance().post(
+            "Prepare", {{"actors", actors()}, {"isSolo", solo}, {"roomName", game->id}});
         log_->info("Co-op role data requested");
         schedule_poll();
     }
