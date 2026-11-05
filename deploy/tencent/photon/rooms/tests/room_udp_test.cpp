@@ -27,6 +27,9 @@ struct Client {
     bool encrypted = false;
     bool initialized = false;
     int actor_id = 0;
+    int viewer_id = 0;
+    int quest_id = 0;
+    std::string room_name;
 
     Client(const std::string &host, uint16_t port) : peer(luxon::enet::EnetPeerConfig{}) {
         peer.on_payload_command = [this](const luxon::enet::EnetCommand &command) {
@@ -161,6 +164,9 @@ class Scenario {
         while (Clock::now() < until_time)
             pump();
         auto &game = connect(game_port_);
+        game.viewer_id = viewer;
+        game.quest_id = quest_id;
+        game.room_name = name;
         request(game, 230, {{221, token}});
         auto actor = std::make_shared<ser::Hashtable>(
             ser::Hashtable{{std::string("PlayerId"), std::to_string(viewer)},
@@ -275,6 +281,24 @@ class Scenario {
                     "AI companion did not receive fixed HP and additional defence");
             require(data[2][1][3] == 2000 && data[2][1][4] == 0,
                     "AI companion attack or base defence changed");
+        }
+        for (const auto *client : {&host, &guest}) {
+            Json plan;
+            until(
+                [&] {
+                    long status;
+                    plan = get("/Get/CompanionPlan/" + std::to_string(client->viewer_id) + "/" +
+                                   std::to_string(client->quest_id), status);
+                    return status == 200 && plan.is_object();
+                },
+                "Local game API companion plan was not published");
+            require(plan["roomName"] == client->room_name && plan["questId"] == client->quest_id &&
+                        plan["viewerId"] == client->viewer_id,
+                    "Local companion plan belongs to another battle");
+            require(plan["units"].size() == 1 && plan["units"][0]["position"] == 2 &&
+                        plan["units"][0]["characterId"] == 10100103 &&
+                        plan["units"][0]["hp"] == 99999,
+                    "Local companion HP plan differs from the Photon character message");
         }
         raise(host, 0x03, Json::to_msgpack(Json::array({1})));
         pause(60);

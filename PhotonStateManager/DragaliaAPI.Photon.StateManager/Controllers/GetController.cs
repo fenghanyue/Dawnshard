@@ -19,6 +19,7 @@ public partial class GetController : ControllerBase
 {
     private readonly IRedisConnectionProvider connectionProvider;
     private readonly ILogger<GetController> logger;
+    private readonly CoopCompanionPlanStore companionPlans;
 
     private IRedisCollection<RedisGame> Games =>
         this.connectionProvider.RedisCollection<RedisGame>();
@@ -26,10 +27,15 @@ public partial class GetController : ControllerBase
     private IRedisCollection<RedisGame> VisibleGames =>
         this.Games.Where(x => x.Visible == true && x.RoomId > 0);
 
-    public GetController(IRedisConnectionProvider connectionProvider, ILogger<GetController> logger)
+    public GetController(
+        IRedisConnectionProvider connectionProvider,
+        ILogger<GetController> logger,
+        CoopCompanionPlanStore companionPlans
+    )
     {
         this.connectionProvider = connectionProvider;
         this.logger = logger;
+        this.companionPlans = companionPlans;
     }
 
     /// <summary>
@@ -129,6 +135,14 @@ public partial class GetController : ControllerBase
 
         Log.FoundPlayerInGame(this.logger, game);
         return game.ToApiGame();
+    }
+
+    /// <summary>Prepared companion stats remain available after the lobby room is hidden.</summary>
+    [HttpGet("CompanionPlan/{viewerId}/{questId}")]
+    public ActionResult<CoopCompanionPlan> CompanionPlan(long viewerId, int questId)
+    {
+        CoopCompanionPlan? plan = this.companionPlans.Get(viewerId, questId);
+        return plan is null ? this.NotFound() : this.Ok(plan);
     }
 
     private Task<RedisGame?> GetPlayerGame(long viewerId) =>

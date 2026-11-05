@@ -103,4 +103,18 @@ public class PhotonStateApi : IPhotonStateApi
 
         return apiGame;
     }
+
+    public async Task<CoopCompanionPlan?> GetCompanionPlan(long viewerId, int questId)
+    {
+        using HttpResponseMessage response = await this.client.GetAsync(
+            new Uri($"Get/CompanionPlan/{viewerId}/{questId}", UriKind.Relative)
+        );
+        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<CoopCompanionPlan>();
+    }
 }

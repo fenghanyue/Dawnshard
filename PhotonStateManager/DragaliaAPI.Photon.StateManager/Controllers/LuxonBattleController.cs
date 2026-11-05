@@ -13,8 +13,11 @@ namespace DragaliaAPI.Photon.StateManager.Controllers;
 [Route("Luxon")]
 [Authorize(AuthenticationSchemes = nameof(PhotonAuthenticationHandler))]
 [RequestSizeLimit(1024 * 1024)]
-public sealed class LuxonBattleController(LuxonApiClient api, ILogger<LuxonBattleController> logger)
-    : ControllerBase
+public sealed class LuxonBattleController(
+    LuxonApiClient api,
+    ILogger<LuxonBattleController> logger,
+    CoopCompanionPlanStore companionPlans
+) : ControllerBase
 {
     private const int CompanionHp = 99999;
     private const int CompanionAdditionalDefence = 99999;
@@ -28,7 +31,12 @@ public sealed class LuxonBattleController(LuxonApiClient api, ILogger<LuxonBattl
         CancellationToken cancellationToken
     )
     {
-        if (!ValidActors(request.Actors) || (request.IsSolo && request.Actors.Count != 1))
+        if (
+            !ValidActors(request.Actors)
+            || (request.IsSolo && request.Actors.Count != 1)
+            || request.RoomName is null
+            || request.RoomName.Length > 128
+        )
         {
             return this.BadRequest();
         }
@@ -101,8 +109,15 @@ public sealed class LuxonBattleController(LuxonApiClient api, ILogger<LuxonBattl
             };
             foreach (HeroParamData hero in heroes)
             {
-                foreach (List<HeroParam> party in hero.HeroParamLists)
+                CoopCompanionPlan plan = new()
                 {
+                    RoomName = request.RoomName,
+                    QuestId = questId,
+                    ViewerId = hero.ViewerId,
+                };
+                for (int partyIndex = 0; partyIndex < hero.HeroParamLists.Count; partyIndex++)
+                {
+                    List<HeroParam> party = hero.HeroParamLists[partyIndex];
                     HeroParam[] allocatedParty = party.Take(counts[hero.ActorNr]).ToArray();
                     if (!request.IsSolo)
                     {
@@ -111,6 +126,14 @@ public sealed class LuxonBattleController(LuxonApiClient api, ILogger<LuxonBattl
                         {
                             companion.Hp = CompanionHp;
                             companion.PlusDef = CompanionAdditionalDefence;
+                            plan.Units.Add(
+                                new()
+                                {
+                                    Position = (partyIndex * 4) + companion.Position,
+                                    CharacterId = companion.CharacterId,
+                                    Hp = companion.Hp,
+                                }
+                            );
                         }
                     }
 
@@ -133,6 +156,9 @@ public sealed class LuxonBattleController(LuxonApiClient api, ILogger<LuxonBattl
                         )
                     );
                 }
+
+                // Replace on every preparation, including solo/four-player battles with no companions.
+                companionPlans.Set(hero.ViewerId, plan);
             }
 
             return this.Ok(result);

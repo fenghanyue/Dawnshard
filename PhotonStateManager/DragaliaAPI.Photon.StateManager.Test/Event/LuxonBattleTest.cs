@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using DragaliaAPI.Photon.Plugin.Plugins.GameLogic.Events;
+using DragaliaAPI.Photon.Shared.Enums;
 using DragaliaAPI.Photon.Shared.Models;
 using DragaliaAPI.Photon.StateManager.Models;
 using MessagePack;
@@ -16,6 +17,7 @@ public sealed class LuxonBattleTest : IDisposable
     private readonly WebApplicationFactory<Program> factory;
     private readonly HttpClient client;
     private readonly CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+    private string? createdRoomName;
 
     public LuxonBattleTest(CustomWebApplicationFactory root)
     {
@@ -38,6 +40,12 @@ public sealed class LuxonBattleTest : IDisposable
 
     public void Dispose()
     {
+        if (this.createdRoomName is not null)
+        {
+            this.factory.Services.GetRequiredService<Redis.OM.Contracts.IRedisConnectionProvider>()
+                .Connection.Execute("DEL", $"{typeof(RedisGame).FullName}:{this.createdRoomName}");
+        }
+
         this.client.Dispose();
         this.factory.Dispose();
         this.stub.Dispose();
@@ -73,7 +81,11 @@ public sealed class LuxonBattleTest : IDisposable
         int fourth
     )
     {
-        LuxonPrepareRequest request = new() { Actors = Actors(players) };
+        LuxonPrepareRequest request = new()
+        {
+            Actors = Actors(players),
+            RoomName = Guid.NewGuid().ToString(),
+        };
         HttpResponseMessage response = await this.client.PostAsJsonAsync(
             "/Luxon/Prepare",
             request,
@@ -107,6 +119,13 @@ public sealed class LuxonBattleTest : IDisposable
             character.HeroParams[0].CharacterId.Should().Be(10100102);
             character.HeroParams[0].Hp.Should().Be(1001);
             character.HeroParams[0].PlusDef.Should().Be(11);
+            CoopCompanionPlan plan = this
+                .factory.Services.GetRequiredService<CoopCompanionPlanStore>()
+                .Get(100 + character.PlayerId, request.Actors[0].QuestId)!;
+            plan.RoomName.Should().Be(request.RoomName);
+            plan.Units.Select(x => (x.Position, x.CharacterId, x.Hp))
+                .Should()
+                .Equal(character.HeroParams.Skip(1).Select(x => (x.Position, x.CharacterId, x.Hp)));
             foreach (HeroParam companion in character.HeroParams.Skip(1))
             {
                 companion.Hp.Should().Be(99999);
@@ -124,6 +143,98 @@ public sealed class LuxonBattleTest : IDisposable
             character.HeroParamExs.Should().HaveCount(4);
             character.HeroParamExs[0].LimitOverCount.Should().Be(5);
         }
+    }
+
+    [Fact]
+    public async Task Prepare_ExportsPlanAfterRoomIsHiddenAndReplacesItForSolo()
+    {
+        string roomName = Guid.NewGuid().ToString();
+        this.createdRoomName = roomName;
+        List<ActorInfo> actors = Actors(2);
+        HttpResponseMessage snapshot = await this.client.PostAsJsonAsync(
+            "/Event/LuxonSnapshot",
+            new LuxonSnapshotRequest
+            {
+                Game = new GameBase
+                {
+                    Name = roomName,
+                    RoomId = 1234567,
+                    QuestId = actors[0].QuestId,
+                    MatchingCompatibleId = 36,
+                    MatchingType = MatchingTypes.Anyone,
+                    EntryConditions = new(),
+                    Players = actors
+                        .Select(x => new Player
+                        {
+                            ActorNr = x.ActorNr,
+                            ViewerId = x.ViewerId,
+                            PartyNoList = x.PartySlots,
+                        })
+                        .ToList(),
+                },
+            },
+            this.cancellationToken
+        );
+        snapshot.StatusCode.Should().Be(HttpStatusCode.OK);
+        HttpResponseMessage prepare = await this.client.PostAsJsonAsync(
+            "/Luxon/Prepare",
+            new LuxonPrepareRequest { Actors = actors, RoomName = roomName },
+            this.cancellationToken
+        );
+        prepare.StatusCode.Should().Be(HttpStatusCode.OK);
+        HttpResponseMessage closed = await this.client.PostAsJsonAsync(
+            "/Event/GameClose",
+            new { GameName = roomName },
+            this.cancellationToken
+        );
+        closed.StatusCode.Should().Be(HttpStatusCode.OK);
+        using HttpResponseMessage hidden = await this.client.GetAsync(
+            "/Get/ByViewerId/101",
+            this.cancellationToken
+        );
+        hidden.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        CoopCompanionPlan plan = (
+            await this.client.GetFromJsonAsync<CoopCompanionPlan>(
+                $"/Get/CompanionPlan/101/{actors[0].QuestId}",
+                this.cancellationToken
+            )
+        )!;
+        plan.RoomName.Should().Be(roomName);
+        plan.ViewerId.Should().Be(101);
+        plan.Units.Should()
+            .ContainSingle()
+            .Which.Should()
+            .BeEquivalentTo(
+                new CoopCompanionUnit
+                {
+                    Position = 2,
+                    CharacterId = 10100103,
+                    Hp = 99999,
+                }
+            );
+        this.factory.Services.GetRequiredService<CoopCompanionPlanStore>()
+            .Get(101, actors[0].QuestId + 1)
+            .Should()
+            .BeNull();
+
+        HttpResponseMessage solo = await this.client.PostAsJsonAsync(
+            "/Luxon/Prepare",
+            new LuxonPrepareRequest
+            {
+                Actors = Actors(1),
+                RoomName = roomName,
+                IsSolo = true,
+            },
+            this.cancellationToken
+        );
+        solo.StatusCode.Should().Be(HttpStatusCode.OK);
+        CoopCompanionPlan soloPlan = (
+            await this.client.GetFromJsonAsync<CoopCompanionPlan>(
+                $"/Get/CompanionPlan/101/{actors[0].QuestId}",
+                this.cancellationToken
+            )
+        )!;
+        soloPlan.Units.Should().BeEmpty();
     }
 
     [Fact]

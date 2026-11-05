@@ -11,6 +11,8 @@ public sealed class LuxonApiOptions
 
 public sealed class LuxonPrepareRequest
 {
+    public string RoomName { get; init; } = string.Empty;
+
     public List<ActorInfo> Actors { get; init; } = [];
 
     public bool IsSolo { get; init; }
