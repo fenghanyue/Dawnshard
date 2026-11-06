@@ -8,9 +8,16 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace DragaliaAPI.Integration.Test.Features.Summoning;
 
-public class WindsBannerTest(CustomWebApplicationFactory factory, ITestOutputHelper outputHelper)
-    : TestFixture(factory, outputHelper)
+public sealed class WindsBannerTest : TestFixture, IDisposable
 {
+    private readonly CustomWebApplicationFactory factory;
+
+    public WindsBannerTest(CustomWebApplicationFactory factory, ITestOutputHelper outputHelper)
+        : base(factory, outputHelper)
+    {
+        this.factory = factory;
+    }
+
     private const int BannerId = 1020005;
     private static readonly JsonSerializerOptions SerializerOptions = new()
     {
@@ -22,6 +29,13 @@ public class WindsBannerTest(CustomWebApplicationFactory factory, ITestOutputHel
     };
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
+    private WebApplicationFactory<Program>? application;
+
+    void IDisposable.Dispose()
+    {
+        this.application?.Dispose();
+        base.Dispose();
+    }
 
     private HttpClient CreateBannerClient(DateTimeOffset start, DateTimeOffset end)
     {
@@ -33,7 +47,7 @@ public class WindsBannerTest(CustomWebApplicationFactory factory, ITestOutputHel
         preset["Start"] = start;
         preset["End"] = end;
         Banner banner = preset.Deserialize<Banner>(SerializerOptions)!;
-        return this.CreateClient(builder =>
+        this.application = this.factory.WithWebHostBuilder(builder =>
         {
             builder.ConfigureAppConfiguration(config =>
                 config.AddInMemoryCollection(
@@ -52,6 +66,15 @@ public class WindsBannerTest(CustomWebApplicationFactory factory, ITestOutputHel
                 })
             );
         });
+        HttpClient client = this.application.CreateClient(
+            new() { BaseAddress = this.Client.BaseAddress! }
+        );
+        foreach ((string name, IEnumerable<string> values) in this.Client.DefaultRequestHeaders)
+        {
+            client.DefaultRequestHeaders.TryAddWithoutValidation(name, values);
+        }
+
+        return client;
     }
 
     [Fact]

@@ -12,18 +12,18 @@ using Microsoft.Extensions.Time.Testing;
 
 namespace DragaliaAPI.Integration.Test.Features.Event;
 
-public class AWishToTheWindsTest : TestFixture
+public sealed class AWishToTheWindsTest : TestFixture, IDisposable
 {
     private const int EventId = 20818;
     private static readonly DateTimeOffset Switch = new(2026, 11, 6, 6, 0, 0, TimeSpan.Zero);
     private readonly FakeTimeProvider clock = new(Switch.AddSeconds(-1));
+    private readonly WebApplicationFactory<Program> application;
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
     public AWishToTheWindsTest(CustomWebApplicationFactory factory, ITestOutputHelper outputHelper)
         : base(factory, outputHelper)
     {
-        this.Client.Dispose();
-        this.Client = this.CreateClient(builder =>
+        this.application = factory.WithWebHostBuilder(builder =>
             builder.ConfigureTestServices(services =>
             {
                 services.AddSingleton<TimeProvider>(this.clock);
@@ -41,6 +41,18 @@ public class AWishToTheWindsTest : TestFixture
                 });
             })
         );
+        using HttpClient original = this.Client;
+        this.Client = this.application.CreateClient(new() { BaseAddress = original.BaseAddress! });
+        foreach ((string name, IEnumerable<string> values) in original.DefaultRequestHeaders)
+        {
+            this.Client.DefaultRequestHeaders.TryAddWithoutValidation(name, values);
+        }
+    }
+
+    void IDisposable.Dispose()
+    {
+        this.application.Dispose();
+        base.Dispose();
     }
 
     private async Task Enter() =>
