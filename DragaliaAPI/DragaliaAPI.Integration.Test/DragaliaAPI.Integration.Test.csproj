@@ -22,6 +22,9 @@
     <ProjectReference Include="..\DragaliaAPI\DragaliaAPI.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="../../deploy/tencent/windsBanner.json" Link="Data/windsBanner.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="../../deploy/tencent/kindnessBanner.json" Link="Data/kindnessBanner.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

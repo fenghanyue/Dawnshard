@@ -1,0 +1,15 @@
+{
+    "Id": 1020005,
+    "IsGala": false,
+    "IsPrizeShowcase": false,
+    "PickupCharas": [
+        "Louise"
+    ],
+    "PickupDragons": [
+        "Garuda"
+    ],
+    "LimitedCharas": [],
+    "LimitedDragons": [],
+    "TradeCharas": [],
+    "TradeDragons": []
+}
