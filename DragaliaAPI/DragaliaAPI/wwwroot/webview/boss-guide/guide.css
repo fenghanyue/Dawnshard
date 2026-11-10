@@ -72,6 +72,15 @@ aside a {
   padding: 8px 0;
   font-weight: 600;
 }
+aside nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 20px;
+}
+aside a[aria-current="page"] {
+  color: #17344b;
+  text-decoration-thickness: 2px;
+}
 article {
   scroll-margin-top: 12px;
 }
@@ -128,6 +137,12 @@ dd {
 }
 .takeaway {
   border-left: 4px solid #287e64;
+}
+.flame .element {
+  background: #b64327;
+}
+.flame .takeaway {
+  border-left-color: #b64327;
 }
 ol {
   margin: 0;
