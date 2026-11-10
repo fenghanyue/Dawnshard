@@ -17,12 +17,15 @@
 
       <aside id="selection-notice" aria-live="polite">
         <p id="selection-message">
-          目前已收录下方的真风龙攻略。点击名称即可查看。
+          请选择要查看的 Boss 攻略。
         </p>
-        <a href="#high-midgardsormr">真耶梦加得（真风龙） →</a>
+        <nav aria-label="攻略目录">
+          <a href="#high-midgardsormr">真耶梦加得（真风龙） →</a>
+          <a href="#high-brunhilda">真布伦希尔德（真火龙） →</a>
+        </nav>
       </aside>
 
-      <article id="high-midgardsormr" aria-labelledby="boss-title">
+      <article id="high-midgardsormr" aria-labelledby="boss-title" hidden>
         <div class="boss-heading">
           <span class="element">风</span>
           <div>
@@ -89,6 +92,105 @@
               rel="noreferrer"
               >CC BY-NC-SA 3.0</a
             >，本页攻略文字以相同许可分享）。
+          </p>
+        </footer>
+      </article>
+
+      <article
+        id="high-brunhilda"
+        class="flame"
+        aria-labelledby="brunhilda-title"
+        hidden
+      >
+        <div class="boss-heading">
+          <span class="element">火</span>
+          <div>
+            <p class="eyebrow">已收录攻略 · High Brunhilda</p>
+            <h2 id="brunhilda-title">真布伦希尔德（真火龙）</h2>
+          </div>
+        </div>
+        <p class="scope">
+          适用：中级、高级的常见机制。下文区分单人与联机；超级的招式和应对不同，请勿照搬。
+        </p>
+
+        <section aria-labelledby="brunhilda-preparation-title">
+          <h3 id="brunhilda-preparation-title">出发前</h3>
+          <p>
+            优先水属性队伍，准备完整的灼伤抗性与治疗。抗性不足时，要有解除灼伤的手段。
+            开场有无法靠技能无敌躲掉的全队伤害，提前加防，受击后及时回复。
+          </p>
+        </section>
+
+        <section aria-labelledby="brunhilda-skills-title">
+          <h3 id="brunhilda-skills-title">关键技能与应对</h3>
+          <dl>
+            <dt>开场爆炎 <span>Scorching Blast</span></dt>
+            <dd>先保证血量与减伤，受击后治疗、解除灼伤，给后续攻击留出生存余地。</dd>
+            <dt>后跳吐息、冲刺与爪击</dt>
+            <dd>
+              主要朝最近的人攻击。引导者让龙头远离队友，其他人从侧后方输出；吐息可绕到背后躲开。
+            </dd>
+            <dt>俯冲爆破 <span>Crimson Inferno</span></dt>
+            <dd>
+              锁定最远的人，别把落点带进人群。中级、高级可通过拉开足够距离取消俯冲，
+              火山也能阻挡俯冲路径。未能取消时提前减伤，其他人避开爆炸范围。
+            </dd>
+            <dt>召唤火山 <span>Volcanic Blitz</span></dt>
+            <dd>
+              单人火山按固定十字或斜十字位置出现；联机依次落在队员位置。
+              避开落点，记住出现顺序，并给后续躲藏留出通路。
+            </dd>
+            <dt>地狱火 <span>Hellfire</span></dt>
+            <dd>
+              让火山挡在自己与 Boss 之间，阻挡全场攻击。一轮共四次，Boss 会穿插冲刺、后跳，
+              每次都要重新确认遮挡方向；火山会依次消失，别一直躲在同一块后面。
+            </dd>
+            <dt>分散与分摊 <span>Flame Chaser / Searing Pillar</span></dt>
+            <dd>
+              紫色追踪圈各自分散，红色分摊圈集合承伤。联机首次先分散、后分摊；
+              第一轮大片熔岩后顺序反转，先分摊、后分散，留意当前标记。
+              单人只有一个追踪圈，省略红圈分摊。
+            </dd>
+            <dt>连续小陨石 <span>Mini Meteors</span></dt>
+            <dd>
+              朝最近的人连续落下。引导者持续移动离开落点，别站在残留伤害里，也别穿过队友。
+            </dd>
+            <dt>大片熔岩 <span>Grand Muspelheim</span></dt>
+            <dd>
+              Boss 飞离场地后铺设熔岩，中级、高级可先往右下安全区集合。
+              避开熔岩边缘，给接下来的分摊与分散留位置。
+            </dd>
+            <dt>四角熔岩与追踪圈 <span>Grand X-Muspelheim / Flame Chaser</span></dt>
+            <dd>
+              场地只留下四角安全区。联机提前分好角落，各自躲避，防止追踪圈重叠；
+              单人注意电脑队员是否仍在熔岩中，必要时切换角色移出。
+            </dd>
+          </dl>
+        </section>
+
+        <section class="takeaway" aria-labelledby="brunhilda-tips-title">
+          <h3 id="brunhilda-tips-title">记住这三件事</h3>
+          <ol>
+            <li>开场先保命，灼伤及时解除，龙头和俯冲落点远离队友。</li>
+            <li>火山是地狱火的掩体；Boss 一移动，就重新确认遮挡方向。</li>
+            <li>紫圈分散、红圈分摊；熔岩后顺序会变，四角阶段提前分好位置。</li>
+          </ol>
+        </section>
+
+        <footer>
+          <p>
+            社区资料的中文整理，技能标题含便于辨认的意译，并非原版官方详情页。不同难度请以战斗内提示为准。
+          </p>
+          <p>
+            参考：<a
+              href="https://dragalialost.fandom.com/wiki/High_Brunhilda_Guide%3A_Standard_%26_Expert"
+              rel="noreferrer"
+              >Dragalia Lost Wiki · High Brunhilda Guide: Standard &amp; Expert</a
+            >（<a
+              href="https://creativecommons.org/licenses/by-nc-sa/3.0/"
+              rel="noreferrer"
+              >CC BY-NC-SA 3.0</a
+            >，本篇攻略文字以相同许可分享）。
           </p>
         </footer>
       </article>
