@@ -22,6 +22,12 @@
     <ProjectReference Include="..\DragaliaAPI\DragaliaAPI.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="../../deploy/tencent/bannerConfig.json" Link="Data/tencentBanners.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="../../deploy/tencent/appsettings.Production.json" Link="Data/tencentEvents.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="../../deploy/tencent/windsBanner.json" Link="Data/windsBanner.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

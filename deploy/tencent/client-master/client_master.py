@@ -131,7 +131,12 @@ def load_box_summons(path: Path) -> set[int]:
     return {int(item["EventId"]) for item in settings.get("EventSummons", [])}
 
 
-def plan_version(runs: list[EventRun], box_summons: set[int]) -> str:
+def load_disabled_memory_events(path: Path) -> set[int]:
+    settings = json.loads(path.read_text(encoding="utf-8-sig"))
+    return set(settings.get("EventOptions", {}).get("DisabledMemoryEventIds", []))
+
+
+def plan_version(runs: list[EventRun], box_summons: set[int], disabled_memory_events: set[int] | None = None) -> str:
     code = hashlib.sha256()
     for name in VERSION_FILES:
         code.update((HERE / name).read_bytes())
@@ -139,6 +144,7 @@ def plan_version(runs: list[EventRun], box_summons: set[int]) -> str:
         "source": SOURCE_VERSION,
         "events": [[run.id, to_master_date(run.start), to_master_date(run.end)] for run in runs],
         "box_summons": sorted(box_summons),
+        "disabled_memory_events": sorted(disabled_memory_events or set()),
         "code": code.hexdigest(),
     }
     digest = hashlib.sha256(json.dumps(plan, sort_keys=True).encode()).digest()
@@ -195,12 +201,16 @@ def rows(tree: dict) -> Iterator[dict]:
 Changes = dict[str, dict[int, dict[str, str | int]]]
 
 
-def plan_changes(tables: dict[str, dict], runs: list[EventRun], box_summons: set[int]) -> Changes:
+def plan_changes(
+    tables: dict[str, dict], runs: list[EventRun], box_summons: set[int], disabled_memory_events: set[int] | None = None
+) -> Changes:
     """按原版数据表算出每一行要改成什么，只留真的会变的字段。"""
     origins = {row["_Id"]: row for row in rows(tables["EventData"])}
-    if missing := sorted(({run.id for run in runs} | CLOSED_EVENTS) - origins.keys()):
+    disabled_memory_events = disabled_memory_events or set()
+    closed_events = CLOSED_EVENTS | disabled_memory_events
+    if missing := sorted(({run.id for run in runs} | closed_events) - origins.keys()):
         raise SystemExit(f"数据表里没有这些活动：{missing}")
-    if closed := sorted({run.id for run in runs} & CLOSED_EVENTS):
+    if closed := sorted({run.id for run in runs} & closed_events):
         raise SystemExit(f"活动 {closed} 已停用，不能排期")
     schedules = {run.id: EventSchedule(origins[run.id], run) for run in runs}
     # 活动角色在活动期间只用专属材料养成（2020 年以后的部分活动），时间也要跟服务器一致
@@ -216,7 +226,13 @@ def plan_changes(tables: dict[str, dict], runs: list[EventRun], box_summons: set
             changes.setdefault(table, {}).setdefault(row["_Id"], {}).update(values)
 
     for row in rows(tables["EventData"]):
-        if row["_Id"] in CLOSED_EVENTS:
+        if row["_Id"] in disabled_memory_events:
+            # 回忆的结束日期为空，不能原地写入日期；取消回忆标记并把普通入口置于未来。
+            add("EventData", row, {
+                "_IsMemoryEvent": 0, "_IsPickupMemoryEvent": 0, "_MemoryEventViewType": 0,
+                "_StartDate": "2099/12/31 06:00:00",
+            })
+        elif row["_Id"] in CLOSED_EVENTS:
             add("EventData", row, {"_EndDate": row["_StartDate"], "_ViewCloseDate": row["_StartDate"]})
         elif row["_Id"] in schedules:
             dates = schedules[row["_Id"]].event_dates(row)
@@ -225,7 +241,7 @@ def plan_changes(tables: dict[str, dict], runs: list[EventRun], box_summons: set
                 dates["_GuestJoinStoryId"] = 2045901
             add("EventData", row, dates)
     for row in rows(tables["QuestEventGroup"]):
-        if row["_Id"] in CLOSED_EVENTS:
+        if row["_Id"] in closed_events:
             add("QuestEventGroup", row, {"_IsHideBanner": 1})
     for row in rows(tables["CharaData"]):
         if run := grow_runs.get(row["_Id"]):
@@ -336,14 +352,15 @@ class Sources:
 
 
 def build_locale(
-    manifest_name: str, sources: Sources, runs: list[EventRun], box_summons: set[int], out_dir: Path
+    manifest_name: str, sources: Sources, runs: list[EventRun], box_summons: set[int], out_dir: Path,
+    disabled_memory_events: set[int] | None = None,
 ) -> tuple[bytes, str]:
     """改一个语言包的数据表，返回新的清单（加密后）和新数据表的文件名。"""
     plain = unity_bundle.decrypt_manifest(sources.manifest(manifest_name))
     master_name, master_size = unity_bundle.manifest_master(plain)
     master = sources.asset(master_name, master_size)
 
-    changes = plan_changes(unity_bundle.read_assets(master, TABLES), runs, box_summons)
+    changes = plan_changes(unity_bundle.read_assets(master, TABLES), runs, box_summons, disabled_memory_events)
     edits = make_edits(changes)
     patched, counts = unity_bundle.patch_assets(master, edits)
 
@@ -396,12 +413,13 @@ def clean_up(out_dir: Path, current: str) -> None:
 
 def generate(args: argparse.Namespace) -> str:
     runs = load_runs(args.events)
-    if not runs and not CLOSED_EVENTS:
+    disabled_memory_events = load_disabled_memory_events(args.events)
+    if not runs and not CLOSED_EVENTS and not disabled_memory_events:
         log("没有排活动，用原版的资源版本")
         return SOURCE_VERSION
     box_summons = load_box_summons(args.event_summons) & {run.id for run in runs}
-    version = plan_version(runs, box_summons)
-    for event_id in sorted(CLOSED_EVENTS):
+    version = plan_version(runs, box_summons, disabled_memory_events)
+    for event_id in sorted(CLOSED_EVENTS | disabled_memory_events):
         log(f"关闭原版活动 {event_id}，隐藏任务页入口")
     for run in runs:
         summon = "，活动召唤打开" if run.id in box_summons else ""
@@ -420,7 +438,9 @@ def generate(args: argparse.Namespace) -> str:
         staging.mkdir(parents=True)
         masters = []
         for manifest_name in SOURCE_MANIFESTS:
-            manifest, master_name = build_locale(manifest_name, sources, runs, box_summons, args.out_dir)
+            manifest, master_name = build_locale(
+                manifest_name, sources, runs, box_summons, args.out_dir, disabled_memory_events
+            )
             write_file(staging / manifest_name, manifest)
             masters.append(master_name)
         write_file(staging / ".masters.json", json.dumps(masters).encode())

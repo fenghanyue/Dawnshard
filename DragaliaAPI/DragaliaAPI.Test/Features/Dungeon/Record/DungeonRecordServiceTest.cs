@@ -5,6 +5,7 @@ using DragaliaAPI.Features.Dungeon;
 using DragaliaAPI.Features.Dungeon.Record;
 using DragaliaAPI.Features.Player;
 using DragaliaAPI.Features.Quest;
+using DragaliaAPI.Features.Shared.Options;
 using DragaliaAPI.Features.Shared.Reward;
 using DragaliaAPI.Features.Tutorial;
 using DragaliaAPI.Models.Generated;
@@ -12,6 +13,7 @@ using DragaliaAPI.Shared.Definitions.Enums;
 using DragaliaAPI.Shared.MasterAsset;
 using DragaliaAPI.Test.Utils;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace DragaliaAPI.Test.Features.Dungeon.Record;
 
@@ -47,7 +49,8 @@ public class DungeonRecordServiceTest
             this.mockCharaService.Object,
             this.mockRewardService.Object,
             this.mockAlbumService.Object,
-            this.mockLogger.Object
+            this.mockLogger.Object,
+            Mock.Of<IOptionsMonitor<EventOptions>>(x => x.CurrentValue == new EventOptions())
         );
 
         this.mockTutorialService.Setup(x => x.AddTutorialFlag(1022)).ReturnsAsync(new List<int>());

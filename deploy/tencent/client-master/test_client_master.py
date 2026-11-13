@@ -99,6 +99,44 @@ class SoloRaidMenuTest(unittest.TestCase):
             client_master.plan_changes(self.tables, [run], set())
 
 
+class DisabledMemoryEventTest(unittest.TestCase):
+    def setUp(self):
+        shared = Path(__file__).resolve().parents[3] / "DragaliaAPI/DragaliaAPI.Shared/Resources"
+        self.tables = {name: table([]) for name in client_master.TABLES}
+        for name, path in (("EventData", "Event/EventData.json"), ("QuestEventGroup", "QuestEventGroup.json")):
+            self.tables[name] = table(json.loads((shared / path).read_text(encoding="utf-8-sig")))
+
+    def test_only_selected_memory_is_removed_and_empty_end_dates_remain_intact(self):
+        before = copy.deepcopy(self.tables)
+        changes = client_master.plan_changes(self.tables, [], set(), {20818})
+        for name, edit in client_master.make_edits(changes).items():
+            edit(self.tables[name])
+        events = {row["_Id"]: row for row in client_master.rows(self.tables["EventData"])}
+        originals = {row["_Id"]: row for row in client_master.rows(before["EventData"])}
+        self.assertEqual(events[20818]["_IsMemoryEvent"], 0)
+        self.assertEqual(events[20818]["_IsPickupMemoryEvent"], 0)
+        self.assertEqual(events[20818]["_MemoryEventViewType"], 0)
+        self.assertEqual(events[20818]["_EndDate"], "")
+        self.assertEqual(events[20818]["_ViewCloseDate"], "")
+        self.assertGreater(client_master.from_master_date(events[20818]["_StartDate"]), datetime(2090, 1, 1))
+        self.assertEqual(sum(row["_IsMemoryEvent"] == 1 for row in events.values()), 27)
+        for event_id, row in originals.items():
+            if event_id not in (20818, 22301):
+                self.assertEqual(events[event_id], row)
+        groups = {row["_Id"]: row for row in client_master.rows(self.tables["QuestEventGroup"])}
+        self.assertEqual(groups[20818]["_IsHideBanner"], 1)
+        self.assertEqual(groups[22301]["_IsHideBanner"], 1)
+        self.assertEqual(client_master.plan_changes(self.tables, [], set(), {20818}), {})
+
+    def test_disabled_memory_cannot_also_be_scheduled(self):
+        run = client_master.EventRun(20818, datetime(2026, 11, 13), datetime(2029, 8, 8))
+        with self.assertRaisesRegex(SystemExit, "20818.*已停用"):
+            client_master.plan_changes(self.tables, [run], set(), {20818})
+
+    def test_disabling_memory_changes_resource_version(self):
+        self.assertNotEqual(client_master.plan_version([], set()), client_master.plan_version([], set(), {20818}))
+
+
 class HalloweenMapsTest(unittest.TestCase):
     def setUp(self):
         SoloRaidMenuTest.setUp(self)

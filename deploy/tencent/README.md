@@ -163,6 +163,9 @@ bash deploy/tencent/photon/smoke.sh dawnshard-luxon:trial
 - **改活动安排**：编辑 `appsettings.Production.json` 里的 `EventOptions.EventList`，每个活动写
   `Id`（活动编号）、`Start`、`End`（UTC 时间）。合并到 main 后自动部署，手机端的数据表也会跟着改，
   见下面「活动在手机上显示」。同一个活动只能排一次。
+- **停用官方回忆**：在 `EventOptions.DisabledMemoryEventIds` 填官方回忆编号。客户端撤下该回忆和任务入口，
+  服务端拒绝激活、活动查询/领奖、开战、结算/扫荡、商店与任务领奖；玩家下次 `load/index` 时清除该活动的选中状态。
+  只隐藏相关任务，保留任务进度、已领奖标记、活动货币、设施和通关记录。当前停用 `20818`，其他 27 个回忆沿用原数据。
 - **改卡池**：编辑 `bannerConfig.json`，每个卡池写 `Id`、`Start`、`End`、`PickupCharas`（主打角色）、`PickupDragons`（主打龙）。
   原版卡池的编号、日期和主打对象在 `DragaliaAPI/DragaliaAPI.Shared/Resources/Summon/SummonData.json`，
   角色和龙的名字见 `DragaliaAPI/DragaliaAPI.Shared/Definitions/Enums/` 里的 `Charas`、`DragonId`。

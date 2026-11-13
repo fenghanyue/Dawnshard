@@ -2,10 +2,13 @@ using DragaliaAPI.Features.Album;
 using DragaliaAPI.Features.Chara;
 using DragaliaAPI.Features.Player;
 using DragaliaAPI.Features.Quest;
+using DragaliaAPI.Features.Shared.Options;
 using DragaliaAPI.Features.Shared.Reward;
 using DragaliaAPI.Features.Tutorial;
+using DragaliaAPI.Infrastructure;
 using DragaliaAPI.Models.Generated;
 using DragaliaAPI.Shared.Definitions.Enums;
+using Microsoft.Extensions.Options;
 using static DragaliaAPI.Features.Tutorial.TutorialService;
 
 namespace DragaliaAPI.Features.Dungeon.Record;
@@ -18,7 +21,8 @@ internal partial class DungeonRecordService(
     ICharaService charaService,
     IRewardService rewardService,
     IAlbumService albumService,
-    ILogger<DungeonRecordService> logger
+    ILogger<DungeonRecordService> logger,
+    IOptionsMonitor<EventOptions> eventOptions
 ) : IDungeonRecordService
 {
     public async Task<IngameResultData> GenerateIngameResultData(
@@ -27,6 +31,11 @@ internal partial class DungeonRecordService(
         DungeonSession session
     )
     {
+        if (eventOptions.CurrentValue.DisabledMemoryEventIds.Contains(session.QuestGid))
+        {
+            throw new DragaliaException(ResultCode.EventOutThePeriod, "Event has ended");
+        }
+
         await tutorialService.AddTutorialFlag(1022);
 
         Log.ProcessingCompletionOfQuest(logger, session.QuestId, session.IsHost);

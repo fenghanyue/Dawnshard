@@ -335,9 +335,12 @@ public partial class MissionService(
 
         DbPlayerMission dbMission = await missionRepository.GetMissionByIdAsync(type, id);
         // FindAsync bypasses the repository's list filter; cached clients must not redeem retired tasks.
-        if (dbMission.GroupId == 20458 && !MasterAsset.EventData[20458].IsMemoryEvent)
+        if (
+            this.eventOptions.DisabledMemoryEventIds.Contains(dbMission.GroupId ?? 0)
+            || (dbMission.GroupId == 20458 && !MasterAsset.EventData[20458].IsMemoryEvent)
+        )
         {
-            throw new DragaliaException(ResultCode.EventOutThePeriod, "Event trial has ended");
+            throw new DragaliaException(ResultCode.EventOutThePeriod, "Event has ended");
         }
 
         if (dbMission.State != MissionState.Completed)

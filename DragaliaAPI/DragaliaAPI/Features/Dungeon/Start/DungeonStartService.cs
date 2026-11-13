@@ -8,6 +8,7 @@ using DragaliaAPI.Features.Fort;
 using DragaliaAPI.Features.Friends;
 using DragaliaAPI.Features.Player;
 using DragaliaAPI.Features.Quest;
+using DragaliaAPI.Features.Shared.Options;
 using DragaliaAPI.Features.Shared.Reward;
 using DragaliaAPI.Features.Shop;
 using DragaliaAPI.Features.Tutorial;
@@ -18,6 +19,7 @@ using DragaliaAPI.Shared.MasterAsset;
 using DragaliaAPI.Shared.MasterAsset.Models;
 using DragaliaAPI.Shared.PlayerDetails;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using static DragaliaAPI.Features.Tutorial.TutorialService;
 
 namespace DragaliaAPI.Features.Dungeon.Start;
@@ -37,15 +39,21 @@ internal sealed partial class DungeonStartService(
     IPaymentService paymentService,
     IEventService eventService,
     IAutoRepeatService autoRepeatService,
-    ITutorialService tutorialService
+    ITutorialService tutorialService,
+    IOptionsMonitor<EventOptions> eventOptions
 ) : IDungeonStartService
 {
     public async Task<bool> ValidateStamina(int questId, StaminaType staminaType)
     {
-        if (!MasterAsset.QuestData.TryGetValue(questId, out QuestData? _))
+        if (!MasterAsset.QuestData.TryGetValue(questId, out QuestData? quest))
         {
             Log.QuestDoesNotExist(logger, questId);
             return false;
+        }
+
+        if (eventOptions.CurrentValue.DisabledMemoryEventIds.Contains(quest.Gid))
+        {
+            throw new DragaliaException(ResultCode.EventOutThePeriod, "Event has ended");
         }
 
         int requiredStamina = await questService.GetQuestStamina(questId, staminaType);
