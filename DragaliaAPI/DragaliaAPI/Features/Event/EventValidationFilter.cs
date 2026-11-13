@@ -27,6 +27,12 @@ public partial class EventValidationFilter(
             return;
         }
 
+        if (optionsMonitor.CurrentValue.DisabledMemoryEventIds.Contains(request.EventId))
+        {
+            SetValidationFailedResponse(context);
+            return;
+        }
+
         if (
             MasterAsset.EventData.TryGetValue(request.EventId, out EventData? masterAssetItem)
             && masterAssetItem.IsMemoryEvent

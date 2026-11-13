@@ -1,11 +1,13 @@
 ﻿using DragaliaAPI.Database.Entities;
 using DragaliaAPI.Database.Repositories;
 using DragaliaAPI.Features.Shared;
+using DragaliaAPI.Features.Shared.Options;
 using DragaliaAPI.Features.Shared.Reward;
 using DragaliaAPI.Infrastructure;
 using DragaliaAPI.Models.Generated;
 using DragaliaAPI.Shared.MasterAsset;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace DragaliaAPI.Features.Event;
 
@@ -14,7 +16,8 @@ public class MemoryEventController(
     IUserDataRepository userDataRepository,
     IUpdateDataService updateDataService,
     IRewardService rewardService,
-    IEventService eventService
+    IEventService eventService,
+    IOptionsMonitor<EventOptions> eventOptions
 ) : DragaliaControllerBase
 {
     [HttpPost("activate")]
@@ -23,7 +26,10 @@ public class MemoryEventController(
         CancellationToken cancellationToken
     )
     {
-        if (request.EventId == 20458 && !MasterAsset.EventData[20458].IsMemoryEvent)
+        if (
+            eventOptions.CurrentValue.DisabledMemoryEventIds.Contains(request.EventId)
+            || (request.EventId == 20458 && !MasterAsset.EventData[20458].IsMemoryEvent)
+        )
         {
             return this.Code(ResultCode.EventOutThePeriod);
         }

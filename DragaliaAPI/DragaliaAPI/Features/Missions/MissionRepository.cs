@@ -1,18 +1,21 @@
 ﻿using DragaliaAPI.Database;
 using DragaliaAPI.Database.Entities;
 using DragaliaAPI.Database.Utils;
+using DragaliaAPI.Features.Shared.Options;
 using DragaliaAPI.Infrastructure;
 using DragaliaAPI.Shared.MasterAsset;
 using DragaliaAPI.Shared.MasterAsset.Models.Missions;
 using DragaliaAPI.Shared.PlayerDetails;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace DragaliaAPI.Features.Missions;
 
 public class MissionRepository(
     ApiContext apiContext,
     IPlayerIdentityService playerIdentityService,
-    TimeProvider timeProvider
+    TimeProvider timeProvider,
+    IOptionsMonitor<EventOptions> eventOptions
 ) : IMissionRepository
 {
     private static readonly int[] TrialDailyMissionIds = MasterAsset
@@ -29,6 +32,7 @@ public class MissionRepository(
             x.ViewerId == this.playerIdentityService.ViewerId
             // Retain trial progress in storage without exposing retired tasks or their notices.
             && (MasterAsset.EventData[20458].IsMemoryEvent || x.GroupId != 20458)
+            && !eventOptions.CurrentValue.DisabledMemoryEventIds.Contains(x.GroupId ?? 0)
         );
 
     public IQueryable<DbCompletedDailyMission> CompletedDailyMissions =>

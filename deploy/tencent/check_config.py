@@ -48,7 +48,20 @@ def check(
     errors: list[str] = []
 
     event_ids = master_ids("Event/EventData.json")
-    events = read_json(events_path).get("EventOptions", {}).get("EventList", [])
+    event_options = read_json(events_path).get("EventOptions", {})
+    events = event_options.get("EventList", [])
+    disabled = event_options.get("DisabledMemoryEventIds", [])
+    memory_ids = {
+        row["_Id"] for row in read_json(SHARED / "Resources/Event/EventData.json")
+        if row["_IsMemoryEvent"]
+    }
+    if not isinstance(disabled, list) or any(type(item) is not int or item not in memory_ids for item in disabled):
+        errors.append("appsettings.Production.json：DisabledMemoryEventIds 只能填写官方回忆活动编号")
+        disabled = []
+    if len(disabled) != len(set(disabled)):
+        errors.append("appsettings.Production.json：DisabledMemoryEventIds 有重复编号")
+    if any(event.get("Id") in disabled for event in events):
+        errors.append("appsettings.Production.json：停用的回忆活动不能同时排期")
     for index, event in enumerate(events, 1):
         where = f"appsettings.Production.json 第 {index} 个活动（{event.get('Id')}）"
         if event.get("Id") not in event_ids:

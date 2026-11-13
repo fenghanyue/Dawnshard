@@ -1,8 +1,11 @@
 using System.Diagnostics;
 using DragaliaAPI.Database;
 using DragaliaAPI.Database.Entities;
+using DragaliaAPI.Features.Shared.Options;
 using DragaliaAPI.Shared.PlayerDetails;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.Extensions.Options;
 
 namespace DragaliaAPI.Features.Login.SavefileUpdate;
 
@@ -15,18 +18,21 @@ public partial class SavefileUpdateService : ISavefileUpdateService
     private readonly IPlayerIdentityService playerIdentityService;
     private readonly IEnumerable<ISavefileUpdate> savefileUpdates;
     private readonly ILogger<SavefileUpdateService> logger;
+    private readonly IOptionsMonitor<EventOptions> eventOptions;
 
     public SavefileUpdateService(
         ApiContext context,
         IPlayerIdentityService playerIdentityService,
         IEnumerable<ISavefileUpdate> savefileUpdates,
-        ILogger<SavefileUpdateService> logger
+        ILogger<SavefileUpdateService> logger,
+        IOptionsMonitor<EventOptions> eventOptions
     )
     {
         this.context = context;
         this.playerIdentityService = playerIdentityService;
         this.savefileUpdates = savefileUpdates;
         this.logger = logger;
+        this.eventOptions = eventOptions;
     }
 
     public async Task UpdateSavefile()
@@ -63,6 +69,20 @@ public partial class SavefileUpdateService : ISavefileUpdateService
                 player.SavefileVersion = update.SavefileVersion;
 
                 Log.AppliedSavefileUpdateTookMs(this.logger, update, s.ElapsedMilliseconds);
+            }
+        }
+
+        // Clear only the selected entry; retain event progress and claimed reward flags.
+        if (this.eventOptions.CurrentValue.DisabledMemoryEventIds.Count > 0)
+        {
+            DbPlayerUserData userData = await this.context.PlayerUserData.SingleAsync();
+            if (
+                this.eventOptions.CurrentValue.DisabledMemoryEventIds.Contains(
+                    userData.ActiveMemoryEventId
+                )
+            )
+            {
+                userData.ActiveMemoryEventId = 0;
             }
         }
 

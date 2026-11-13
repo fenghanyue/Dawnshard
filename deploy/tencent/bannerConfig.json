@@ -67,7 +67,28 @@
                 "TradeCharas": [],
                 "TradeDragons": [],
                 "Start": "2026-11-06T06:00:00Z",
-                "End": "2029-08-01T05:59:59Z"
+                "End": "2026-11-13T03:18:00Z"
+            },
+            {
+                "Id": 1020116,
+                "Start": "2026-11-13T03:18:00Z",
+                "End": "2029-08-08T03:17:59Z",
+                "IsGala": false,
+                "IsPrizeShowcase": false,
+                "PickupCharas": [
+                    "Seimei"
+                ],
+                "PickupDragons": [
+                    "GozuTenno"
+                ],
+                "LimitedCharas": [],
+                "LimitedDragons": [],
+                "TradeCharas": [
+                    "Seimei"
+                ],
+                "TradeDragons": [
+                    "GozuTenno"
+                ]
             }
         ]
     }
