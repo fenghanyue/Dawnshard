@@ -89,6 +89,29 @@
                 "TradeDragons": [
                     "GozuTenno"
                 ]
+            },
+            {
+                "Id": 1020203,
+                "Start": "2026-11-13T15:30:00Z",
+                "End": "2029-08-08T15:29:59Z",
+                "IsGala": true,
+                "IsPrizeShowcase": false,
+                "PickupCharas": [
+                    "GalaMascula",
+                    "GalaElisanne"
+                ],
+                "PickupDragons": [
+                    "GalaBeastCiella"
+                ],
+                "LimitedCharas": [],
+                "LimitedDragons": [],
+                "TradeCharas": [
+                    "GalaMascula",
+                    "GalaElisanne"
+                ],
+                "TradeDragons": [
+                    "GalaBeastCiella"
+                ]
             }
         ]
     }
